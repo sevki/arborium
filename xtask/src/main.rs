@@ -2290,7 +2290,7 @@ fn extension_to_lang_id(ext: &str) -> Option<&'static str> {
         "cpp" => Some("cpp"),
         "h" => Some("c"),
         "hpp" => Some("cpp"),
-        "cs" => Some("csharp"),
+        "cs" => Some("c-sharp"),
         "fs" => Some("fsharp"),
         "hs" => Some("haskell"),
         "lua" => Some("lua"),

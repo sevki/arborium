@@ -13,8 +13,12 @@ pub fn language() -> Language {
     unsafe { tree_sitter_cpp() }
 }
 
-/// The highlight query for cpp.
-pub const HIGHLIGHTS_QUERY: &str = include_str!("../../../grammars/tree-sitter-cpp/queries/highlights.scm");
+/// The highlight query for cpp (includes C highlights as base).
+pub const HIGHLIGHTS_QUERY: &str = concat!(
+    include_str!("../../../grammars/tree-sitter-c/queries/highlights.scm"),
+    "\n",
+    include_str!("../../../grammars/tree-sitter-cpp/queries/highlights.scm"),
+);
 
 /// The injections query for cpp.
 pub const INJECTIONS_QUERY: &str = include_str!("../../../grammars/tree-sitter-cpp/queries/injections.scm");
