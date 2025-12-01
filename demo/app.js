@@ -212,20 +212,21 @@ function updateLangInfoPanel(id) {
     const iconSvg = getIconSvg(id);
     const tag = info.tag || 'code';
 
-    // Build metadata pills with icons
-    let metaPills = '';
-    if (info.year) {
-        const calIcon = icons['mdi:calendar'] || '';
-        metaPills += `<span class="meta-pill">${calIcon}${info.year}</span>`;
+    // Build attribution line: "2020, Author Name" or just "Author Name" or just "2020"
+    let attribution = '';
+    if (info.year && info.inventor) {
+        attribution = `${info.year}, ${info.inventor}`;
+    } else if (info.year) {
+        attribution = `${info.year}`;
+    } else if (info.inventor) {
+        attribution = info.inventor;
     }
-    if (info.inventor) {
-        const userIcon = icons['mdi:account'] || '';
-        metaPills += `<span class="meta-pill">${userIcon}${info.inventor}</span>`;
-    }
-    if (info.wikipedia) {
-        const wikiIcon = icons['mdi:wikipedia'] || '';
-        metaPills += `<span class="meta-pill"><a href="${info.wikipedia}" target="_blank" rel="noopener">${wikiIcon}Wikipedia</a></span>`;
-    }
+
+    // Language name - link to url or wikipedia if available
+    const linkUrl = info.url || info.wikipedia;
+    const nameHtml = linkUrl
+        ? `<a class="lang-name-link" href="${linkUrl}" target="_blank" rel="noopener">${info.name}</a>`
+        : `<span class="lang-name">${info.name}</span>`;
 
     // Update sample bar (separate from card)
     const sampleBar = document.getElementById('sample-bar');
@@ -245,10 +246,10 @@ function updateLangInfoPanel(id) {
             <span class="hero-icon">${iconSvg}</span>
         </div>
         <div class="card-header">
-            <span class="lang-name">${info.name}</span>
+            ${nameHtml}
             <span class="tag tag-${tag}">${tag}</span>
         </div>
-        ${metaPills ? `<div class="card-meta">${metaPills}</div>` : ''}
+        ${attribution ? `<div class="card-attribution">${attribution}</div>` : ''}
         ${info.description ? `<div class="card-body"><p class="card-description">${info.description}</p></div>` : ''}
         ${info.trivia ? `<div class="card-trivia">${info.trivia}</div>` : ''}
     `;
@@ -789,6 +790,21 @@ document.addEventListener('keydown', (e) => {
     const isInTextarea = activeEl.tagName === 'TEXTAREA';
     const isInLangInput = activeEl === langInput;
     const isInThemeInput = activeEl === themeInput;
+    const isInInput = activeEl.tagName === 'INPUT';
+
+    // Cmd/Ctrl+K opens language picker from anywhere
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        enterSearchMode();
+        return;
+    }
+
+    // "/" key opens language picker (if not in an input)
+    if (e.key === '/' && !isInTextarea && !isInInput) {
+        e.preventDefault();
+        enterSearchMode();
+        return;
+    }
 
     // If in textarea, don't intercept arrows
     if (isInTextarea) return;

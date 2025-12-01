@@ -247,6 +247,16 @@ description = "Lightweight data interchange format widely used for APIs and conf
 wikipedia = "https://en.wikipedia.org/wiki/JSON"
 trivia = "Douglas Crockford discovered JSON in 2001 while working at State Software. He described it as a 'fat-free alternative to XML' and claimed he didn't invent it but rather discovered it, as the notation was already implicit in JavaScript since 1999."
 
+[kotlin]
+repo = "https://github.com/fwcd/tree-sitter-kotlin"
+commit = "57fb4560ba8641865bc0baa6b3f413b236112c4c"
+license = "MIT"
+inventor = "JetBrains"
+year = 2011
+description = "A modern programming language that runs on the JVM, official for Android development"
+wikipedia = "https://en.wikipedia.org/wiki/Kotlin_(programming_language)"
+trivia = "Kotlin was named after Kotlin Island near St. Petersburg, Russia, where the JetBrains team is based. Google announced Kotlin as an official Android development language in 2017, and by 2019 made it the preferred language for Android app development."
+
 [lean]
 repo = "https://github.com/Julian/tree-sitter-lean"
 commit = "efe6b87145608d12f5996bd7f0cf6095a0e82261"
@@ -294,6 +304,17 @@ year = 2003
 description = "Purely functional package manager and domain-specific language for reproducible software deployment"
 wikipedia = "https://en.wikipedia.org/wiki/Nix_(package_manager)"
 trivia = "Nix stores packages in isolation using cryptographic hashes in paths like /nix/store/5rnf...-firefox-3.5.4/, making dependency hell impossible. The Nixpkgs repository contains over 122,000 packages as of 2025, more up-to-date packages than any other repository. Eelco Dolstra developed Nix as his PhD thesis project at Utrecht University, published in 2006 as "The Purely Functional Software Deployment Model"."
+
+[ocaml]
+repo = "https://github.com/tree-sitter/tree-sitter-ocaml"
+commit = "3ef7c00b29e41e3a0c1d18e82ea37c64d72b93fc"
+license = "MIT"
+inventor = "Xavier Leroy, Jérôme Vouillon, Damien Doligez, Didier Rémy"
+year = 1996
+description = "A multi-paradigm programming language with emphasis on expressiveness and safety"
+wikipedia = "https://en.wikipedia.org/wiki/OCaml"
+trivia = "The 'O' in OCaml stands for 'Objective', as it was called Objective Caml before 2011. OCaml is used extensively in formal verification and financial trading systems. Jane Street, one of the largest proprietary trading firms, uses OCaml for over 30 million lines of production code."
+
 [perl]
 repo = "https://github.com/tree-sitter-perl/tree-sitter-perl"
 commit = "ad74e6db234c35d537de9358799a8e0cc4f5dee0"
@@ -343,6 +364,16 @@ year = 2006
 description = "CSS preprocessor that adds features like variables, nesting, and mixins to CSS"
 wikipedia = "https://en.wikipedia.org/wiki/Sass_(style_sheet_language)"
 trivia = "Sass (Syntactically Awesome Style Sheets) was created by Hampton Catlin and developed by Natalie Weizenbaum in 2006. SCSS (Sassy CSS), introduced in version 3, uses a syntax that is a superset of CSS3, meaning every valid CSS3 stylesheet is also valid SCSS. The name 'Sass' reflects its original indented syntax, while SCSS maintains CSS's curly-brace syntax, making adoption easier for developers."
+
+[scheme]
+repo = "https://github.com/6cdh/tree-sitter-scheme"
+commit = "591893b9a8b9ec85f5cef86e0cc1028012ad9f0e"
+license = "MIT"
+inventor = "Guy L. Steele Jr., Gerald Jay Sussman"
+year = 1975
+description = "A minimalist dialect of Lisp with lexical scope, first-class procedures, and tail-call optimization"
+wikipedia = "https://en.wikipedia.org/wiki/Scheme_(programming_language)"
+trivia = "Scheme was created at MIT AI Lab and influenced the design of many languages including JavaScript (which borrowed first-class functions and closures). The language was intentionally small - the original spec fit on 50 pages. Scheme's name comes from 'Schemer', after the AI language Planner, but was shortened due to filename length limits."
 
 [sql]
 repo = "https://github.com/DerekStride/tree-sitter-sql"
@@ -575,6 +606,16 @@ year = 2016
 description = "Component framework that compiles to highly efficient vanilla JavaScript at build time"
 wikipedia = "https://en.wikipedia.org/wiki/Svelte"
 trivia = "Svelte was created by Rich Harris, a graphics editor at The New York Times, and takes a radically different approach from frameworks like React and Vue. Instead of using a virtual DOM, Svelte compiles components to highly optimized imperative code at build time, resulting in smaller bundle sizes and better runtime performance. The name 'Svelte' means slender or elegant, reflecting the framework's minimalist philosophy and lean output."
+
+[swift]
+repo = "https://github.com/alex-pinkus/tree-sitter-swift"
+commit = "78d84ef82c387fceeb6094038da28717ea052e39"
+license = "MIT"
+inventor = "Chris Lattner"
+year = 2014
+description = "A powerful and intuitive programming language for Apple platforms"
+wikipedia = "https://en.wikipedia.org/wiki/Swift_(programming_language)"
+trivia = "Chris Lattner started Swift as a personal project in 2010 while working at Apple, spending 18 months on it before getting approval to make it official. He also created LLVM and Clang. Swift was designed to be a safer language than Objective-C, eliminating entire categories of bugs through features like optionals and automatic memory management."
 
 [hlsl]
 repo = "https://github.com/tree-sitter-grammars/tree-sitter-hlsl"

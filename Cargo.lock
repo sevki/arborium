@@ -571,6 +571,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "arborium-kotlin"
+version = "0.1.0"
+dependencies = [
+ "arborium-sysroot",
+ "arborium-test-harness",
+ "cc",
+ "tree-sitter-patched-arborium",
+]
+
+[[package]]
 name = "arborium-lean"
 version = "0.1.0"
 dependencies = [
@@ -642,6 +652,16 @@ dependencies = [
 
 [[package]]
 name = "arborium-objc"
+version = "0.1.0"
+dependencies = [
+ "arborium-sysroot",
+ "arborium-test-harness",
+ "cc",
+ "tree-sitter-patched-arborium",
+]
+
+[[package]]
+name = "arborium-ocaml"
 version = "0.1.0"
 dependencies = [
  "arborium-sysroot",
@@ -781,6 +801,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "arborium-scheme"
+version = "0.1.0"
+dependencies = [
+ "arborium-sysroot",
+ "arborium-test-harness",
+ "cc",
+ "tree-sitter-patched-arborium",
+]
+
+[[package]]
 name = "arborium-scss"
 version = "0.1.0"
 dependencies = [
@@ -832,6 +862,16 @@ dependencies = [
 
 [[package]]
 name = "arborium-svelte"
+version = "0.1.0"
+dependencies = [
+ "arborium-sysroot",
+ "arborium-test-harness",
+ "cc",
+ "tree-sitter-patched-arborium",
+]
+
+[[package]]
+name = "arborium-swift"
 version = "0.1.0"
 dependencies = [
  "arborium-sysroot",

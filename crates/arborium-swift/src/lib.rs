@@ -1,0 +1,40 @@
+//! SWIFT grammar for tree-sitter
+//!
+//! This crate provides the swift language grammar for use with tree-sitter.
+
+use tree_sitter_patched_arborium::Language;
+
+unsafe extern "C" {
+    fn tree_sitter_swift() -> Language;
+}
+
+/// Returns the swift tree-sitter language.
+pub fn language() -> Language {
+    unsafe { tree_sitter_swift() }
+}
+
+/// The highlight query for swift.
+pub const HIGHLIGHTS_QUERY: &str = include_str!("../../../grammars/tree-sitter-swift/queries/highlights.scm");
+
+/// The injections query for swift.
+pub const INJECTIONS_QUERY: &str = include_str!("../../../grammars/tree-sitter-swift/queries/injections.scm");
+
+/// The locals query for swift.
+pub const LOCALS_QUERY: &str = include_str!("../../../grammars/tree-sitter-swift/queries/locals.scm");
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_grammar() {
+        arborium_test_harness::test_grammar(
+            language(),
+            "swift",
+            HIGHLIGHTS_QUERY,
+            INJECTIONS_QUERY,
+            LOCALS_QUERY,
+            env!("CARGO_MANIFEST_DIR"),
+        );
+    }
+}

@@ -63,13 +63,6 @@
         <div id="status" class="status"></div>
 
         <section id="about" class="about">
-            <div class="about-hero">
-                <p class="slogan">What do we want?</p>
-                <p class="slogan-answer">Syntax highlighting.</p>
-                <p class="slogan">When do we want it?</p>
-                <p class="slogan-answer">Now. But also good. And also on the web.</p>
-            </div>
-
             <div class="about-card solution">
                 <h3>arborium</h3>
                 <p>Finding good tree-sitter grammars is hard. In arborium, every grammar:</p>
@@ -78,13 +71,6 @@
                     <li>{{ICON:mdi:check-circle}} Builds for WASM &amp; native via cargo</li>
                     <li>{{ICON:mdi:check-circle}} Has working highlight queries</li>
                 </ul>
-                <div class="platform-logos">
-                    <span class="platform-logo" title="Rust">{{ICON:devicon-plain:rust}}</span>
-                    <span class="platform-logo" title="WebAssembly">{{ICON:simple-icons:webassembly}}</span>
-                    <span class="platform-logo" title="macOS">{{ICON:mdi:apple}}</span>
-                    <span class="platform-logo" title="Linux">{{ICON:mdi:linux}}</span>
-                    <span class="platform-logo" title="Windows">{{ICON:mdi:microsoft-windows}}</span>
-                </div>
                 <p>
                     We provide any C symbols the scanner might rely on. We patched grammars and wrote
                     highlight queries so you don't have to. Enjoy.
@@ -109,6 +95,72 @@
                 </div>
                 <p>
                     <strong>ANSI</strong> — 24-bit true color for terminal applications.
+                </p>
+            </div>
+
+            <div class="about-card">
+                <h3>Platforms</h3>
+                <div class="platform-section">
+                    <div class="platform-group">
+                        <div class="platform-logos">
+                            <span class="platform-logo" title="macOS">{{ICON:mdi:apple}}</span>
+                            <span class="platform-logo" title="Linux">{{ICON:mdi:linux}}</span>
+                            <span class="platform-logo" title="Windows">{{ICON:mdi:microsoft-windows}}</span>
+                        </div>
+                        <p>
+                            <strong>macOS, Linux, Windows</strong> — tree-sitter handles generating native crates
+                            for these platforms. Just add the dependency and go.
+                        </p>
+                    </div>
+                    <div class="platform-group wasm">
+                        <div class="platform-logos">
+                            <span class="platform-logo" title="WebAssembly">{{ICON:simple-icons:webassembly}}</span>
+                        </div>
+                        <p>
+                            <strong>WebAssembly</strong> — the hard one. Compiling Rust to WASM with C code that
+                            assumes a standard library is tricky. We provide a sysroot that makes this work,
+                            enabling Rust-on-the-frontend scenarios like this demo.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="about-card">
+                <h3>Languages</h3>
+                <p>
+                    <strong id="lang-count">90+</strong> languages included, each behind a feature flag.
+                    Enable only what you need, or use <code>all-languages</code> for everything.
+                </p>
+                <p>
+                    Each feature flag comment includes the grammar's license, so you always know what
+                    you're shipping.
+                </p>
+            </div>
+
+            <div class="about-card">
+                <h3>Theme support</h3>
+                <p>
+                    The highlighter supports themes for both <strong>HTML</strong> and <strong>ANSI</strong> output.
+                </p>
+                <p class="theme-list-label">Bundled themes:</p>
+                <div class="theme-chips">
+                    <span class="theme-chip">Catppuccin Mocha</span>
+                    <span class="theme-chip">Catppuccin Latte</span>
+                    <span class="theme-chip">Catppuccin Frappé</span>
+                    <span class="theme-chip">Catppuccin Macchiato</span>
+                    <span class="theme-chip">Dracula</span>
+                    <span class="theme-chip">Tokyo Night</span>
+                    <span class="theme-chip">Nord</span>
+                    <span class="theme-chip">One Dark</span>
+                    <span class="theme-chip">GitHub Dark</span>
+                    <span class="theme-chip">GitHub Light</span>
+                    <span class="theme-chip">Monokai Pro</span>
+                    <span class="theme-chip">Melange Dark</span>
+                    <span class="theme-chip">Melange Light</span>
+                </div>
+                <p>
+                    Custom themes can be defined programmatically using RGB colors and style attributes
+                    (bold, italic, underline, strikethrough).
                 </p>
             </div>
 

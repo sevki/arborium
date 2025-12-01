@@ -530,6 +530,16 @@ fn find_grammars(repo_root: &Path) -> Result<Vec<PathBuf>, Box<dyn std::error::E
                             grammars.push(subpath);
                         }
                     }
+                    // Also check for grammars/ subdirectory pattern (e.g., tree-sitter-ocaml/grammars/ocaml/)
+                    let nested_grammars = path.join("grammars");
+                    if nested_grammars.is_dir() {
+                        for subentry in fs::read_dir(&nested_grammars).into_iter().flatten().flatten() {
+                            let subpath = subentry.path();
+                            if subpath.is_dir() && subpath.join("grammar.js").exists() {
+                                grammars.push(subpath);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -749,6 +759,8 @@ fn copy_grammar_sources_to_crate(repo_root: &Path, grammar_dir: &Path) -> Result
     // These are used by scanners that include files like "../../common/scanner.h"
     // For sub-grammars (e.g., typescript in tree-sitter-typescript/typescript/),
     // also check the parent directory for shared files
+    // For deeply nested grammars (e.g., tree-sitter-ocaml/grammars/ocaml/),
+    // also check the grandparent directory
     for shared_dir in &["common"] {
         // First check in grammar_dir itself
         let src_shared = grammar_dir.join(shared_dir);
@@ -761,6 +773,13 @@ fn copy_grammar_sources_to_crate(repo_root: &Path, grammar_dir: &Path) -> Result
             if parent_shared.exists() && parent_shared.is_dir() {
                 let dest_shared = crate_grammar_src.join(shared_dir);
                 copy_dir_recursive(&parent_shared, &dest_shared)?;
+            } else if let Some(grandparent) = parent.parent() {
+                // For deeply nested grammars (e.g., tree-sitter-ocaml/grammars/ocaml/)
+                let grandparent_shared = grandparent.join(shared_dir);
+                if grandparent_shared.exists() && grandparent_shared.is_dir() {
+                    let dest_shared = crate_grammar_src.join(shared_dir);
+                    copy_dir_recursive(&grandparent_shared, &dest_shared)?;
+                }
             }
         }
     }
@@ -785,6 +804,7 @@ fn copy_grammar_sources_to_crate(repo_root: &Path, grammar_dir: &Path) -> Result
                 if file_name.ends_with(".c") || file_name.ends_with(".cc") {
                     let content = fs::read_to_string(&path)?;
                     let fixed_content = content
+                        .replace("#include \"../../../common/", "#include \"common/")
                         .replace("#include \"../../common/", "#include \"common/")
                         .replace("#include \"../common/", "#include \"common/");
                     fs::write(&dest_path, fixed_content)?;

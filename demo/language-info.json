@@ -437,6 +437,7 @@
   },
   "kdl": {
     "name": "KDL",
+    "url": "https://kdl.dev/",
     "tag": "config",
     "icon": "mdi:file-document-outline",
     "tier": 0,
@@ -444,6 +445,17 @@
     "year": 2020,
     "description": "The KDL Document Language, a document language with xml-like semantics.",
     "trivia": "KDL stands for 'Cuddly Document Language' (pronounced 'cuddle')."
+  },
+  "kotlin": {
+    "name": "Kotlin",
+    "tag": "code",
+    "icon": "devicon-plain:kotlin",
+    "aliases": ["kt", "kts"],
+    "inventor": "JetBrains",
+    "year": 2011,
+    "description": "A modern, concise programming language that runs on the JVM and Android.",
+    "wikipedia": "https://en.wikipedia.org/wiki/Kotlin_(programming_language)",
+    "trivia": "Named after Kotlin Island near St. Petersburg, similar to how Java was named after an island."
   },
   "lean": {
     "name": "Lean",
@@ -534,6 +546,17 @@
     "description": "An object-oriented language that adds Smalltalk-style messaging to C.",
     "wikipedia": "https://en.wikipedia.org/wiki/Objective-C",
     "trivia": "Objective-C was the main language for Apple development before Swift."
+  },
+  "ocaml": {
+    "name": "OCaml",
+    "tag": "code",
+    "icon": "devicon-plain:ocaml",
+    "aliases": ["ml", "mli"],
+    "inventor": "Xavier Leroy, Jérôme Vouillon, Damien Doligez, Didier Rémy",
+    "year": 1996,
+    "description": "A functional programming language with type inference and strong static typing.",
+    "wikipedia": "https://en.wikipedia.org/wiki/OCaml",
+    "trivia": "OCaml stands for 'Objective Caml' - originally called Caml Light, it's part of the ML family of languages."
   },
   "perl": {
     "name": "Perl",
@@ -670,6 +693,17 @@
     "wikipedia": "https://en.wikipedia.org/wiki/Scala_(programming_language)",
     "trivia": "Scala stands for 'Scalable Language'. It was designed to grow with user demands."
   },
+  "scheme": {
+    "name": "Scheme",
+    "tag": "code",
+    "icon": "mdi:lambda",
+    "aliases": ["scm", "ss"],
+    "inventor": "Guy L. Steele Jr., Gerald Jay Sussman",
+    "year": 1975,
+    "description": "A minimalist dialect of Lisp known for its elegance and powerful macro system.",
+    "wikipedia": "https://en.wikipedia.org/wiki/Scheme_(programming_language)",
+    "trivia": "Scheme was the first Lisp dialect to use lexical scoping and the first to require tail-call optimization."
+  },
   "scss": {
     "name": "SCSS",
     "tag": "markup",
@@ -727,6 +761,16 @@
     "description": "A component framework that compiles to vanilla JavaScript at build time.",
     "wikipedia": "https://en.wikipedia.org/wiki/Svelte",
     "trivia": "Unlike React or Vue, Svelte has no virtual DOM - it compiles to direct DOM manipulation."
+  },
+  "swift": {
+    "name": "Swift",
+    "tag": "code",
+    "icon": "devicon-plain:swift",
+    "inventor": "Chris Lattner",
+    "year": 2014,
+    "description": "A powerful and intuitive programming language for Apple platforms and beyond.",
+    "wikipedia": "https://en.wikipedia.org/wiki/Swift_(programming_language)",
+    "trivia": "Chris Lattner started working on Swift in 2010 while also leading the LLVM project."
   },
   "textproto": {
     "name": "Text Proto",
