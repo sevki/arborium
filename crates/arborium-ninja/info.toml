@@ -2,8 +2,9 @@ name = "ninja"
 repo = ""
 commit = ""
 license = ""
-inventor = ""
-year = 0
+inventor = "Evan Martin"
+year = 2011
 description = ""
+link = "https://ninja-build.org"
 trivia = ""
 

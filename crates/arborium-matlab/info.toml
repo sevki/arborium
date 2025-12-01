@@ -2,8 +2,9 @@ name = "matlab"
 repo = ""
 commit = ""
 license = ""
-inventor = ""
-year = 0
+inventor = "Cleve Moler"
+year = 1984
 description = ""
+link = "https://en.wikipedia.org/wiki/MATLAB"
 trivia = ""
 

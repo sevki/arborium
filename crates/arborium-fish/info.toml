@@ -2,8 +2,9 @@ name = "fish"
 repo = ""
 commit = ""
 license = ""
-inventor = ""
-year = 0
+inventor = "Axel Liljencrantz"
+year = 2005
 description = ""
+link = "https://en.wikipedia.org/wiki/Friendly_interactive_shell"
 trivia = ""
 

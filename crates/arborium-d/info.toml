@@ -2,8 +2,9 @@ name = "d"
 repo = ""
 commit = ""
 license = ""
-inventor = ""
-year = 0
+inventor = "Walter Bright"
+year = 2001
 description = ""
+link = "https://en.wikipedia.org/wiki/D_(programming_language)"
 trivia = ""
 

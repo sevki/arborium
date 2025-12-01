@@ -2,8 +2,9 @@ name = "agda"
 repo = ""
 commit = ""
 license = ""
-inventor = ""
-year = 0
+inventor = "Ulf Norell"
+year = 2007
 description = ""
+link = "https://en.wikipedia.org/wiki/Agda_(programming_language)"
 trivia = ""
 

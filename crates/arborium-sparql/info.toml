@@ -2,8 +2,9 @@ name = "sparql"
 repo = ""
 commit = ""
 license = ""
-inventor = ""
-year = 0
+inventor = "W3C RDF Data Access Working Group"
+year = 2008
 description = ""
+link = "https://en.wikipedia.org/wiki/SPARQL"
 trivia = ""
 

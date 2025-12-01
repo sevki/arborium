@@ -2,8 +2,9 @@ name = "cmake"
 repo = ""
 commit = ""
 license = ""
-inventor = ""
-year = 0
+inventor = "Bill Hoffman"
+year = 2000
 description = ""
+link = "https://en.wikipedia.org/wiki/CMake"
 trivia = ""
 

@@ -2,8 +2,9 @@ name = "ruby"
 repo = ""
 commit = ""
 license = ""
-inventor = ""
-year = 0
+inventor = "Yukihiro Matsumoto"
+year = 1995
 description = ""
+link = "https://en.wikipedia.org/wiki/Ruby_(programming_language)"
 trivia = ""
 

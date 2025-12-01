@@ -2,8 +2,9 @@ name = "elisp"
 repo = ""
 commit = ""
 license = ""
-inventor = ""
-year = 0
+inventor = "Richard Stallman"
+year = 1985
 description = ""
+link = "https://en.wikipedia.org/wiki/Emacs_Lisp"
 trivia = ""
 

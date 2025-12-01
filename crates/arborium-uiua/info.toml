@@ -2,8 +2,9 @@ name = "uiua"
 repo = ""
 commit = ""
 license = ""
-inventor = ""
-year = 0
+inventor = "Daniel Diaz"
+year = 2023
 description = ""
+link = "https://www.uiua.org"
 trivia = ""
 

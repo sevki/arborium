@@ -2,8 +2,9 @@ name = "asciidoc"
 repo = ""
 commit = ""
 license = ""
-inventor = ""
-year = 0
+inventor = "Stuart Rackham"
+year = 2002
 description = ""
+link = "https://en.wikipedia.org/wiki/AsciiDoc"
 trivia = ""
 

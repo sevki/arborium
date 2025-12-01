@@ -2,8 +2,9 @@ name = "julia"
 repo = ""
 commit = ""
 license = ""
-inventor = ""
-year = 0
+inventor = "Jeff Bezanson, Stefan Karpinski, Viral B. Shah, Alan Edelman"
+year = 2012
 description = ""
+link = "https://en.wikipedia.org/wiki/Julia_(programming_language)"
 trivia = ""
 

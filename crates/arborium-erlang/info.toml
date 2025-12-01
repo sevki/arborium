@@ -2,8 +2,9 @@ name = "erlang"
 repo = ""
 commit = ""
 license = ""
-inventor = ""
-year = 0
+inventor = "Joe Armstrong, Robert Virding, Mike Williams"
+year = 1986
 description = ""
+link = "https://en.wikipedia.org/wiki/Erlang_(programming_language)"
 trivia = ""
 

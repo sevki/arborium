@@ -2,8 +2,9 @@ name = "kdl"
 repo = ""
 commit = ""
 license = ""
-inventor = ""
-year = 0
+inventor = "KDL community"
+year = 2021
 description = ""
+link = "https://kdl.dev"
 trivia = ""
 

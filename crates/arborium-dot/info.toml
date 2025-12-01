@@ -2,8 +2,9 @@ name = "dot"
 repo = ""
 commit = ""
 license = ""
-inventor = ""
-year = 0
+inventor = "Stephen North and AT&T Bell Labs"
+year = 1991
 description = ""
+link = "https://en.wikipedia.org/wiki/DOT_(graph_description_language)"
 trivia = ""
 

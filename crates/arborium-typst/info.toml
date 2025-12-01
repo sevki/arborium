@@ -2,8 +2,9 @@ name = "typst"
 repo = ""
 commit = ""
 license = ""
-inventor = ""
-year = 0
+inventor = "Typst Labs"
+year = 2022
 description = ""
+link = "https://typst.app"
 trivia = ""
 

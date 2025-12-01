@@ -2,8 +2,9 @@ name = "ssh-config"
 repo = ""
 commit = ""
 license = ""
-inventor = ""
-year = 0
+inventor = "Tatu Ylönen"
+year = 1995
 description = ""
+link = "https://man.openbsd.org/ssh_config"
 trivia = ""
 

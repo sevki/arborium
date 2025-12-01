@@ -2,8 +2,9 @@ name = "textproto"
 repo = ""
 commit = ""
 license = ""
-inventor = ""
-year = 0
+inventor = "Google"
+year = 2001
 description = ""
+link = "https://github.com/protocolbuffers/protobuf"
 trivia = ""
 

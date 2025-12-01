@@ -2,8 +2,9 @@ name = "graphql"
 repo = ""
 commit = ""
 license = ""
-inventor = ""
-year = 0
+inventor = "Lee Byron, Nick Schrock"
+year = 2012
 description = ""
+link = "https://en.wikipedia.org/wiki/GraphQL"
 trivia = ""
 
