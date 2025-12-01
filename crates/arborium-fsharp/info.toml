@@ -5,7 +5,7 @@ license = "MIT"
 inventor = "Don Syme"
 year = 2005
 description = "Functional-first .NET language with type inference; official docs at [learn.microsoft.com/fsharp](https://learn.microsoft.com/dotnet/fsharp/)."
-wikipedia = "https://en.wikipedia.org/wiki/F_Sharp_(programming_language)"
+link = "https://en.wikipedia.org/wiki/F_Sharp_(programming_language)"
 trivia = "Developed at Microsoft Research and first released publicly in 2005; see Syme's early [F# design notes](https://learn.microsoft.com/dotnet/fsharp/language-reference/) and the 2010 [F# 2.0 language spec](https://learn.microsoft.com/dotnet/fsharp/language-reference/language-specification)."
 
 [[samples]]
@@ -13,3 +13,12 @@ path = "samples/Library.fs"
 description = "MathService module showing functions, pipe operators, Seq operations, and namespace/module structure."
 link = "https://github.com/dotnet/samples/blob/main/core/getting-started/unit-testing-with-fsharp/MathService/Library.fs"
 license = "MIT"
+handpicked = false
+
+# amos-picked sample
+[[samples]]
+path = "samples/Diff.fs"
+description = "WoofWare.Expect diffing utility with pattern matching, recursion, and string processing."
+link = "https://github.com/Smaug123/WoofWare.Expect/blob/main/WoofWare.Expect/Diff.fs"
+license = "MIT"
+handpicked = true
