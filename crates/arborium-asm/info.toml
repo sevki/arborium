@@ -9,7 +9,7 @@ wikipedia = "https://en.wikipedia.org/wiki/Assembly_language"
 trivia = "Booth detailed one of the first assemblers in her 1947 ARC report, and backward compatibility means [Intel's 8086 programs still run on modern x86 chips](https://archive.org/details/Intel8086ProgrammersReferenceManual)."
 
 [[samples]]
-path = "sample.asm"
-description = ""
-link = ""
-license = ""
+path = "samples/struc.asm"
+description = "Exercises NASM struc/istruc directives, offsets, and data definitions."
+link = "https://github.com/netwide-assembler/nasm/blob/master/test/struc.asm"
+license = "BSD-2-Clause"

@@ -8,3 +8,8 @@ description = "High-level general-purpose language emphasizing readability; auth
 wikipedia = "https://en.wikipedia.org/wiki/Python_(programming_language)"
 trivia = "Named after Monty Python; van Rossum released Python 0.9.0 in Feb 1991. The 'Zen of Python' is documented in `import this` and the [PEP 20](https://peps.python.org/pep-0020/)."
 
+[[samples]]
+path = "samples/dynamic_progress.py"
+description = "Rich demo showing dynamic progress bars, context managers, multiple progress tasks."
+link = "https://github.com/Textualize/rich/blob/master/examples/dynamic_progress.py"
+license = "MIT"

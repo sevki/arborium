@@ -9,7 +9,7 @@ wikipedia = "https://en.wikipedia.org/wiki/Java_(programming_language)"
 trivia = "Started as 'Oak' then renamed Java after Java coffee; the 'write once, run anywhere' mantra comes from Sun's 1995 launch. The [JLS](https://docs.oracle.com/javase/specs/) defines the language across versions."
 
 [[samples]]
-path = "sample.java"
-description = ""
-link = ""
-license = ""
+path = "samples/Vet.java"
+description = "Spring Petclinic domain entity using annotations, collections, comparators."
+link = "https://github.com/spring-projects/spring-petclinic/blob/main/src/main/java/org/springframework/samples/petclinic/vet/Vet.java"
+license = "Apache-2.0"
