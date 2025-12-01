@@ -251,7 +251,6 @@ trivia = "Douglas Crockford discovered JSON in 2001 while working at State Softw
 repo = "https://github.com/Julian/tree-sitter-lean"
 commit = "efe6b87145608d12f5996bd7f0cf6095a0e82261"
 license = "MIT"
-
 inventor = "Leonardo de Moura"
 year = 2013
 description = "A proof assistant and functional programming language based on dependent type theory for formal mathematical verification"
@@ -281,7 +280,6 @@ trivia = "Markdown was created in 2004 by John Gruber in collaboration with Aaro
 repo = "https://github.com/tree-sitter-grammars/tree-sitter-meson"
 commit = "280b6e59186f18528bab1567f5cc43b78b9cd881"
 license = "MIT"
-
 inventor = "Jussi Pakkanen"
 year = 2013
 description = "Fast and user-friendly build system designed to improve developer productivity"
@@ -291,7 +289,6 @@ trivia = "Meson was created by Finnish developer Jussi Pakkanen during Christmas
 repo = "https://github.com/nix-community/tree-sitter-nix"
 commit = "bfcb03e6ddccc5a1eb84cea0176096f85a7af333"
 license = "MIT"
-
 inventor = "Eelco Dolstra"
 year = 2003
 description = "Purely functional package manager and domain-specific language for reproducible software deployment"
@@ -504,7 +501,6 @@ trivia = "Devicetree originated at Sun Microsystems in 1988 as part of Open Firm
 repo = "https://github.com/tree-sitter-grammars/tree-sitter-starlark"
 commit = "a453dbf3ba433db0e5ec621a38a7e59d72e4dc69"
 license = "MIT"
-
 inventor = "Laurent Le Brun and Google"
 year = 2015
 description = "Python-based configuration language with deterministic evaluation for build systems"
@@ -535,7 +531,6 @@ trivia = "GLSL was first introduced with OpenGL 2.0 to replace the fixed-functio
 repo = "https://github.com/tree-sitter-grammars/tree-sitter-vim"
 commit = "3dd4747082d1b717b8978211c06ef7b6cd16125b"
 license = "MIT"
-
 inventor = "Bram Moolenaar"
 year = 1991
 description = "Modal text editor and improvement of vi with multi-level undo and extensive customization"
@@ -685,7 +680,6 @@ trivia = "ReScript emerged in 2020 from the rebranding of BuckleScript, which wa
 repo = "https://github.com/smoeding/tree-sitter-postscript"
 commit = "33718235e7ce32e355a8dc591b435637a329bc5b"
 license = "MIT"
-
 inventor = "John Warnock and Charles Geschke"
 year = 1984
 description = "Page description language and programming language for desktop publishing and printing"
@@ -695,7 +689,6 @@ trivia = "PostScript was created at Adobe Systems and released in 1984 after Joh
 repo = "https://github.com/tlaplus-community/tree-sitter-tlaplus"
 commit = "2d831940c782850f64dabf5b7b17e9e51f7f0ebb"
 license = "MIT"
-
 inventor = "Leslie Lamport"
 year = 1999
 description = "Formal specification language for designing and verifying concurrent and distributed systems"
@@ -705,7 +698,6 @@ trivia = "TLA+ was created by Turing Award winner Leslie Lamport, who also inven
 repo = "https://codeberg.org/foxy/tree-sitter-prolog"
 commit = "d8d415f6a1cf80ca138524bcc395810b176d40fa"
 license = "MIT"
-
 inventor = "Alain Colmerauer and Philippe Roussel"
 year = 1972
 description = "Logic programming language for artificial intelligence and computational linguistics"
