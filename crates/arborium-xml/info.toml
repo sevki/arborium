@@ -2,6 +2,7 @@ name = "xml"
 repo = "https://github.com/tree-sitter-grammars/tree-sitter-xml"
 commit = "863dbc381f44f6c136a399e684383b977bb2beaa"
 license = "MIT"
+subdir = "xml"  # Multi-grammar repo: use xml/ subdirectory
 inventor = "W3C XML Working Group"
 year = 1998
 description = "Extensible Markup Language defined by the [W3C XML 1.0 Recommendation](https://www.w3.org/TR/xml/)."

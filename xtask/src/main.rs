@@ -734,20 +734,42 @@ fn copy_grammar_sources_to_crate(repo_root: &Path, grammar_dir: &Path) -> Result
     }
     fs::create_dir_all(&crate_grammar_src)?;
 
+    // Copy shared directories (common/, etc.) from grammar root if they exist
+    // These are used by scanners that include files like "../../common/scanner.h"
+    for shared_dir in &["common"] {
+        let src_shared = grammar_dir.join(shared_dir);
+        if src_shared.exists() && src_shared.is_dir() {
+            let dest_shared = crate_grammar_src.join(shared_dir);
+            copy_dir_recursive(&src_shared, &dest_shared)?;
+        }
+    }
+
     // Copy all .c, .cc, .h, .json files from grammar's src/
     for entry in fs::read_dir(&grammar_src_dir)? {
         let entry = entry?;
         let path = entry.path();
 
         if path.is_file() {
-            let name = path.file_name().unwrap().to_string_lossy();
-            let should_copy = name.ends_with(".c")
-                || name.ends_with(".cc")
-                || name.ends_with(".h")
-                || name.ends_with(".json");
+            let file_name = path.file_name().unwrap().to_string_lossy();
+            let should_copy = file_name.ends_with(".c")
+                || file_name.ends_with(".cc")
+                || file_name.ends_with(".h")
+                || file_name.ends_with(".json");
 
             if should_copy {
-                fs::copy(&path, crate_grammar_src.join(entry.file_name()))?;
+                let dest_path = crate_grammar_src.join(entry.file_name());
+
+                // For C/C++ source files, fix include paths that reference parent directories
+                // e.g., "../../common/scanner.h" -> "common/scanner.h"
+                if file_name.ends_with(".c") || file_name.ends_with(".cc") {
+                    let content = fs::read_to_string(&path)?;
+                    let fixed_content = content
+                        .replace("#include \"../../common/", "#include \"common/")
+                        .replace("#include \"../common/", "#include \"common/");
+                    fs::write(&dest_path, fixed_content)?;
+                } else {
+                    fs::copy(&path, &dest_path)?;
+                }
             }
         } else if path.is_dir() {
             // Copy subdirectories like tree_sitter/
@@ -1043,44 +1065,94 @@ fn vendor_grammar(name: &str) {
         }
     }
 
+    // Determine the source directory for grammar files
+    // Check info.toml for subdir field (for multi-grammar repos like tree-sitter-xml)
+    let crate_info_path = repo_root.join("crates").join(format!("arborium-{}", name)).join("info.toml");
+    let subdir = if crate_info_path.exists() {
+        fs::read_to_string(&crate_info_path)
+            .ok()
+            .and_then(|content| {
+                for line in content.lines() {
+                    let line = line.trim();
+                    if line.starts_with("subdir") {
+                        if let Some(value) = line.split('=').nth(1) {
+                            let value = value.trim().trim_matches('"').trim_matches('\'');
+                            // Strip inline comments
+                            let value = value.split('#').next().unwrap_or(value).trim();
+                            if !value.is_empty() {
+                                return Some(value.to_string());
+                            }
+                        }
+                    }
+                }
+                None
+            })
+    } else {
+        None
+    };
+
+    let grammar_source_dir = if let Some(ref subdir) = subdir {
+        println!("  (multi-grammar repo, using {}/)", subdir);
+        temp_dir.join(subdir)
+    } else {
+        temp_dir.clone()
+    };
+
     // Copy grammar.js
-    let grammar_js = temp_dir.join("grammar.js");
+    let grammar_js = grammar_source_dir.join("grammar.js");
     if grammar_js.exists() {
         fs::copy(&grammar_js, target_dir.join("grammar.js")).expect("Failed to copy grammar.js");
     }
 
     // Copy package.json if it exists (some grammars have npm dependencies)
-    let package_json = temp_dir.join("package.json");
+    // Try grammar-specific first, then root
+    let package_json = if grammar_source_dir.join("package.json").exists() {
+        grammar_source_dir.join("package.json")
+    } else {
+        temp_dir.join("package.json")
+    };
     if package_json.exists() {
         fs::copy(&package_json, target_dir.join("package.json")).ok();
     }
 
     // Copy grammar/ directory if it exists (for grammars with multiple files)
-    let grammar_dir = temp_dir.join("grammar");
+    let grammar_dir = grammar_source_dir.join("grammar");
     if grammar_dir.exists() {
         copy_dir_recursive(&grammar_dir, &target_dir.join("grammar")).expect("Failed to copy grammar/");
     }
 
     // Copy additional directories that some grammars need for their grammar.js
+    // Check both root level (for shared dirs like common/) and grammar-specific
     for extra_dir in &["lib", "common", "rules"] {
-        let src_dir = temp_dir.join(extra_dir);
-        if src_dir.exists() {
-            copy_dir_recursive(&src_dir, &target_dir.join(extra_dir))
+        // First try root level (shared directories)
+        let root_extra = temp_dir.join(extra_dir);
+        if root_extra.exists() {
+            copy_dir_recursive(&root_extra, &target_dir.join(extra_dir))
                 .unwrap_or_else(|e| eprintln!("  Warning: Failed to copy {}/: {}", extra_dir, e));
+        }
+        // Then try grammar-specific (may override)
+        if grammar_source_dir != temp_dir {
+            let grammar_extra = grammar_source_dir.join(extra_dir);
+            if grammar_extra.exists() {
+                copy_dir_recursive(&grammar_extra, &target_dir.join(extra_dir))
+                    .unwrap_or_else(|e| eprintln!("  Warning: Failed to copy {}/: {}", extra_dir, e));
+            }
         }
     }
 
     // Copy all root-level JS files (helper files that grammars may need)
-    if let Ok(entries) = fs::read_dir(&temp_dir) {
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if path.is_file() {
-                if let Some(ext) = path.extension() {
-                    if ext == "js" {
-                        let filename = path.file_name().unwrap();
-                        // grammar.js is already copied separately
-                        if filename != "grammar.js" {
-                            fs::copy(&path, target_dir.join(filename)).ok();
+    for source_dir in &[&temp_dir, &grammar_source_dir] {
+        if let Ok(entries) = fs::read_dir(source_dir) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.is_file() {
+                    if let Some(ext) = path.extension() {
+                        if ext == "js" || ext == "mjs" {
+                            let filename = path.file_name().unwrap();
+                            // grammar.js is already copied separately
+                            if filename != "grammar.js" {
+                                fs::copy(&path, target_dir.join(filename)).ok();
+                            }
                         }
                     }
                 }
@@ -1089,15 +1161,21 @@ fn vendor_grammar(name: &str) {
     }
 
     // Copy src/ directory
-    let src_dir = temp_dir.join("src");
+    let src_dir = grammar_source_dir.join("src");
     if src_dir.exists() {
         copy_dir_recursive(&src_dir, &target_dir.join("src")).expect("Failed to copy src/");
     }
 
-    // Copy queries/ if target doesn't already have them
-    let queries_dir = temp_dir.join("queries");
-    if queries_dir.exists() && !target_dir.join("queries").exists() {
-        copy_dir_recursive(&queries_dir, &target_dir.join("queries")).expect("Failed to copy queries/");
+    // Copy queries/ - check grammar-specific first, then root, if target doesn't have them
+    if !target_dir.join("queries").exists() {
+        let queries_dir = if grammar_source_dir.join("queries").exists() {
+            grammar_source_dir.join("queries")
+        } else {
+            temp_dir.join("queries")
+        };
+        if queries_dir.exists() {
+            copy_dir_recursive(&queries_dir, &target_dir.join("queries")).expect("Failed to copy queries/");
+        }
     }
 
     // Clean up temp dir
