@@ -13,3 +13,9 @@ path = "samples/chat.rs"
 description = "Tokio chat example showing async/await, channels, tasks, and borrowing."
 link = "https://github.com/tokio-rs/tokio/blob/master/examples/chat.rs"
 license = "MIT OR Apache-2.0"
+
+[[samples]]
+path = "samples/octree.rs"
+description = "Handpicked: stardrift physics octree with generics, traits, recursion, and spatial indexing."
+link = "https://github.com/emilyst/stardrift/blob/main/src/physics/octree.rs"
+license = "MIT"
