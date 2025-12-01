@@ -5,7 +5,7 @@ license = "MIT"
 inventor = "Phil Moorby and Prabhu Goel"
 year = 1984
 description = "Hardware description language standardized as [IEEE 1364](https://standards.ieee.org/ieee/1364/2985/)."
-wikipedia = "https://en.wikipedia.org/wiki/Verilog"
+link = "https://en.wikipedia.org/wiki/Verilog"
 trivia = "Created at Gateway Design Automation (later Cadence) in 1984; became an open IEEE standard in 1995 (IEEE 1364-1995)."
 
 [[samples]]
@@ -13,3 +13,12 @@ path = "samples/lint_style.sv"
 description = "Verible lint test file demonstrating SystemVerilog constructs, modules, and style cases."
 link = "https://github.com/chipsalliance/verible/blob/master/verilog/tools/lint/testdata/lint_style.sv"
 license = "Apache-2.0"
+handpicked = false
+
+# amos-picked sample
+[[samples]]
+path = "samples/state_machine.v"
+description = "BE-P decoder state machine with always blocks, parameters, and nonblocking assignments."
+link = "https://github.com/DusterTheFirst/tt07-bep-decode/blob/main/src/state_machine.v"
+license = "CC0-1.0"
+handpicked = true
