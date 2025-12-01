@@ -14,13 +14,13 @@ pub fn language() -> Language {
 }
 
 /// The highlight query for objc.
-pub const HIGHLIGHTS_QUERY: &str = include_str!("../../../tree-sitter-objc/queries/highlights.scm");
+pub const HIGHLIGHTS_QUERY: &str = include_str!("../../../grammars/tree-sitter-objc/queries/highlights.scm");
 
 /// The injections query for objc.
-pub const INJECTIONS_QUERY: &str = include_str!("../../../tree-sitter-objc/queries/injections.scm");
+pub const INJECTIONS_QUERY: &str = include_str!("../../../grammars/tree-sitter-objc/queries/injections.scm");
 
 /// The locals query for objc.
-pub const LOCALS_QUERY: &str = include_str!("../../../tree-sitter-objc/queries/locals.scm");
+pub const LOCALS_QUERY: &str = include_str!("../../../grammars/tree-sitter-objc/queries/locals.scm");
 
 #[cfg(test)]
 mod tests {

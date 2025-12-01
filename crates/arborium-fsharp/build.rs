@@ -1,5 +1,5 @@
 fn main() {
-    let src_dir = "../../tree-sitter-fsharp";
+    let src_dir = "grammar-src";
 
     println!("cargo:rerun-if-changed={}/parser.c", src_dir);
     println!("cargo:rerun-if-changed={}/scanner.c", src_dir);
@@ -14,7 +14,7 @@ fn main() {
         .flag_if_supported("-Wno-unused-but-set-variable")
         .flag_if_supported("-Wno-trigraphs");
 
-    // For WASM builds, use our custom sysroot (provided by arborium crate via links = "arborium")
+    // For WASM builds, use our custom sysroot (provided by arborium-sysroot crate)
     if let Ok(sysroot) = std::env::var("DEP_ARBORIUM_SYSROOT_PATH") {
         build.include(&sysroot);
     }

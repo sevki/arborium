@@ -251,7 +251,7 @@
         /* Language picker styles */
         .lang-picker {
             position: relative;
-            width: 320px;
+            width: 400px;
         }
 
         .lang-picker-label {
@@ -415,7 +415,7 @@
             letter-spacing: 0.03em;
         }
 
-        .tag-programming { background: var(--tag-prog); color: var(--bg); }
+        .tag-code { background: var(--tag-prog); color: var(--bg); }
         .tag-markup { background: var(--tag-markup); color: var(--bg); }
         .tag-config { background: var(--tag-config); color: var(--bg); }
         .tag-data { background: var(--tag-data); color: var(--bg); }
@@ -1116,87 +1116,86 @@
         // aliases are alternative names used in markdown fenced code blocks
         const languageInfo = {
             // Programming languages
-            ada: { name: 'Ada', tag: 'programming', icon: 'devicon-plain:ada' },
-            agda: { name: 'Agda', tag: 'programming' },
-            asm: { name: 'Assembly', tag: 'programming', icon: 'mdi:memory', aliases: ['assembly'] },
-            awk: { name: 'AWK', tag: 'programming', icon: 'mdi:text-box-outline' },
+            ada: { name: 'Ada', tag: 'code', icon: 'mdi:alpha-a-box-outline' },
+            agda: { name: 'Agda', tag: 'code' },
+            asm: { name: 'Assembly', tag: 'code', icon: 'mdi:memory', aliases: ['assembly'] },
+            awk: { name: 'AWK', tag: 'code', icon: 'mdi:text-box-outline' },
             bash: { name: 'Bash', tag: 'shell', icon: 'devicon-plain:bash', aliases: ['sh', 'shell'] },
             batch: { name: 'Batch', tag: 'shell', icon: 'mdi:console', aliases: ['bat', 'cmd'] },
-            c: { name: 'C', tag: 'programming', icon: 'devicon-plain:c', aliases: ['h'] },
-            'c-sharp': { name: 'C#', tag: 'programming', icon: 'devicon-plain:csharp', aliases: ['cs', 'csharp'] },
-            clojure: { name: 'Clojure', tag: 'programming', icon: 'devicon-plain:clojure', aliases: ['clj'] },
-            commonlisp: { name: 'Common Lisp', tag: 'programming', icon: 'mdi:lambda', aliases: ['lisp', 'cl'] },
-            cpp: { name: 'C++', tag: 'programming', icon: 'devicon-plain:cplusplus', aliases: ['c++', 'cxx', 'hpp'] },
+            c: { name: 'C', tag: 'code', icon: 'devicon-plain:c', aliases: ['h'] },
+            'c-sharp': { name: 'C#', tag: 'code', icon: 'devicon-plain:csharp', aliases: ['cs', 'csharp'] },
+            clojure: { name: 'Clojure', tag: 'code', icon: 'simple-icons:clojure', aliases: ['clj'] },
+            commonlisp: { name: 'Common Lisp', tag: 'code', icon: 'mdi:lambda', aliases: ['lisp', 'cl'] },
+            cpp: { name: 'C++', tag: 'code', icon: 'devicon-plain:cplusplus', aliases: ['c++', 'cxx', 'hpp'] },
             css: { name: 'CSS', tag: 'markup', icon: 'devicon-plain:css3' },
-            d: { name: 'D', tag: 'programming', icon: 'mdi:alpha-d-box-outline', aliases: ['dlang'] },
-            dart: { name: 'Dart', tag: 'programming', icon: 'devicon-plain:dart' },
+            d: { name: 'D', tag: 'code', icon: 'mdi:alpha-d-box-outline', aliases: ['dlang'] },
+            dart: { name: 'Dart', tag: 'code', icon: 'devicon-plain:dart' },
             diff: { name: 'Diff', tag: 'data', icon: 'mdi:file-compare', aliases: ['patch'] },
             dockerfile: { name: 'Dockerfile', tag: 'config', icon: 'devicon-plain:docker', aliases: ['docker'] },
-            elisp: { name: 'Emacs Lisp', tag: 'programming', icon: 'devicon-plain:emacs', aliases: ['emacs-lisp', 'el'] },
-            elixir: { name: 'Elixir', tag: 'programming', icon: 'devicon-plain:elixir', aliases: ['ex', 'exs'] },
-            elm: { name: 'Elm', tag: 'programming', icon: 'devicon-plain:elm' },
-            erlang: { name: 'Erlang', tag: 'programming', icon: 'devicon-plain:erlang', aliases: ['erl'] },
+            elisp: { name: 'Emacs Lisp', tag: 'code', icon: 'simple-icons:gnuemacs', aliases: ['emacs-lisp', 'el'] },
+            elixir: { name: 'Elixir', tag: 'code', icon: 'devicon-plain:elixir', aliases: ['ex', 'exs'] },
+            elm: { name: 'Elm', tag: 'code', icon: 'devicon-plain:elm' },
+            erlang: { name: 'Erlang', tag: 'code', icon: 'devicon-plain:erlang', aliases: ['erl'] },
             fish: { name: 'Fish', tag: 'shell', icon: 'mdi:fish' },
-            fsharp: { name: 'F#', tag: 'programming', icon: 'devicon-plain:fsharp', aliases: ['fs', 'f#'] },
-            gleam: { name: 'Gleam', tag: 'programming', icon: 'devicon-plain:gleam' },
-            glsl: { name: 'GLSL', tag: 'programming', icon: 'devicon-plain:opengl', aliases: ['vert', 'frag'] },
-            go: { name: 'Go', tag: 'programming', icon: 'devicon-plain:go', aliases: ['golang'] },
+            fsharp: { name: 'F#', tag: 'code', icon: 'devicon-plain:fsharp', aliases: ['fs', 'f#'] },
+            gleam: { name: 'Gleam', tag: 'code', icon: 'devicon-plain:gleam' },
+            glsl: { name: 'GLSL', tag: 'code', icon: 'devicon-plain:opengl', aliases: ['vert', 'frag'] },
+            go: { name: 'Go', tag: 'code', icon: 'devicon-plain:go', aliases: ['golang'] },
             graphql: { name: 'GraphQL', tag: 'query', icon: 'devicon-plain:graphql', aliases: ['gql'] },
-            haskell: { name: 'Haskell', tag: 'programming', icon: 'devicon-plain:haskell', aliases: ['hs'] },
+            haskell: { name: 'Haskell', tag: 'code', icon: 'devicon-plain:haskell', aliases: ['hs'] },
             hcl: { name: 'HCL', tag: 'config', icon: 'devicon-plain:terraform', aliases: ['terraform', 'tf'] },
-            hlsl: { name: 'HLSL', tag: 'programming', icon: 'mdi:cube-outline' },
+            hlsl: { name: 'HLSL', tag: 'code', icon: 'mdi:cube-outline' },
             html: { name: 'HTML', tag: 'markup', icon: 'devicon-plain:html5', aliases: ['htm'] },
-            hyprlang: { name: 'Hyprland', tag: 'config', icon: 'simple-icons:hyprland' },
-            idris: { name: 'Idris', tag: 'programming', icon: 'mdi:alpha-i-box-outline', aliases: ['idr'] },
+            idris: { name: 'Idris', tag: 'code', icon: 'mdi:alpha-i-box-outline', aliases: ['idr'] },
             ini: { name: 'INI', tag: 'config', icon: 'mdi:cog-outline', aliases: ['conf', 'cfg'] },
-            java: { name: 'Java', tag: 'programming', icon: 'devicon-plain:java' },
-            javascript: { name: 'JavaScript', tag: 'programming', icon: 'devicon-plain:javascript', aliases: ['js', 'jsx', 'mjs', 'cjs'] },
+            java: { name: 'Java', tag: 'code', icon: 'devicon-plain:java' },
+            javascript: { name: 'JavaScript', tag: 'code', icon: 'devicon-plain:javascript', aliases: ['js', 'jsx', 'mjs', 'cjs'] },
             jinja2: { name: 'Jinja2', tag: 'markup', icon: 'mdi:code-braces', aliases: ['jinja', 'j2'] },
             jq: { name: 'jq', tag: 'query', icon: 'mdi:code-json' },
             json: { name: 'JSON', tag: 'data', icon: 'mdi:code-json', aliases: ['jsonc'] },
-            julia: { name: 'Julia', tag: 'programming', icon: 'devicon-plain:julia', aliases: ['jl'] },
+            julia: { name: 'Julia', tag: 'code', icon: 'devicon-plain:julia', aliases: ['jl'] },
             kdl: { name: 'KDL', tag: 'config', icon: 'mdi:file-document-outline' },
-            kotlin: { name: 'Kotlin', tag: 'programming', icon: 'devicon-plain:kotlin', aliases: ['kt', 'kts'] },
-            lean: { name: 'Lean', tag: 'programming', icon: 'mdi:alpha-l-box-outline' },
-            lua: { name: 'Lua', tag: 'programming', icon: 'devicon-plain:lua' },
+            kotlin: { name: 'Kotlin', tag: 'code', icon: 'devicon-plain:kotlin', aliases: ['kt', 'kts'] },
+            lean: { name: 'Lean', tag: 'code', icon: 'mdi:alpha-l-box-outline' },
+            lua: { name: 'Lua', tag: 'code', icon: 'devicon-plain:lua' },
             markdown: { name: 'Markdown', tag: 'markup', icon: 'devicon-plain:markdown', aliases: ['md', 'mdx'] },
-            matlab: { name: 'MATLAB', tag: 'programming', icon: 'devicon-plain:matlab', aliases: ['m'] },
+            matlab: { name: 'MATLAB', tag: 'code', icon: 'devicon-plain:matlab', aliases: ['m'] },
             meson: { name: 'Meson', tag: 'config', icon: 'mdi:hammer-wrench' },
-            nginx: { name: 'nginx', tag: 'config', icon: 'devicon-plain:nginx' },
+            nginx: { name: 'nginx', tag: 'config', icon: 'simple-icons:nginx' },
             ninja: { name: 'Ninja', tag: 'config', icon: 'mdi:ninja' },
             nix: { name: 'Nix', tag: 'config', icon: 'devicon-plain:nixos' },
-            objc: { name: 'Objective-C', tag: 'programming', icon: 'devicon-plain:objectivec', aliases: ['objective-c', 'mm'] },
-            ocaml: { name: 'OCaml', tag: 'programming', icon: 'devicon-plain:ocaml', aliases: ['ml'] },
-            perl: { name: 'Perl', tag: 'programming', icon: 'devicon-plain:perl', aliases: ['pl', 'pm'] },
-            php: { name: 'PHP', tag: 'programming', icon: 'devicon-plain:php' },
-            python: { name: 'Python', tag: 'programming', icon: 'devicon-plain:python', aliases: ['py', 'py3', 'python3'] },
+            objc: { name: 'Objective-C', tag: 'code', icon: 'devicon-plain:objectivec', aliases: ['objective-c', 'mm'] },
+            ocaml: { name: 'OCaml', tag: 'code', icon: 'devicon-plain:ocaml', aliases: ['ml'] },
+            perl: { name: 'Perl', tag: 'code', icon: 'devicon-plain:perl', aliases: ['pl', 'pm'] },
+            php: { name: 'PHP', tag: 'code', icon: 'devicon-plain:php' },
+            python: { name: 'Python', tag: 'code', icon: 'devicon-plain:python', aliases: ['py', 'py3', 'python3'] },
             query: { name: 'Tree-sitter Query', tag: 'query', icon: 'mdi:file-tree-outline', aliases: ['scm'] },
-            r: { name: 'R', tag: 'programming', icon: 'devicon-plain:r', aliases: ['rlang'] },
+            r: { name: 'R', tag: 'code', icon: 'devicon-plain:r', aliases: ['rlang'] },
             ron: { name: 'RON', tag: 'data', icon: 'devicon-plain:rust' },
-            ruby: { name: 'Ruby', tag: 'programming', icon: 'devicon-plain:ruby', aliases: ['rb'] },
-            rust: { name: 'Rust', tag: 'programming', icon: 'devicon-plain:rust', aliases: ['rs'] },
-            scala: { name: 'Scala', tag: 'programming', icon: 'devicon-plain:scala' },
-            scss: { name: 'SCSS', tag: 'markup', icon: 'devicon-plain:sass', aliases: ['sass'] },
+            ruby: { name: 'Ruby', tag: 'code', icon: 'devicon-plain:ruby', aliases: ['rb'] },
+            rust: { name: 'Rust', tag: 'code', icon: 'devicon-plain:rust', aliases: ['rs'] },
+            scala: { name: 'Scala', tag: 'code', icon: 'devicon-plain:scala' },
+            scss: { name: 'SCSS', tag: 'markup', icon: 'simple-icons:sass', aliases: ['sass'] },
             sparql: { name: 'SPARQL', tag: 'query', icon: 'mdi:graph-outline', aliases: ['rq'] },
             sql: { name: 'SQL', tag: 'query', icon: 'mdi:database-outline', aliases: ['mysql', 'postgresql', 'postgres', 'sqlite'] },
-            'ssh-config': { name: 'SSH Config', tag: 'config', icon: 'devicon-plain:ssh' },
-            starlark: { name: 'Starlark', tag: 'programming', icon: 'mdi:star-outline', aliases: ['bzl', 'bazel'] },
+            'ssh-config': { name: 'SSH Config', tag: 'config', icon: 'mdi:key-chain' },
+            starlark: { name: 'Starlark', tag: 'code', icon: 'mdi:star-outline', aliases: ['bzl', 'bazel'] },
             svelte: { name: 'Svelte', tag: 'markup', icon: 'devicon-plain:svelte' },
-            swift: { name: 'Swift', tag: 'programming', icon: 'devicon-plain:swift' },
+            swift: { name: 'Swift', tag: 'code', icon: 'devicon-plain:swift' },
             textproto: { name: 'Text Proto', tag: 'data', icon: 'mdi:message-outline', aliases: ['pbtxt', 'textpb'] },
             thrift: { name: 'Thrift', tag: 'data', icon: 'mdi:swap-horizontal' },
-            toml: { name: 'TOML', tag: 'config', icon: 'devicon-plain:toml' },
-            typescript: { name: 'TypeScript', tag: 'programming', icon: 'devicon-plain:typescript', aliases: ['ts', 'tsx', 'mts', 'cts'] },
+            toml: { name: 'TOML', tag: 'config', icon: 'simple-icons:toml' },
+            typescript: { name: 'TypeScript', tag: 'code', icon: 'devicon-plain:typescript', aliases: ['ts', 'tsx', 'mts', 'cts'] },
             typst: { name: 'Typst', tag: 'markup', icon: 'simple-icons:typst', aliases: ['typ'] },
-            uiua: { name: 'Uiua', tag: 'programming', icon: 'mdi:alpha-u-box-outline', aliases: ['ua'] },
-            vb: { name: 'VB.NET', tag: 'programming', icon: 'devicon-plain:visualbasic', aliases: ['vbnet', 'visualbasic'] },
-            verilog: { name: 'Verilog', tag: 'programming', icon: 'mdi:chip', aliases: ['v', 'sv', 'systemverilog'] },
-            vim: { name: 'Vim Script', tag: 'programming', icon: 'devicon-plain:vim', aliases: ['viml', 'vimscript'] },
+            uiua: { name: 'Uiua', tag: 'code', icon: 'mdi:alpha-u-box-outline', aliases: ['ua'] },
+            vb: { name: 'VB.NET', tag: 'code', icon: 'devicon-plain:visualbasic', aliases: ['vbnet', 'visualbasic'] },
+            verilog: { name: 'Verilog', tag: 'code', icon: 'mdi:chip', aliases: ['v', 'sv', 'systemverilog'] },
+            vim: { name: 'Vim Script', tag: 'code', icon: 'devicon-plain:vim', aliases: ['viml', 'vimscript'] },
             vue: { name: 'Vue', tag: 'markup', icon: 'devicon-plain:vuejs' },
-            x86asm: { name: 'x86 Assembly', tag: 'programming', icon: 'mdi:memory', aliases: ['nasm', 'x86'] },
+            x86asm: { name: 'x86 Assembly', tag: 'code', icon: 'mdi:memory', aliases: ['nasm', 'x86'] },
             xml: { name: 'XML', tag: 'markup', icon: 'devicon-plain:xml', aliases: ['xsl', 'xslt', 'svg'] },
             yaml: { name: 'YAML', tag: 'config', icon: 'devicon-plain:yaml', aliases: ['yml'] },
-            zig: { name: 'Zig', tag: 'programming', icon: 'devicon-plain:zig' },
+            zig: { name: 'Zig', tag: 'code', icon: 'simple-icons:zig' },
             zsh: { name: 'Zsh', tag: 'shell', icon: 'mdi:console' },
             // Build systems
             caddy: { name: 'Caddyfile', tag: 'config', icon: 'simple-icons:caddy' },
@@ -1267,7 +1266,7 @@
             const filtered = [];
 
             for (const id of allLanguages) {
-                const info = languageInfo[id] || { name: id, tag: 'programming' };
+                const info = languageInfo[id] || { name: id, tag: 'code' };
                 const name = info.name;
                 const tag = info.tag;
                 const aliases = info.aliases || [];
@@ -1319,7 +1318,7 @@
             }
 
             langDropdown.innerHTML = languages.map((lang, idx) => {
-                const info = languageInfo[lang.id] || { name: lang.id, tag: 'programming' };
+                const info = languageInfo[lang.id] || { name: lang.id, tag: 'code' };
                 const nameHtml = lang.nameMatch
                     ? highlightMatches(info.name, lang.nameMatch)
                     : info.name;
@@ -1353,7 +1352,7 @@
 
         // Update the rich label display
         function updateLabel(id) {
-            const info = languageInfo[id] || { name: id, tag: 'programming' };
+            const info = languageInfo[id] || { name: id, tag: 'code' };
             const icon = getIcon(id);
             const iconHtml = `<iconify-icon icon="${icon || 'mdi:code-tags'}" class="lang-icon"></iconify-icon>`;
             langLabel.innerHTML = `

@@ -434,6 +434,34 @@ pub extern "C" fn iswalpha(wc: u32) -> c_int {
     ) as c_int
 }
 
+/// iswupper implementation - check if wide char is uppercase
+#[unsafe(no_mangle)]
+pub extern "C" fn iswupper(wc: u32) -> c_int {
+    // Basic Latin uppercase A-Z
+    if (0x41..=0x5A).contains(&wc) {
+        return 1;
+    }
+    // Latin-1 Supplement uppercase (À-Ö, Ø-Þ)
+    if (0xC0..=0xD6).contains(&wc) || (0xD8..=0xDE).contains(&wc) {
+        return 1;
+    }
+    0
+}
+
+/// iswlower implementation - check if wide char is lowercase
+#[unsafe(no_mangle)]
+pub extern "C" fn iswlower(wc: u32) -> c_int {
+    // Basic Latin lowercase a-z
+    if (0x61..=0x7A).contains(&wc) {
+        return 1;
+    }
+    // Latin-1 Supplement lowercase (à-ö, ø-þ)
+    if (0xE0..=0xF6).contains(&wc) || (0xF8..=0xFE).contains(&wc) {
+        return 1;
+    }
+    0
+}
+
 /// towlower implementation - convert wide char to lowercase
 #[unsafe(no_mangle)]
 pub extern "C" fn towlower(wc: u32) -> u32 {

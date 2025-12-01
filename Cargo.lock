@@ -627,6 +627,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "arborium-postscript"
+version = "0.1.0"
+dependencies = [
+ "arborium-sysroot",
+ "cc",
+ "tree-sitter-patched-arborium",
+]
+
+[[package]]
+name = "arborium-powershell"
+version = "0.1.0"
+dependencies = [
+ "arborium-sysroot",
+ "cc",
+ "tree-sitter-patched-arborium",
+]
+
+[[package]]
+name = "arborium-prolog"
+version = "0.1.0"
+dependencies = [
+ "arborium-sysroot",
+ "cc",
+ "tree-sitter-patched-arborium",
+]
+
+[[package]]
 name = "arborium-python"
 version = "0.1.0"
 dependencies = [
@@ -646,6 +673,15 @@ dependencies = [
 
 [[package]]
 name = "arborium-r"
+version = "0.1.0"
+dependencies = [
+ "arborium-sysroot",
+ "cc",
+ "tree-sitter-patched-arborium",
+]
+
+[[package]]
+name = "arborium-rescript"
 version = "0.1.0"
 dependencies = [
  "arborium-sysroot",
@@ -766,6 +802,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "arborium-tlaplus"
+version = "0.1.0"
+dependencies = [
+ "arborium-sysroot",
+ "cc",
+ "tree-sitter-patched-arborium",
+]
+
+[[package]]
 name = "arborium-toml"
 version = "0.1.0"
 dependencies = [
@@ -803,6 +848,15 @@ dependencies = [
 
 [[package]]
 name = "arborium-verilog"
+version = "0.1.0"
+dependencies = [
+ "arborium-sysroot",
+ "cc",
+ "tree-sitter-patched-arborium",
+]
+
+[[package]]
+name = "arborium-vhdl"
 version = "0.1.0"
 dependencies = [
  "arborium-sysroot",

@@ -64,9 +64,9 @@ fn get_config(language: &str) -> Option<Result<HighlightConfiguration, arborium:
         "uiua" | "ua" => Some(make_config!(lang_uiua, "uiua")),
         "vb" | "vbnet" | "visualbasic" => Some(make_config!(lang_vb, "vb")),
         "verilog" | "v" | "sv" | "systemverilog" => Some(make_config!(lang_verilog, "verilog")),
-        "vim" | "viml" | "vimscript" => Some(make_config!(lang_vim, "vim")),
+        // "vim" | "viml" | "vimscript" => Some(make_config!(lang_vim, "vim")), // excluded - slow to compile
         "zig" => Some(make_config!(lang_zig, "zig")),
-        "zsh" => Some(make_config!(lang_zsh, "zsh")),
+        // "zsh" => Some(make_config!(lang_zsh, "zsh")), // excluded - grammar incomplete
 
         // Markup & templating
         "css" => Some(make_config!(lang_css, "css")),
@@ -84,7 +84,6 @@ fn get_config(language: &str) -> Option<Result<HighlightConfiguration, arborium:
         "devicetree" => Some(make_config!(lang_devicetree, "devicetree")),
         "dockerfile" | "docker" => Some(make_config!(lang_dockerfile, "dockerfile")),
         "hcl" | "terraform" | "tf" => Some(make_config!(lang_hcl, "hcl")),
-        "hyprlang" => Some(make_config!(lang_hyprlang, "hyprlang")),
         "ini" | "conf" | "cfg" => Some(make_config!(lang_ini, "ini")),
         "kdl" => Some(make_config!(lang_kdl, "kdl")),
         "meson" => Some(make_config!(lang_meson, "meson")),
@@ -204,7 +203,6 @@ pub fn supported_languages() -> Vec<JsValue> {
         "devicetree",
         "dockerfile",
         "hcl",
-        "hyprlang",
         "ini",
         "kdl",
         "meson",

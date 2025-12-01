@@ -253,11 +253,6 @@ repo = "https://github.com/tree-sitter-grammars/tree-sitter-starlark"
 commit = "a453dbf3ba433db0e5ec621a38a7e59d72e4dc69"
 license = "MIT"
 
-[hyprlang]
-repo = "https://github.com/tree-sitter-grammars/tree-sitter-hyprlang"
-commit = "22723f25f3faf329863d952c9601b492afd971c9"
-license = "MIT"
-
 [hcl]
 repo = "https://github.com/tree-sitter-grammars/tree-sitter-hcl"
 commit = "fad991865fee927dd1de5e172fb3f08ac674d914"
@@ -331,4 +326,34 @@ license = "MIT"
 [vb]
 repo = "https://github.com/CodeAnt-AI/tree-sitter-vb-dotnet"
 commit = "cfca210ce8fdcb5245bd9cd5c47ce0a21a8488d5"
+license = "MIT"
+
+[powershell]
+repo = "https://github.com/airbus-cert/tree-sitter-powershell"
+commit = "9379c77984af1f3d3d7e3cc5e897de3496725280"
+license = "MIT"
+
+[vhdl]
+repo = "https://github.com/alemuller/tree-sitter-vhdl"
+commit = "a3b2d84990527c7f8f4ae219c332c00c33d2d8e5"
+license = "MIT"
+
+[rescript]
+repo = "https://github.com/rescript-lang/tree-sitter-rescript"
+commit = "d2df8a285fff95de56a91d2f8152aeceb66f40ef"
+license = "MIT"
+
+[postscript]
+repo = "https://github.com/smoeding/tree-sitter-postscript"
+commit = "33718235e7ce32e355a8dc591b435637a329bc5b"
+license = "MIT"
+
+[tlaplus]
+repo = "https://github.com/tlaplus-community/tree-sitter-tlaplus"
+commit = "2d831940c782850f64dabf5b7b17e9e51f7f0ebb"
+license = "MIT"
+
+[prolog]
+repo = "https://codeberg.org/foxy/tree-sitter-prolog"
+commit = "d8d415f6a1cf80ca138524bcc395810b176d40fa"
 license = "MIT"

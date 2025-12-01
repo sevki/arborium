@@ -71,6 +71,7 @@ fn main() {
         "serve-demo" => {
             let mut addr = "127.0.0.1".to_string();
             let mut port: Option<u16> = None;
+            let mut dev_mode = false;
             let mut i = 2;
             while i < args.len() {
                 match args[i].as_str() {
@@ -95,14 +96,18 @@ fn main() {
                             std::process::exit(1);
                         }
                     }
+                    "--dev" => {
+                        dev_mode = true;
+                        i += 1;
+                    }
                     _ => {
                         eprintln!("Unknown option: {}", args[i]);
-                        eprintln!("Usage: cargo xtask serve-demo [-a <address>] [-p <port>]");
+                        eprintln!("Usage: cargo xtask serve-demo [-a <address>] [-p <port>] [--dev]");
                         std::process::exit(1);
                     }
                 }
             }
-            serve_demo(&addr, port);
+            serve_demo(&addr, port, dev_mode);
         }
         "help" | "--help" | "-h" => print_usage(),
         cmd => {
@@ -125,6 +130,7 @@ fn print_usage() {
     eprintln!("  serve-demo       Build and serve the WASM demo locally");
     eprintln!("                   Options: -a <address> (default: 127.0.0.1)");
     eprintln!("                            -p <port> (default: auto-select 8000-8010)");
+    eprintln!("                            --dev (fast dev build: -O1, no wasm-opt, fast compression)");
     eprintln!("  help             Show this help message");
 }
 
@@ -320,6 +326,16 @@ fn regenerate(filter: Option<&str>) {
 
     println!("\r{}", "Cleanup complete.".dimmed());
 
+    // Step 7: Copy C sources to crates
+    print!("\r{}", "Copying C sources to crates...".dimmed());
+    std::io::stdout().flush().ok();
+
+    grammars.par_iter().for_each(|grammar| {
+        let _ = copy_grammar_sources_to_crate(&repo_root, grammar);
+    });
+
+    println!("\r{}", "C sources copied to crates.".dimmed());
+
     // Summary
     let total_duration = start_time.elapsed();
     let results = results.lock().unwrap();
@@ -488,8 +504,9 @@ fn ensure_tree_sitter_cli() -> Result<(), Box<dyn std::error::Error>> {
 
 fn find_grammars(repo_root: &Path) -> Result<Vec<PathBuf>, Box<dyn std::error::Error>> {
     let mut grammars = Vec::new();
+    let grammars_dir = repo_root.join("grammars");
 
-    for entry in fs::read_dir(repo_root)? {
+    for entry in fs::read_dir(&grammars_dir)? {
         let entry = entry?;
         let path = entry.path();
 
@@ -515,12 +532,13 @@ fn find_grammars(repo_root: &Path) -> Result<Vec<PathBuf>, Box<dyn std::error::E
 
 /// Set up node_modules symlinks so grammars can find their dependencies
 fn setup_node_modules(repo_root: &Path) -> Result<(), Box<dyn std::error::Error>> {
-    let node_modules = repo_root.join("node_modules");
+    let grammars_dir = repo_root.join("grammars");
+    let node_modules = grammars_dir.join("node_modules");
 
     // Create node_modules if it doesn't exist
     if !node_modules.exists() {
         fs::create_dir(&node_modules)?;
-        println!("  Created node_modules/");
+        println!("  Created grammars/node_modules/");
     }
 
     // Create symlinks for each grammar that is a dependency
@@ -532,7 +550,7 @@ fn setup_node_modules(repo_root: &Path) -> Result<(), Box<dyn std::error::Error>
     }
 
     for dep in deps_needed {
-        let target = repo_root.join(dep);
+        let target = grammars_dir.join(dep);
         let link = node_modules.join(dep);
 
         if target.exists() {
@@ -596,13 +614,14 @@ fn init_grammar(grammar_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn regenerate_grammar(grammar_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
-    // Set NODE_PATH to repo root so grammars can find their dependencies
-    let repo_root = grammar_dir.parent().unwrap_or(grammar_dir);
+    // Set NODE_PATH to grammars/ dir so grammars can find their dependencies
+    // grammar_dir is grammars/tree-sitter-*, so parent is grammars/
+    let grammars_dir = grammar_dir.parent().unwrap_or(grammar_dir);
 
     let output = Command::new("tree-sitter")
         .args(["generate"])
         .current_dir(grammar_dir)
-        .env("NODE_PATH", repo_root)
+        .env("NODE_PATH", grammars_dir)
         .stdout(Stdio::null())
         .stderr(Stdio::piped())
         .output()?;
@@ -678,6 +697,62 @@ fn clean_grammar(grammar_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let _ = removed_count; // suppress unused warning
+    Ok(())
+}
+
+/// Copy C source files from a grammar's src/ to the corresponding crate's grammar-src/
+fn copy_grammar_sources_to_crate(repo_root: &Path, grammar_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    let name = grammar_dir
+        .file_name()
+        .unwrap()
+        .to_string_lossy()
+        .strip_prefix("tree-sitter-")
+        .unwrap_or(&grammar_dir.file_name().unwrap().to_string_lossy())
+        .to_string();
+
+    let grammar_src_dir = grammar_dir.join("src");
+    let crate_name = format!("arborium-{}", name);
+    let crate_dir = repo_root.join("crates").join(&crate_name);
+    let crate_grammar_src = crate_dir.join("grammar-src");
+
+    // Skip if crate doesn't exist
+    if !crate_dir.exists() {
+        return Ok(());
+    }
+
+    // Skip if grammar src doesn't exist
+    if !grammar_src_dir.exists() {
+        return Ok(());
+    }
+
+    // Create grammar-src/ directory in crate
+    if crate_grammar_src.exists() {
+        fs::remove_dir_all(&crate_grammar_src)?;
+    }
+    fs::create_dir_all(&crate_grammar_src)?;
+
+    // Copy all .c, .cc, .h, .json files from grammar's src/
+    for entry in fs::read_dir(&grammar_src_dir)? {
+        let entry = entry?;
+        let path = entry.path();
+
+        if path.is_file() {
+            let name = path.file_name().unwrap().to_string_lossy();
+            let should_copy = name.ends_with(".c")
+                || name.ends_with(".cc")
+                || name.ends_with(".h")
+                || name.ends_with(".json");
+
+            if should_copy {
+                fs::copy(&path, crate_grammar_src.join(entry.file_name()))?;
+            }
+        } else if path.is_dir() {
+            // Copy subdirectories like tree_sitter/
+            let dest_dir = crate_grammar_src.join(entry.file_name());
+            copy_dir_recursive(&path, &dest_dir)?;
+        }
+    }
+
     Ok(())
 }
 
@@ -897,7 +972,7 @@ fn vendor_grammar(name: &str) {
 
     // Determine the target directory name
     let dir_name = format!("tree-sitter-{}", name);
-    let target_dir = repo_root.join(&dir_name);
+    let target_dir = repo_root.join("grammars").join(&dir_name);
 
     // Clone to temp directory
     let temp_dir = std::env::temp_dir().join(format!("arborium-vendor-{}", name));
@@ -1225,7 +1300,7 @@ fn detect_grammar_config(repo_root: &Path, name: &str) -> GrammarCrateConfig {
         return config;
     }
 
-    let grammar_dir = repo_root.join(format!("tree-sitter-{}", name));
+    let grammar_dir = repo_root.join("grammars").join(format!("tree-sitter-{}", name));
     let src_dir = grammar_dir.join("src");
     let queries_dir = grammar_dir.join("queries");
 
@@ -1293,7 +1368,8 @@ cc = {{ version = "1", features = ["parallel"] }}
 
 /// Generate build.rs for a grammar crate
 fn generate_build_rs(config: &GrammarCrateConfig) -> String {
-    let src_dir_path = format!("../../tree-sitter-{}/src", config.name);
+    // Source files are now in grammar-src/ within the crate itself
+    let src_dir_path = "grammar-src";
 
     let rerun_lines: String = config
         .source_files
@@ -1393,11 +1469,11 @@ pub fn {}_language() -> Language {{
         ));
     }
 
-    // Query constants
+    // Query constants - queries are in grammars/tree-sitter-{name}/queries/
     let query_prefix = if config.query_path.is_empty() {
-        format!("../../../tree-sitter-{}/queries/", config.name)
+        format!("../../../grammars/tree-sitter-{}/queries/", config.name)
     } else {
-        format!("../../../tree-sitter-{}/queries/{}", config.name, config.query_path)
+        format!("../../../grammars/tree-sitter-{}/queries/{}", config.name, config.query_path)
     };
 
     if config.has_highlights {
@@ -1555,11 +1631,15 @@ fn generate_grammar_crates() {
 // =============================================================================
 
 /// Build and serve the WASM demo
-fn serve_demo(addr: &str, specified_port: Option<u16>) {
+fn serve_demo(addr: &str, specified_port: Option<u16>, dev_mode: bool) {
     let repo_root = find_repo_root().expect("Could not find repo root");
     let demo_dir = repo_root.join("demo");
 
-    println!("Building and serving arborium demo...\n");
+    if dev_mode {
+        println!("Building and serving arborium demo (DEV MODE)...\n");
+    } else {
+        println!("Building and serving arborium demo...\n");
+    }
 
     // Step 0: Generate index.html from template
     step("Generating demo HTML", || {
@@ -1613,62 +1693,95 @@ fn serve_demo(addr: &str, specified_port: Option<u16>) {
     // Step 1: Check for wasm-pack
     step("Checking for wasm-pack", || ensure_wasm_pack());
 
-    // Step 2: Cargo build in debug mode (fast, no optimizations) for early env import check
-    step("Building WASM (debug, fast)", || {
-        println!("  Running cargo build (debug) for WASM target...");
-        let status = Command::new("cargo")
-            .args([
-                "build",
-                "--target",
-                "wasm32-unknown-unknown",
-                "-p",
-                "arborium-demo",
-            ])
-            .stdout(Stdio::inherit())
-            .stderr(Stdio::inherit())
-            .status()?;
+    if dev_mode {
+        // DEV MODE: Fast build with --dev flag, skip wasm-opt
+        step("Building WASM package (wasm-pack --dev)", || {
+            println!("  Running wasm-pack build --dev --target web...");
+            let status = Command::new("wasm-pack")
+                .args(["build", "--dev", "--target", "web"])
+                .current_dir(&demo_dir)
+                .stdout(Stdio::inherit())
+                .stderr(Stdio::inherit())
+                .status()?;
 
-        if !status.success() {
-            return Err("cargo build failed".into());
-        }
+            if !status.success() {
+                return Err("wasm-pack build failed".into());
+            }
 
-        println!("  Debug build complete!");
-        Ok(())
-    });
+            println!("  Dev build complete!");
+            Ok(())
+        });
 
-    // Step 3: Check for env imports on debug build (before slow optimized build)
-    step("Checking for env imports", || {
-        check_wasm_env_imports_debug()
-    });
+        // Check for env imports
+        step("Checking for env imports", || {
+            let wasm_file = demo_dir.join("pkg/arborium_demo_bg.wasm");
+            check_wasm_env_imports(&wasm_file)
+        });
 
-    // Step 4: Build the WASM package with wasm-pack (includes wasm-opt)
-    step("Building WASM package (wasm-pack)", || {
-        println!("  Running wasm-pack build --target web...");
-        let status = Command::new("wasm-pack")
-            .args(["build", "--target", "web"])
-            .current_dir(&demo_dir)
-            .stdout(Stdio::inherit())
-            .stderr(Stdio::inherit())
-            .status()?;
+        // Fast compression with low quality settings
+        step("Pre-compressing files (fast)", || {
+            precompress_files_fast(&demo_dir)
+        });
+    } else {
+        // RELEASE MODE: Full optimizations
 
-        if !status.success() {
-            return Err("wasm-pack build failed".into());
-        }
+        // Step 2: Cargo build in debug mode (fast, no optimizations) for early env import check
+        step("Building WASM (debug, fast)", || {
+            println!("  Running cargo build (debug) for WASM target...");
+            let status = Command::new("cargo")
+                .args([
+                    "build",
+                    "--target",
+                    "wasm32-unknown-unknown",
+                    "-p",
+                    "arborium-demo",
+                ])
+                .stdout(Stdio::inherit())
+                .stderr(Stdio::inherit())
+                .status()?;
 
-        println!("  Build complete!");
-        Ok(())
-    });
+            if !status.success() {
+                return Err("cargo build failed".into());
+            }
 
-    // Step 5: Verify env imports on final release build
-    step("Verifying release build (env imports)", || {
-        let wasm_file = demo_dir.join("pkg/arborium_demo_bg.wasm");
-        check_wasm_env_imports(&wasm_file)
-    });
+            println!("  Debug build complete!");
+            Ok(())
+        });
 
-    // Step 6: Pre-compress files
-    step("Pre-compressing files", || {
-        precompress_files(&demo_dir)
-    });
+        // Step 3: Check for env imports on debug build (before slow optimized build)
+        step("Checking for env imports", || {
+            check_wasm_env_imports_debug()
+        });
+
+        // Step 4: Build the WASM package with wasm-pack (includes wasm-opt)
+        step("Building WASM package (wasm-pack)", || {
+            println!("  Running wasm-pack build --target web...");
+            let status = Command::new("wasm-pack")
+                .args(["build", "--target", "web"])
+                .current_dir(&demo_dir)
+                .stdout(Stdio::inherit())
+                .stderr(Stdio::inherit())
+                .status()?;
+
+            if !status.success() {
+                return Err("wasm-pack build failed".into());
+            }
+
+            println!("  Build complete!");
+            Ok(())
+        });
+
+        // Step 5: Verify env imports on final release build
+        step("Verifying release build (env imports)", || {
+            let wasm_file = demo_dir.join("pkg/arborium_demo_bg.wasm");
+            check_wasm_env_imports(&wasm_file)
+        });
+
+        // Step 6: Pre-compress files with best compression
+        step("Pre-compressing files", || {
+            precompress_files(&demo_dir)
+        });
+    }
 
     // Step 7: Start HTTP server
     println!("\n==> Starting HTTP server");
@@ -1762,18 +1875,23 @@ fn serve_demo(addr: &str, specified_port: Option<u16>) {
             continue;
         }
 
-        // Check if client accepts gzip encoding
-        let accepts_gzip = request
+        // Check what encodings the client accepts
+        let accept_encoding = request
             .headers()
             .iter()
-            .any(|h| {
-                h.field.as_str().to_ascii_lowercase() == "accept-encoding"
-                    && h.value.as_str().contains("gzip")
-            });
+            .find(|h| h.field.as_str().to_ascii_lowercase() == "accept-encoding")
+            .map(|h| h.value.as_str().to_string())
+            .unwrap_or_default();
 
-        // Try to serve pre-compressed .gz file if available
+        let accepts_br = accept_encoding.contains("br");
+        let accepts_gzip = accept_encoding.contains("gzip");
+
+        // Try to serve pre-compressed files (prefer brotli over gzip)
+        let br_path = PathBuf::from(format!("{}.br", file_path.display()));
         let gz_path = PathBuf::from(format!("{}.gz", file_path.display()));
-        let (serve_path, encoding) = if accepts_gzip && gz_path.exists() {
+        let (serve_path, encoding) = if accepts_br && br_path.exists() {
+            (br_path, Some("br"))
+        } else if accepts_gzip && gz_path.exists() {
             (gz_path, Some("gzip"))
         } else {
             (file_path.clone(), None)
@@ -1909,22 +2027,42 @@ fn compute_bundle_info(demo_dir: &Path) -> String {
     info
 }
 
-/// Compress data using brotli level 9
+/// Compress data using brotli level 5 (good balance of speed and compression)
 fn compress_brotli(data: &[u8]) -> Result<Vec<u8>, std::io::Error> {
     let mut output = Vec::new();
     {
-        let mut encoder = brotli::CompressorWriter::new(&mut output, 4096, 9, 22);
+        let mut encoder = brotli::CompressorWriter::new(&mut output, 4096, 5, 22);
         encoder.write_all(data)?;
     }
     Ok(output)
 }
 
-/// Compress data using gzip (flate2)
+/// Compress data using gzip (flate2) - best compression
 fn compress_gzip(data: &[u8]) -> Result<Vec<u8>, std::io::Error> {
     use flate2::write::GzEncoder;
     use flate2::Compression;
 
     let mut encoder = GzEncoder::new(Vec::new(), Compression::best());
+    encoder.write_all(data)?;
+    encoder.finish()
+}
+
+/// Compress data using brotli level 1 (fast)
+fn compress_brotli_fast(data: &[u8]) -> Result<Vec<u8>, std::io::Error> {
+    let mut output = Vec::new();
+    {
+        let mut encoder = brotli::CompressorWriter::new(&mut output, 4096, 1, 22);
+        encoder.write_all(data)?;
+    }
+    Ok(output)
+}
+
+/// Compress data using gzip level 1 (fast)
+fn compress_gzip_fast(data: &[u8]) -> Result<Vec<u8>, std::io::Error> {
+    use flate2::write::GzEncoder;
+    use flate2::Compression;
+
+    let mut encoder = GzEncoder::new(Vec::new(), Compression::fast());
     encoder.write_all(data)?;
     encoder.finish()
 }
@@ -2013,15 +2151,98 @@ fn precompress_files(demo_dir: &Path) -> Result<(), Box<dyn std::error::Error>> 
         let raw_size = data.len();
         let file_name = file.to_string();
 
-        // Spawn gzip (zopfli) compression
-        let results = Arc::clone(&results);
-        handles.push(thread::spawn(move || {
-            let gz_path = PathBuf::from(format!("{}.gz", file_path.display()));
-            let gz_data = compress_gzip(&data).expect("gzip compression failed");
-            fs::write(&gz_path, &gz_data).expect("failed to write .gz file");
-            let msg = format!("  {} ({}) -> .gz ({})", file_name, format_size(raw_size), format_size(gz_data.len()));
-            results.lock().unwrap().push(msg);
-        }));
+        // Spawn gzip compression
+        {
+            let results = Arc::clone(&results);
+            let data = data.clone();
+            let file_path = file_path.clone();
+            let file_name = file_name.clone();
+            handles.push(thread::spawn(move || {
+                let gz_path = PathBuf::from(format!("{}.gz", file_path.display()));
+                let gz_data = compress_gzip(&data).expect("gzip compression failed");
+                fs::write(&gz_path, &gz_data).expect("failed to write .gz file");
+                let msg = format!("  {} ({}) -> .gz ({})", file_name, format_size(raw_size), format_size(gz_data.len()));
+                results.lock().unwrap().push(msg);
+            }));
+        }
+
+        // Spawn brotli compression in parallel
+        {
+            let results = Arc::clone(&results);
+            handles.push(thread::spawn(move || {
+                let br_path = PathBuf::from(format!("{}.br", file_path.display()));
+                let br_data = compress_brotli(&data).expect("brotli compression failed");
+                fs::write(&br_path, &br_data).expect("failed to write .br file");
+                let msg = format!("  {} ({}) -> .br ({})", file_name, format_size(raw_size), format_size(br_data.len()));
+                results.lock().unwrap().push(msg);
+            }));
+        }
+    }
+
+    // Wait for all threads to complete
+    for handle in handles {
+        handle.join().expect("compression thread panicked");
+    }
+
+    // Print results
+    let results = results.lock().unwrap();
+    for msg in results.iter() {
+        println!("{}", msg);
+    }
+
+    Ok(())
+}
+
+/// Pre-compress files with fast (low quality) settings for dev mode
+fn precompress_files_fast(demo_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    use std::sync::{Arc, Mutex};
+    use std::thread;
+
+    let files_to_compress = [
+        "index.html",
+        "pkg/arborium_demo.js",
+        "pkg/arborium_demo_bg.wasm",
+    ];
+
+    let results: Arc<Mutex<Vec<String>>> = Arc::new(Mutex::new(Vec::new()));
+    let mut handles = Vec::new();
+
+    for file in files_to_compress {
+        let file_path = demo_dir.join(file);
+        if !file_path.exists() {
+            continue;
+        }
+
+        let data = fs::read(&file_path)?;
+        let raw_size = data.len();
+        let file_name = file.to_string();
+
+        // Spawn fast gzip compression
+        {
+            let results = Arc::clone(&results);
+            let data = data.clone();
+            let file_path = file_path.clone();
+            let file_name = file_name.clone();
+            handles.push(thread::spawn(move || {
+                let gz_path = PathBuf::from(format!("{}.gz", file_path.display()));
+                let gz_data = compress_gzip_fast(&data).expect("gzip compression failed");
+                fs::write(&gz_path, &gz_data).expect("failed to write .gz file");
+                let msg = format!("  {} ({}) -> .gz ({})", file_name, format_size(raw_size), format_size(gz_data.len()));
+                results.lock().unwrap().push(msg);
+            }));
+        }
+
+        // Spawn fast brotli compression in parallel
+        {
+            let results = Arc::clone(&results);
+            handles.push(thread::spawn(move || {
+                let br_path = PathBuf::from(format!("{}.br", file_path.display()));
+                let br_data = compress_brotli_fast(&data).expect("brotli compression failed");
+                fs::write(&br_path, &br_data).expect("failed to write .br file");
+                let msg = format!("  {} ({}) -> .br ({})", file_name, format_size(raw_size), format_size(br_data.len()));
+                results.lock().unwrap().push(msg);
+            }));
+        }
     }
 
     // Wait for all threads to complete

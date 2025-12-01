@@ -163,9 +163,6 @@ pub use arborium_hlsl as lang_hlsl;
 #[cfg(feature = "lang-html")]
 pub use arborium_html as lang_html;
 
-#[cfg(feature = "lang-hyprlang")]
-pub use arborium_hyprlang as lang_hyprlang;
-
 #[cfg(feature = "lang-idris")]
 pub use arborium_idris as lang_idris;
 

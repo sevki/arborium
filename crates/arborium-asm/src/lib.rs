@@ -14,7 +14,7 @@ pub fn language() -> Language {
 }
 
 /// The highlight query for asm.
-pub const HIGHLIGHTS_QUERY: &str = include_str!("../../../tree-sitter-asm/queries/asm/highlights.scm");
+pub const HIGHLIGHTS_QUERY: &str = include_str!("../../../grammars/tree-sitter-asm/queries/asm/highlights.scm");
 
 /// The injections query for asm (empty - no injections available).
 pub const INJECTIONS_QUERY: &str = "";

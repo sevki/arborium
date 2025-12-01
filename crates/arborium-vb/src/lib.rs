@@ -5,12 +5,12 @@
 use tree_sitter_patched_arborium::Language;
 
 unsafe extern "C" {
-    fn tree_sitter_vb() -> Language;
+    fn tree_sitter_vb_dotnet() -> Language;
 }
 
 /// Returns the vb tree-sitter language.
 pub fn language() -> Language {
-    unsafe { tree_sitter_vb() }
+    unsafe { tree_sitter_vb_dotnet() }
 }
 
 /// The highlight query for vb (empty - no highlights available).

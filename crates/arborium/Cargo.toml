@@ -24,7 +24,7 @@ all-languages = [
     "lang-elisp", "lang-elixir", "lang-elm", "lang-erlang",
     "lang-fish", "lang-fsharp",
     "lang-gleam", "lang-glsl", "lang-go", "lang-graphql",
-    "lang-haskell", "lang-hcl", "lang-hlsl", "lang-html", "lang-hyprlang",
+    "lang-haskell", "lang-hcl", "lang-hlsl", "lang-html",
     "lang-ini",
     "lang-java", "lang-javascript", "lang-jinja2", "lang-jq", "lang-json", "lang-julia",
     "lang-kdl",
@@ -38,10 +38,12 @@ all-languages = [
     "lang-scala", "lang-scss", "lang-sparql", "lang-sql", "lang-ssh-config", "lang-starlark", "lang-svelte",
     "lang-textproto", "lang-thrift", "lang-toml", "lang-typst",
     "lang-uiua",
-    "lang-vb", "lang-verilog", "lang-vim", "lang-vue",
+    "lang-vb", "lang-verilog", "lang-vue",
+    # "lang-vim", # excluded - slow to compile (4.6MB parser.c)
     "lang-x86asm", "lang-xml",
     "lang-yaml",
-    "lang-zig", "lang-zsh",
+    "lang-zig",
+    # "lang-zsh", # excluded - grammar is incomplete/experimental
 ]
 
 # Individual language features
@@ -80,7 +82,6 @@ lang-haskell = ["dep:arborium-haskell"]
 lang-hcl = ["dep:arborium-hcl"]
 lang-hlsl = ["dep:arborium-hlsl"]
 lang-html = ["dep:arborium-html"]
-lang-hyprlang = ["dep:arborium-hyprlang"]
 lang-idris = ["dep:arborium-idris"]
 lang-ini = ["dep:arborium-ini"]
 lang-java = ["dep:arborium-java"]
@@ -275,10 +276,6 @@ optional = true
 
 [dependencies.arborium-html]
 path = "../arborium-html"
-optional = true
-
-[dependencies.arborium-hyprlang]
-path = "../arborium-hyprlang"
 optional = true
 
 [dependencies.arborium-idris]

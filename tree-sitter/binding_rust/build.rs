@@ -41,6 +41,8 @@ fn main() {
         if wasm_sysroot.exists() {
             config.include(&wasm_sysroot);
             config.file(wasm_sysroot.join("src/stdio.c"));
+            config.file(wasm_sysroot.join("src/ctype.c"));
+            // wctype functions are provided by arborium/src/wasm.rs - don't duplicate
             println!("cargo:rerun-if-changed={}", wasm_sysroot.display());
         }
     }

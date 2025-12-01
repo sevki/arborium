@@ -4,11 +4,14 @@
 node_modules/
 **/node_modules/
 
-# Tree-sitter generated files (anywhere)
-**/src/parser.c
-**/src/grammar.json
-**/src/node-types.json
-**/src/tree_sitter/
+# Tree-sitter generated files (in grammars/)
+grammars/**/src/parser.c
+grammars/**/src/grammar.json
+grammars/**/src/node-types.json
+grammars/**/src/tree_sitter/
+
+# Grammar C sources copied to crates (regenerated from grammars/)
+crates/*/grammar-src/
 
 # Pre-compressed demo files
 demo/*.br
