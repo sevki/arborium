@@ -1,0 +1,10 @@
+name = "ini"
+repo = "https://github.com/justinmk/tree-sitter-ini"
+commit = "bea223734aa9cea2c8793bf9098bd7fdef912f57"
+license = "Apache-2.0"
+inventor = "Unknown (popularized by Microsoft Windows)"
+year = 1985
+description = "Simple key-value configuration format; Microsoft documented the `.ini` structure in early Windows SDKs (e.g., [Win16 SDK Programmer's Reference](https://win16.org/))."
+wikipedia = "https://en.wikipedia.org/wiki/INI_file"
+trivia = "Windows 1.0 (1985) popularized `.ini` for application settings; the legacy WinAPI functions `GetPrivateProfileString` etc. are still documented in [Microsoft Learn](https://learn.microsoft.com/windows/win32/api/winbase/)."
+

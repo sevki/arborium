@@ -1,0 +1,10 @@
+name = "lua"
+repo = "https://github.com/tree-sitter-grammars/tree-sitter-lua"
+commit = "d76023017f7485eae629cb60d406c7a1ca0f40c9"
+license = "MIT"
+inventor = "Roberto Ierusalimschy, Waldemar Celes, Luiz Henrique de Figueiredo"
+year = 1993
+description = "Lightweight embeddable scripting language from PUC-Rio; official reference manual at [lua.org](https://www.lua.org/manual/5.4/)."
+wikipedia = "https://en.wikipedia.org/wiki/Lua_(programming_language)"
+trivia = "Lua (meaning 'moon' in Portuguese) succeeded SOL ('sun'); see the [history page](https://www.lua.org/history.html) and the 1993 technical report introducing Lua."
+

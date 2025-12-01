@@ -255,7 +255,7 @@ inventor = "Leonardo de Moura"
 year = 2013
 description = "A proof assistant and functional programming language based on dependent type theory for formal mathematical verification"
 wikipedia = "https://en.wikipedia.org/wiki/Lean_(proof_assistant)"
-trivia = "Lean has been used to verify cutting-edge mathematical research, including Terence Tao's formalization of the Polynomial Freiman-Ruzsa conjecture in 2023. The community-maintained mathlib library contains over 210,000 formalized theorems. In 2024, Google DeepMind's AlphaProof system achieved silver medal performance at the International Mathematical Olympiad by proving mathematical statements in Lean."
+trivia = "Lean has been used to verify cutting-edge mathematical research, including the 2023 proof of the Polynomial Freiman-Ruzsa conjecture by W. T. Gowers, Ben Green, Freddie Manners, and Terence Tao, which was formalized in Lean by a community effort; the mathlib library contained over 210,000 theorems as of May 2025. In 2024, Google DeepMind's AlphaProof system achieved silver medal performance at the International Mathematical Olympiad by proving mathematical statements in Lean."
 [lua]
 repo = "https://github.com/tree-sitter-grammars/tree-sitter-lua"
 commit = "d76023017f7485eae629cb60d406c7a1ca0f40c9"

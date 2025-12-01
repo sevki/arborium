@@ -1,0 +1,10 @@
+name = "jinja2"
+repo = "https://github.com/dbt-labs/tree-sitter-jinja2"
+commit = "922b28e1352c4966418b2e7e3772e0583d4532a2"
+license = "GPL-3.0"
+inventor = "Armin Ronacher"
+year = 2008
+description = "Python templating engine inspired by Django; official docs at [jinja.palletsprojects.com](https://jinja.palletsprojects.com/)."
+wikipedia = "https://en.wikipedia.org/wiki/Jinja_(template_engine)"
+trivia = "Named after the Jinja shrine; released as part of the Pocoo suite. See the [Jinja design notes](https://jinja.palletsprojects.com/en/stable/#design-goals) and early release history in the docs."
+

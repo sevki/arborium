@@ -1,0 +1,10 @@
+name = "java"
+repo = "https://github.com/tree-sitter/tree-sitter-java"
+commit = "e10607b45ff745f5f876bfa3e94fbcc6b44bdc11"
+license = "MIT"
+inventor = "James Gosling"
+year = 1995
+description = "Object-oriented, class-based language targeting the JVM; authoritative reference is the [Java Language Specification](https://docs.oracle.com/javase/specs/)."
+wikipedia = "https://en.wikipedia.org/wiki/Java_(programming_language)"
+trivia = "Started as 'Oak' then renamed Java after Java coffee; the 'write once, run anywhere' mantra comes from Sun's 1995 launch. The [JLS](https://docs.oracle.com/javase/specs/) defines the language across versions."
+

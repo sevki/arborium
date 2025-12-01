@@ -1,0 +1,10 @@
+name = "dockerfile"
+repo = "https://github.com/camdencheek/tree-sitter-dockerfile"
+commit = "971acdd908568b4531b0ba28a445bf0bb720aba5"
+license = "MIT"
+inventor = "Solomon Hykes and Docker, Inc."
+year = 2013
+description = "Declarative format for Docker image builds; official reference: [Dockerfile docs](https://docs.docker.com/engine/reference/builder/)."
+wikipedia = "https://docs.docker.com/engine/reference/builder/"
+trivia = "Introduced with Docker's first public release in 2013; the reference documents each instruction and the layer-caching model that made Docker adoption explode ([Dockerfile reference](https://docs.docker.com/engine/reference/builder/))."
+
