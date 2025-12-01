@@ -13,3 +13,10 @@ path = "samples/eval.txt"
 description = "Vim help for eval features, covering expressions, functions, and scripting constructs."
 link = "https://github.com/vim/vim/blob/master/runtime/doc/eval.txt"
 license = "Vim"
+
+# amos-picked sample
+[[samples]]
+path = "samples/mru.vim"
+description = "Most-recently-used file list plugin demonstrating Vimscript functions, autocmds, and mappings."
+link = "https://github.com/QuietMisdreavus/misdreavus-mru/blob/master/plugin/mru.vim"
+license = "Vim"
