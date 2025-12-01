@@ -252,6 +252,7 @@ license = "MIT"
 repo = "https://github.com/tree-sitter-grammars/tree-sitter-starlark"
 commit = "a453dbf3ba433db0e5ec621a38a7e59d72e4dc69"
 license = "MIT"
+# Note: grammar is incomplete - doesn't parse some Buck2/Bazel constructs correctly
 
 [hcl]
 repo = "https://github.com/tree-sitter-grammars/tree-sitter-hcl"

@@ -13,8 +13,8 @@ pub fn language() -> Language {
     unsafe { tree_sitter_batch() }
 }
 
-/// The highlight query for batch (empty - no highlights available).
-pub const HIGHLIGHTS_QUERY: &str = "";
+/// The highlight query for batch.
+pub const HIGHLIGHTS_QUERY: &str = include_str!("../../../grammars/tree-sitter-batch/queries/highlights.scm");
 
 /// The injections query for batch (empty - no injections available).
 pub const INJECTIONS_QUERY: &str = "";
