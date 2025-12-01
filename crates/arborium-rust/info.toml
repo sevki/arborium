@@ -16,6 +16,7 @@ license = "MIT OR Apache-2.0"
 
 [[samples]]
 path = "samples/octree.rs"
-description = "Handpicked: stardrift physics octree with generics, traits, recursion, and spatial indexing."
+# amos-picked sample
+description = "stardrift physics octree with generics, traits, recursion, and spatial indexing."
 link = "https://github.com/emilyst/stardrift/blob/main/src/physics/octree.rs"
 license = "MIT"
