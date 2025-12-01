@@ -78,6 +78,8 @@ members = [
     "crates/arborium-thrift",
     "crates/arborium-tlaplus",
     "crates/arborium-toml",
+    "crates/arborium-tsx",
+    "crates/arborium-typescript",
     "crates/arborium-typst",
     "crates/arborium-uiua",
     "crates/arborium-vb",

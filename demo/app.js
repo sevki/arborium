@@ -77,6 +77,7 @@ function filterLanguages(query) {
         const name = info.name;
         const tag = info.tag;
         const aliases = info.aliases || [];
+        const tier = info.tier ?? 99; // Default to low priority if no tier
 
         // Match against id, name, tag, or aliases
         const idMatch = fuzzyMatch(query, id);
@@ -102,6 +103,7 @@ function filterLanguages(query) {
                 id,
                 name,
                 tag,
+                tier,
                 aliases,
                 idMatch,
                 nameMatch,
@@ -111,8 +113,18 @@ function filterLanguages(query) {
         }
     }
 
-    // Sort by match quality
-    filtered.sort((a, b) => a.score - b.score);
+    // Sort by tier first (lower is better), then by match quality/name
+    filtered.sort((a, b) => {
+        // When searching (query exists), prioritize match quality
+        if (query) {
+            return a.score - b.score;
+        }
+        // When browsing (no query), sort by tier then name
+        if (a.tier !== b.tier) {
+            return a.tier - b.tier;
+        }
+        return a.name.localeCompare(b.name);
+    });
 
     return filtered;
 }
@@ -247,11 +259,19 @@ function updateLangInfoPanel(id) {
 function enterSearchMode() {
     langPicker.classList.add('searching');
     langInput.value = '';
-    highlightedIndex = 0;
     const filtered = filterLanguages('');
+    // Start from currently selected language, not 0
+    if (selectedLang) {
+        const selectedIndex = filtered.findIndex(l => l.id === selectedLang);
+        highlightedIndex = selectedIndex >= 0 ? selectedIndex : 0;
+    } else {
+        highlightedIndex = 0;
+    }
     renderDropdown(filtered);
     langDropdown.classList.add('open');
     langInput.focus();
+    // Scroll to show the selected item
+    scrollToHighlighted();
 }
 
 // Exit search mode
@@ -682,6 +702,18 @@ async function initialize() {
         wasmLoaded = true;
 
         allLanguages = supported_languages();
+
+        // Sort by tier (lower is better), then by name
+        allLanguages.sort((a, b) => {
+            const infoA = languageInfo[a] || { name: a };
+            const infoB = languageInfo[b] || { name: b };
+            const tierA = infoA.tier ?? 99;
+            const tierB = infoB.tier ?? 99;
+            if (tierA !== tierB) {
+                return tierA - tierB;
+            }
+            return (infoA.name || a).localeCompare(infoB.name || b);
+        });
 
         // Select Rust by default
         if (allLanguages.includes('rust')) {

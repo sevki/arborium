@@ -8,3 +8,8 @@ description = "Temporal Logic of Actions (TLA+) for formal specs; the canonical 
 wikipedia = "https://en.wikipedia.org/wiki/TLA+"
 trivia = "Lamport introduced TLA+ in the late 1990s; AWS famously uses it to find subtle bugs—see Lamport’s papers and the TLA+ hyperbook."
 
+[[samples]]
+path = "samples/TwoPhase.tla"
+description = "TLA+ spec for two-phase commit covering modules, states, and temporal properties."
+link = "https://github.com/tlaplus/Examples/blob/master/specifications/TwoPhaseCommit/TwoPhase.tla"
+license = "EUPL-1.1"

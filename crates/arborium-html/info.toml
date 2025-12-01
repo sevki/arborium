@@ -8,3 +8,8 @@ description = "Standard markup language for web documents; current living standa
 wikipedia = "https://en.wikipedia.org/wiki/HTML"
 trivia = "Berners-Lee introduced HTML in 1991; the first public description appeared in 1993, and the modern living standard is maintained by WHATWG as the authoritative spec ([WHATWG](https://whatwg.org/))."
 
+[[samples]]
+path = "samples/index.html"
+description = "HTML5 Boilerplate index with semantic markup, meta tags, noscript, and script includes."
+link = "https://github.com/h5bp/html5-boilerplate/blob/main/dist/index.html"
+license = "MIT"

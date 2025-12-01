@@ -8,3 +8,8 @@ description = "VHSIC Hardware Description Language; standardized as [IEEE 1076](
 wikipedia = "https://en.wikipedia.org/wiki/VHDL"
 trivia = "Developed under the VHSIC program and standardized in 1987 as IEEE 1076; later revisions added numeric_std and child standards."
 
+[[samples]]
+path = "samples/issue1220.vhdl"
+description = "GHDL test case exercising VHDL entities, architectures, signals, and synthesis edge cases."
+link = "https://github.com/ghdl/ghdl/blob/master/testsuite/synth/issue1220.vhdl"
+license = "GPL-2.0-or-later"

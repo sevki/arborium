@@ -8,3 +8,8 @@ description = "Sass/SCSS is a CSS superset adding variables, nesting, and mixins
 wikipedia = "https://en.wikipedia.org/wiki/Sass_(style_sheet_language)"
 trivia = "SCSS syntax arrived with Sass 3 (2010) to mirror CSS; history and design notes are in the [Sass blog archives](https://sass-lang.com/blog/) and [language reference](https://sass-lang.com/documentation/syntax)."
 
+[[samples]]
+path = "samples/_buttons.scss"
+description = "Bootstrap buttons partial with variables, mixins, nesting, and interpolation."
+link = "https://github.com/twbs/bootstrap/blob/main/scss/_buttons.scss"
+license = "MIT"

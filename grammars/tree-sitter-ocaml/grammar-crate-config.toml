@@ -1,0 +1,5 @@
+# Grammar crate configuration for OCaml
+# Also exports the interface grammar
+[[extra_languages]]
+c_symbol = "ocaml_interface"
+export_name = "ocaml_interface"

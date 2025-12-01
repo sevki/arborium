@@ -8,3 +8,8 @@ description = "Tom's Obvious, Minimal Language for configuration; official spec 
 wikipedia = "https://en.wikipedia.org/wiki/TOML"
 trivia = "TOML 1.0.0 was released January 2021 after 8 years of iteration; see the spec changelog on [toml.io](https://toml.io/en/v1.0.0)."
 
+[[samples]]
+path = "samples/example.toml"
+description = "BurntSushi TOML example covering strings, arrays, tables, and datetimes."
+link = "https://github.com/BurntSushi/toml/blob/master/tests/example.toml"
+license = "MIT"

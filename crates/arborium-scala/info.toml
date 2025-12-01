@@ -8,3 +8,8 @@ description = "Multi-paradigm JVM language blending OO and FP; official docs at 
 wikipedia = "https://en.wikipedia.org/wiki/Scala_(programming_language)"
 trivia = "The name abbreviates 'scalable language'; Odersky announced Scala in 2004 after work on Java generics and the Pizza language. The [Scala 3 reference](https://docs.scala-lang.org/scala3/reference/) documents current syntax and features."
 
+[[samples]]
+path = "samples/SparkPi.scala"
+description = "Apache Spark example computing Pi using RDDs, showing objects, methods, and functional style."
+link = "https://github.com/apache/spark/blob/master/examples/src/main/scala/org/apache/spark/examples/SparkPi.scala"
+license = "Apache-2.0"

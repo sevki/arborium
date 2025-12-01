@@ -8,3 +8,8 @@ description = "Cap’n Proto serialization and RPC system; design and spec at [c
 wikipedia = "https://en.wikipedia.org/wiki/Cap'n_Proto"
 trivia = "Varda released Cap’n Proto on April 1, 2013, as a faster, zero-copy successor to Protocol Buffers; the [design doc](https://capnproto.org/faq.html) explains the zero-copy format."
 
+[[samples]]
+path = "samples/addressbook.capnp"
+description = "Cap'n Proto address book example with structs, lists, and annotations."
+link = "https://github.com/capnproto/capnproto/blob/master/c++/samples/addressbook.capnp"
+license = "Apache-2.0"

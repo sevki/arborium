@@ -8,3 +8,8 @@ description = "Modal text editor language (Vimscript); official reference at [:h
 wikipedia = "https://en.wikipedia.org/wiki/Vim_(text_editor)"
 trivia = "Moolenaar released Vim 1.14 for Amiga in 1991; Vimscript reference is built into `:help` and online at [vimhelp.org](https://vimhelp.org)."
 
+[[samples]]
+path = "samples/eval.txt"
+description = "Vim help for eval features, covering expressions, functions, and scripting constructs."
+link = "https://github.com/vim/vim/blob/master/runtime/doc/eval.txt"
+license = "Vim"

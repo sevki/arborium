@@ -10,7 +10,7 @@
 <body>
     <div class="container">
         <!-- Hidden icons for JS use -->
-        <div style="display:none">{{ICON:mdi:calendar}}{{ICON:mdi:account}}{{ICON:mdi:wikipedia}}</div>
+        <div style="display:none">{{ICON:mdi:calendar}}{{ICON:mdi:account}}{{ICON:mdi:wikipedia}}{{ICON:simple-icons:webassembly}}{{ICON:devicon-plain:rust}}{{ICON:mdi:apple}}{{ICON:mdi:linux}}{{ICON:mdi:microsoft-windows}}{{ICON:mdi:check-circle}}</div>
 
         <div class="controls">
             <h1>
@@ -64,55 +64,55 @@
 
         <section id="about" class="about">
             <div class="about-hero">
-                <p class="slogan">What do we want? <em>Syntax highlighting.</em></p>
-                <p class="slogan">When do we want it? <em>Now.</em> But also <em>good.</em></p>
-            </div>
-
-            <p class="about-intro">
-                Arborium is a curated collection of <a href="https://tree-sitter.github.io/tree-sitter/">tree-sitter</a> grammars
-                for Rust — server-side or client-side via WebAssembly.
-            </p>
-            <p class="bundle-stats" id="bundle-stats"></p>
-
-            <div class="about-card problem">
-                <h3>The problem</h3>
-                <p>For <em>every language</em> you want to highlight, you have to figure out:</p>
-                <ul>
-                    <li>Which grammar is currently maintained?</li>
-                    <li>Is it up to date with tree-sitter?</li>
-                    <li>Does the generated C code actually compile?</li>
-                    <li>Does it compile to <strong>WASM</strong> without timing out?</li>
-                    <li>Do you need to provide C library functions yourself?</li>
-                    <li>What's the license?</li>
-                    <li>Does it have highlight queries? Do they <em>work</em>?</li>
-                </ul>
-                <p class="punchline">Multiply by 80 languages. Have fun.</p>
+                <p class="slogan">What do we want?</p>
+                <p class="slogan-answer">Syntax highlighting.</p>
+                <p class="slogan">When do we want it?</p>
+                <p class="slogan-answer">Now. But also good. And also on the web.</p>
             </div>
 
             <div class="about-card solution">
-                <h3>The solution</h3>
+                <h3>arborium</h3>
+                <p>Finding good tree-sitter grammars is hard. In arborium, every grammar:</p>
+                <ul class="check-list">
+                    <li>{{ICON:mdi:check-circle}} Is generated with tree-sitter 0.25</li>
+                    <li>{{ICON:mdi:check-circle}} Builds for WASM &amp; native via cargo</li>
+                    <li>{{ICON:mdi:check-circle}} Has working highlight queries</li>
+                </ul>
+                <div class="platform-logos">
+                    <span class="platform-logo" title="Rust">{{ICON:devicon-plain:rust}}</span>
+                    <span class="platform-logo" title="WebAssembly">{{ICON:simple-icons:webassembly}}</span>
+                    <span class="platform-logo" title="macOS">{{ICON:mdi:apple}}</span>
+                    <span class="platform-logo" title="Linux">{{ICON:mdi:linux}}</span>
+                    <span class="platform-logo" title="Windows">{{ICON:mdi:microsoft-windows}}</span>
+                </div>
                 <p>
-                    Arborium handles all of this. Every grammar is tested, patched, and ships with
-                    working highlight queries. If it's in the collection, <strong>it works</strong> —
-                    native and WASM.
+                    We provide any C symbols the scanner might rely on. We patched grammars and wrote
+                    highlight queries so you don't have to. Enjoy.
                 </p>
             </div>
 
-            <div class="about-card comparison">
-                <h3>A modern approach</h3>
-                <p>Forget class soup. Use semantic custom elements.</p>
+            <div class="about-card">
+                <h3>Output formats</h3>
+                <p>
+                    <strong>HTML</strong> — custom elements like <code>&lt;a-k&gt;</code> instead of
+                    <code>&lt;span class="keyword"&gt;</code>. More compact markup. No JavaScript required.
+                </p>
                 <div class="compare-boxes">
                     <div class="compare-box old">
-                        <span class="compare-label">Old way</span>
+                        <span class="compare-label">The old way</span>
                         <code>&lt;span class="keyword"&gt;fn&lt;/span&gt;</code>
                     </div>
                     <div class="compare-box new">
-                        <span class="compare-label">Arborium</span>
+                        <span class="compare-label">arborium</span>
                         <code>&lt;a-k&gt;fn&lt;/a-k&gt;</code>
                     </div>
                 </div>
-                <p>No JavaScript registration. Just CSS. Theme switching becomes trivial.</p>
+                <p>
+                    <strong>ANSI</strong> — 24-bit true color for terminal applications.
+                </p>
             </div>
+
+            <p class="bundle-stats" id="bundle-stats"></p>
 
             <p class="links">
                 <a href="https://github.com/bearcove/arborium">GitHub</a>

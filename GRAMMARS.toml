@@ -373,6 +373,18 @@ year = 2012
 description = "Statically typed superset of JavaScript that compiles to plain JavaScript"
 wikipedia = "https://en.wikipedia.org/wiki/TypeScript"
 trivia = "TypeScript was designed by Anders Hejlsberg, the same architect behind C# and Turbo Pascal. Microsoft open-sourced TypeScript in 2012 to address JavaScript's lack of type safety in large-scale applications. The language quickly gained adoption, with major frameworks like Angular, Vue 3, and many others being written entirely in TypeScript."
+# Note: This grammar has two sub-grammars: typescript and tsx (in separate subdirectories)
+
+[tsx]
+repo = "https://github.com/tree-sitter/tree-sitter-typescript"
+commit = "75b3874edb2dc714fb1fd77a32013d0f8699989f"
+license = "MIT"
+inventor = "Facebook (Jordan Walke for React/JSX) + Microsoft (TypeScript)"
+year = 2015
+description = "TypeScript with JSX support for React component development"
+wikipedia = "https://en.wikipedia.org/wiki/TypeScript"
+trivia = "TSX combines TypeScript's static type checking with JSX's declarative UI syntax. While JSX was introduced by Facebook for React in 2013, TSX emerged as TypeScript gained popularity and React developers sought better tooling. Today, TSX is the de facto standard for React development in TypeScript codebases."
+# Note: Sub-grammar of tree-sitter-typescript, shares queries with typescript
 
 [verilog]
 repo = "https://github.com/tree-sitter/tree-sitter-verilog"
@@ -383,17 +395,6 @@ year = 1984
 description = "Hardware description language for modeling digital circuits and systems"
 wikipedia = "https://en.wikipedia.org/wiki/Verilog"
 trivia = "Verilog was originally designed as a proprietary hardware modeling language by Gateway Design Automation, which was later acquired by Cadence Design Systems. The language was made an open standard in 1995 and became an IEEE standard (IEEE 1364) in the same year, which significantly accelerated its adoption in the digital design industry."
-
-[wasm]
-repo = "https://github.com/wasm-lsp/tree-sitter-wasm"
-commit = "2ca28a9f9d709847bf7a3de0942a84e912f59088"
-license = "Apache-2.0"
-inventor = "W3C WebAssembly Community Group (Mozilla, Google, Microsoft, Apple)"
-year = 2015
-description = "Binary instruction format for a stack-based virtual machine, designed as a portable compilation target"
-wikipedia = "https://en.wikipedia.org/wiki/WebAssembly"
-trivia = "WebAssembly was first announced in 2015 by engineers from Mozilla, Google, Microsoft, and Apple to address the limitations of web technologies. It evolved from Mozilla's asm.js and Google Native Client. In March 2017, the MVP (minimum viable product) was released, and by November 2017, all major browsers supported it. WebAssembly became a W3C recommendation in December 2019 and received the ACM SIGPLAN Programming Languages Software Award in 2021."
-# Note: This grammar has two sub-grammars: wat and wast
 
 [xml]
 repo = "https://github.com/tree-sitter-grammars/tree-sitter-xml"

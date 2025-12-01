@@ -8,3 +8,8 @@ description = "Dependently typed functional language for verified software; see 
 wikipedia = "https://en.wikipedia.org/wiki/Idris_(programming_language)"
 trivia = "Brady introduced Idris in 2009 to bring dependent types to general-purpose programming; the [Idris tutorial](https://www.idris-lang.org/documentation/) demonstrates length-indexed vectors and other proofs in code."
 
+[[samples]]
+path = "samples/BTree.idr"
+description = "Idris2 sample defining binary trees, dependent types, and proofs."
+link = "https://github.com/idris-lang/Idris2/blob/main/samples/BTree.idr"
+license = "Apache-2.0"

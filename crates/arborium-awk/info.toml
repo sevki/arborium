@@ -8,3 +8,8 @@ description = "Pattern-scanning and text processing language; original descripti
 wikipedia = "https://en.wikipedia.org/wiki/AWK"
 trivia = "Name comes from creators' initials Aho–Weinberger–Kernighan; see the [AWK book](https://dl.acm.org/doi/10.5555/104836) and Unix V7 manual pages for the classic implementation."
 
+[[samples]]
+path = "samples/chem.awk"
+description = "AWK script from one-true-awk tests exercising records, fields, loops, and functions."
+link = "https://github.com/onetrueawk/awk/blob/master/testdir/chem.awk"
+license = "BSD-2-Clause"

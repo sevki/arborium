@@ -8,3 +8,8 @@ description = "Hardware description language standardized as [IEEE 1364](https:/
 wikipedia = "https://en.wikipedia.org/wiki/Verilog"
 trivia = "Created at Gateway Design Automation (later Cadence) in 1984; became an open IEEE standard in 1995 (IEEE 1364-1995)."
 
+[[samples]]
+path = "samples/lint_style.sv"
+description = "Verible lint test file demonstrating SystemVerilog constructs, modules, and style cases."
+link = "https://github.com/chipsalliance/verible/blob/master/verilog/tools/lint/testdata/lint_style.sv"
+license = "Apache-2.0"

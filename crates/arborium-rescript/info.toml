@@ -8,3 +8,8 @@ description = "Functional language that compiles to JavaScript, evolved from Buc
 wikipedia = "https://rescript-lang.org/"
 trivia = "Rebranded from BuckleScript/Reason in 2020 to focus on a JS-centric pipeline; see the [ReScript announcement](https://rescript-lang.org/blog/announcement) and docs for the syntax and compiler."
 
+[[samples]]
+path = "samples/Demo.res"
+description = "ReScript project template demo component with JSX-like syntax and bindings."
+link = "https://github.com/rescript-lang/rescript-project-template/blob/master/src/Demo.res"
+license = "MIT"

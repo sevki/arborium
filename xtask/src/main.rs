@@ -518,9 +518,18 @@ fn find_grammars(repo_root: &Path) -> Result<Vec<PathBuf>, Box<dyn std::error::E
         if path.is_dir() {
             let name = path.file_name().unwrap().to_string_lossy();
             if name.starts_with("tree-sitter-") {
-                // Verify it has a grammar.js
+                // Verify it has a grammar.js in root
                 if path.join("grammar.js").exists() {
                     grammars.push(path);
+                } else {
+                    // Check for multi-grammar repos (e.g., tree-sitter-typescript has typescript/ and tsx/ subdirs)
+                    for subentry in fs::read_dir(&path).into_iter().flatten().flatten() {
+                        let subpath = subentry.path();
+                        if subpath.is_dir() && subpath.join("grammar.js").exists() {
+                            // This is a sub-grammar, add it as a separate grammar
+                            grammars.push(subpath);
+                        }
+                    }
                 }
             }
         }
@@ -738,11 +747,21 @@ fn copy_grammar_sources_to_crate(repo_root: &Path, grammar_dir: &Path) -> Result
 
     // Copy shared directories (common/, etc.) from grammar root if they exist
     // These are used by scanners that include files like "../../common/scanner.h"
+    // For sub-grammars (e.g., typescript in tree-sitter-typescript/typescript/),
+    // also check the parent directory for shared files
     for shared_dir in &["common"] {
+        // First check in grammar_dir itself
         let src_shared = grammar_dir.join(shared_dir);
         if src_shared.exists() && src_shared.is_dir() {
             let dest_shared = crate_grammar_src.join(shared_dir);
             copy_dir_recursive(&src_shared, &dest_shared)?;
+        } else if let Some(parent) = grammar_dir.parent() {
+            // For sub-grammars, check the parent directory (e.g., tree-sitter-typescript/)
+            let parent_shared = parent.join(shared_dir);
+            if parent_shared.exists() && parent_shared.is_dir() {
+                let dest_shared = crate_grammar_src.join(shared_dir);
+                copy_dir_recursive(&parent_shared, &dest_shared)?;
+            }
         }
     }
 
@@ -1258,13 +1277,16 @@ fn copy_dir_recursive(src: &Path, dst: &Path) -> std::io::Result<()> {
 // =============================================================================
 
 /// Configuration for a grammar crate
+///
+/// This can be auto-detected from the filesystem, or loaded from a
+/// `grammar-crate-config.toml` file in the grammar directory for special cases.
 #[derive(Debug)]
 struct GrammarCrateConfig {
     /// Grammar name (e.g., "rust", "python")
     name: String,
     /// C function name suffix (e.g., "rust" for tree_sitter_rust)
     c_symbol: String,
-    /// Source files to compile (relative to tree-sitter-{name}/src/)
+    /// Source files to compile (relative to src/)
     source_files: Vec<String>,
     /// Whether highlights.scm exists
     has_highlights: bool,
@@ -1278,146 +1300,119 @@ struct GrammarCrateConfig {
     extra_languages: Vec<(String, String)>, // (c_symbol, export_name)
     /// Sample files for testing (paths relative to crate root)
     samples: Vec<String>,
+    /// For sub-grammars: the parent repo name (e.g., "typescript" for tsx in tree-sitter-typescript)
+    /// Used to find queries in grammars/tree-sitter-{parent_repo}/queries/ instead of tree-sitter-{name}
+    parent_repo: Option<String>,
+    /// Base languages whose queries should be included before this grammar's queries
+    /// e.g., ["javascript"] for TypeScript means JavaScript queries are prepended
+    inherits_queries_from: Vec<String>,
 }
 
-/// Special grammar configurations that differ from the standard pattern
-fn get_special_grammar_config(name: &str) -> Option<GrammarCrateConfig> {
-    match name {
-        "rust" => Some(GrammarCrateConfig {
-            name: "rust".to_string(),
-            c_symbol: "rust_orchard".to_string(),
-            source_files: vec!["parser.c".to_string(), "scanner.c".to_string()],
-            has_highlights: true,
-            has_injections: true,
-            has_locals: false,
-            query_path: "".to_string(),
-            extra_languages: vec![],
-            samples: vec![],
-        }),
-        "typescript" => Some(GrammarCrateConfig {
-            name: "typescript".to_string(),
-            c_symbol: "typescript".to_string(),
-            source_files: vec!["parser.c".to_string(), "scanner.c".to_string()],
-            has_highlights: true,
-            has_injections: false,
-            has_locals: true,
-            query_path: "".to_string(),
-            extra_languages: vec![("tsx".to_string(), "tsx".to_string())],
-            samples: vec![],
-        }),
-        "markdown" => Some(GrammarCrateConfig {
-            name: "markdown".to_string(),
-            c_symbol: "markdown".to_string(),
-            source_files: vec!["parser.c".to_string(), "scanner.c".to_string()],
-            has_highlights: true,
-            has_injections: false,
-            has_locals: false,
-            query_path: "tree-sitter-markdown/".to_string(),
-            extra_languages: vec![("markdown_inline".to_string(), "markdown_inline".to_string())],
-            samples: vec![],
-        }),
-        "ocaml" => Some(GrammarCrateConfig {
-            name: "ocaml".to_string(),
-            c_symbol: "ocaml".to_string(),
-            source_files: vec!["parser.c".to_string(), "scanner.c".to_string()],
-            has_highlights: true,
-            has_injections: false,
-            has_locals: true,
-            query_path: "".to_string(),
-            extra_languages: vec![("ocaml_interface".to_string(), "ocaml_interface".to_string())],
-            samples: vec![],
-        }),
-        "xml" => Some(GrammarCrateConfig {
-            name: "xml".to_string(),
-            c_symbol: "xml".to_string(),
-            source_files: vec!["parser.c".to_string()],
-            has_highlights: true,
-            has_injections: false,
-            has_locals: false,
-            query_path: "".to_string(),
-            extra_languages: vec![("dtd".to_string(), "dtd".to_string())],
-            samples: vec![],
-        }),
-        "php" => Some(GrammarCrateConfig {
-            name: "php".to_string(),
-            c_symbol: "php".to_string(),
-            source_files: vec!["parser.c".to_string(), "scanner.c".to_string()],
-            has_highlights: true,
-            has_injections: true,
-            has_locals: false,
-            query_path: "".to_string(),
-            extra_languages: vec![("php_only".to_string(), "php_only".to_string())],
-            samples: vec![],
-        }),
-        "wasm" => Some(GrammarCrateConfig {
-            name: "wasm".to_string(),
-            c_symbol: "wat".to_string(),  // The wasm grammar exports wat, not wasm
-            source_files: vec!["parser.c".to_string()],
-            has_highlights: false,
-            has_injections: false,
-            has_locals: false,
-            query_path: "wat/".to_string(),
-            extra_languages: vec![("wast".to_string(), "wast".to_string())],
-            samples: vec![],
-        }),
-        "just" => Some(GrammarCrateConfig {
-            name: "just".to_string(),
-            c_symbol: "just".to_string(),
-            source_files: vec!["parser.c".to_string(), "scanner.c".to_string()],
-            has_highlights: true,
-            has_injections: true,
-            has_locals: false,
-            query_path: "just/".to_string(),
-            extra_languages: vec![],
-            samples: vec![],
-        }),
-        "typst" => Some(GrammarCrateConfig {
-            name: "typst".to_string(),
-            c_symbol: "typst".to_string(),
-            source_files: vec!["parser.c".to_string(), "scanner.c".to_string()],
-            has_highlights: true,
-            has_injections: true,
-            has_locals: false,
-            query_path: "typst/".to_string(),
-            extra_languages: vec![],
-            samples: vec![],
-        }),
-        "asm" => Some(GrammarCrateConfig {
-            name: "asm".to_string(),
-            c_symbol: "asm".to_string(),
-            source_files: vec!["parser.c".to_string()],
-            has_highlights: true,
-            has_injections: false,
-            has_locals: false,
-            query_path: "asm/".to_string(),
-            extra_languages: vec![],
-            samples: vec![],
-        }),
-        "vb" => Some(GrammarCrateConfig {
-            name: "vb".to_string(),
-            c_symbol: "vb_dotnet".to_string(),
-            source_files: vec!["parser.c".to_string(), "scanner.c".to_string()],
-            has_highlights: true,
-            has_injections: false,
-            has_locals: false,
-            query_path: "".to_string(),
-            extra_languages: vec![],
-            samples: vec![],
-        }),
-        _ => None,
+/// Parse grammar-crate-config.toml from a grammar directory
+///
+/// Example grammar-crate-config.toml:
+/// ```toml
+/// # Optional: C symbol name (defaults to name with - replaced by _)
+/// c_symbol = "rust_orchard"
+///
+/// # Optional: Query path prefix for nested query directories
+/// query_path = "just/"
+///
+/// # Optional: For sub-grammars, the parent repo name for finding queries
+/// parent_repo = "typescript"
+///
+/// # Optional: Languages whose queries should be inherited (prepended)
+/// inherits_queries_from = ["javascript"]
+///
+/// # Optional: Additional languages exported by this grammar
+/// [[extra_languages]]
+/// c_symbol = "tsx"
+/// export_name = "tsx"
+/// ```
+fn parse_grammar_crate_config(config_path: &Path) -> Option<toml::Value> {
+    if config_path.exists() {
+        eprintln!("  [DEBUG] Found config: {}", config_path.display());
     }
+    let content = fs::read_to_string(config_path).ok()?;
+    let parsed = content.parse::<toml::Value>().ok();
+    if parsed.is_some() {
+        eprintln!("  [DEBUG] Parsed config with parent_repo: {:?}",
+            parsed.as_ref().and_then(|v| v.get("parent_repo")));
+    }
+    parsed
 }
 
-/// Detect grammar configuration from filesystem
-fn detect_grammar_config(repo_root: &Path, name: &str) -> GrammarCrateConfig {
-    // Check for special configuration first
-    if let Some(config) = get_special_grammar_config(name) {
-        return config;
-    }
-
-    let grammar_dir = repo_root.join("grammars").join(format!("tree-sitter-{}", name));
+/// Detect grammar configuration from filesystem and optional config file
+///
+/// Looks for grammar-crate-config.toml in the grammar directory for overrides.
+/// Falls back to auto-detection for any unspecified values.
+fn detect_grammar_config(repo_root: &Path, grammar_dir: &Path, name: &str) -> GrammarCrateConfig {
     let src_dir = grammar_dir.join("src");
-    let queries_dir = grammar_dir.join("queries");
+
+    // For sub-grammars, check parent directory for queries
+    let queries_dir = if grammar_dir.join("queries").exists() {
+        grammar_dir.join("queries")
+    } else if let Some(parent) = grammar_dir.parent() {
+        if parent.join("queries").exists() {
+            parent.join("queries")
+        } else {
+            grammar_dir.join("queries") // will be detected as not existing
+        }
+    } else {
+        grammar_dir.join("queries")
+    };
+
+    // Load config file if it exists
+    let config_file = grammar_dir.join("grammar-crate-config.toml");
+    eprintln!("  [DEBUG] Looking for config at: {} (exists: {})", config_file.display(), config_file.exists());
+    let config = parse_grammar_crate_config(&config_file);
+
+    // Extract values from config or use defaults
+    let c_symbol = config
+        .as_ref()
+        .and_then(|c| c.get("c_symbol"))
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string())
+        .unwrap_or_else(|| name.replace('-', "_"));
+
+    let query_path = config
+        .as_ref()
+        .and_then(|c| c.get("query_path"))
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string())
+        .unwrap_or_default();
+
+    let parent_repo = config
+        .as_ref()
+        .and_then(|c| c.get("parent_repo"))
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+
+    let inherits_queries_from = config
+        .as_ref()
+        .and_then(|c| c.get("inherits_queries_from"))
+        .and_then(|v| v.as_array())
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                .collect()
+        })
+        .unwrap_or_default();
+
+    let extra_languages = config
+        .as_ref()
+        .and_then(|c| c.get("extra_languages"))
+        .and_then(|v| v.as_array())
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|v| {
+                    let c_sym = v.get("c_symbol")?.as_str()?;
+                    let export = v.get("export_name")?.as_str()?;
+                    Some((c_sym.to_string(), export.to_string()))
+                })
+                .collect()
+        })
+        .unwrap_or_default();
 
     // Detect source files
     let mut source_files = vec!["parser.c".to_string()];
@@ -1428,13 +1423,15 @@ fn detect_grammar_config(repo_root: &Path, name: &str) -> GrammarCrateConfig {
         source_files.push("scanner.cc".to_string());
     }
 
-    // Detect queries
-    let has_highlights = queries_dir.join("highlights.scm").exists();
-    let has_injections = queries_dir.join("injections.scm").exists();
-    let has_locals = queries_dir.join("locals.scm").exists();
-
-    // Convert name to C symbol (replace - with _)
-    let c_symbol = name.replace('-', "_");
+    // Detect queries - apply query_path prefix
+    let query_base = if query_path.is_empty() {
+        queries_dir.clone()
+    } else {
+        queries_dir.join(&query_path)
+    };
+    let has_highlights = query_base.join("highlights.scm").exists();
+    let has_injections = query_base.join("injections.scm").exists();
+    let has_locals = query_base.join("locals.scm").exists();
 
     // Read samples from info.toml if it exists
     let crate_dir = repo_root.join("crates").join(format!("arborium-{}", name));
@@ -1452,9 +1449,11 @@ fn detect_grammar_config(repo_root: &Path, name: &str) -> GrammarCrateConfig {
         has_highlights,
         has_injections,
         has_locals,
-        query_path: "".to_string(),
-        extra_languages: vec![],
+        query_path,
+        extra_languages,
         samples,
+        parent_repo,
+        inherits_queries_from,
     }
 }
 
@@ -1715,10 +1714,12 @@ pub fn {}_language() -> Language {{
     }
 
     // Query constants - queries are in grammars/tree-sitter-{name}/queries/
+    // For sub-grammars (e.g., tsx in tree-sitter-typescript), use parent_repo for the path
+    let repo_name = config.parent_repo.as_ref().unwrap_or(&config.name);
     let query_prefix = if config.query_path.is_empty() {
-        format!("../../../grammars/tree-sitter-{}/queries/", config.name)
+        format!("../../../grammars/tree-sitter-{}/queries/", repo_name)
     } else {
-        format!("../../../grammars/tree-sitter-{}/queries/{}", config.name, config.query_path)
+        format!("../../../grammars/tree-sitter-{}/queries/{}", repo_name, config.query_path)
     };
 
     if config.has_highlights {
@@ -1834,7 +1835,7 @@ fn generate_grammar_crates() {
         let license = grammars.get(name).map(|g| g.license.as_str()).unwrap_or("MIT");
 
         // Detect configuration
-        let config = detect_grammar_config(&repo_root, name);
+        let config = detect_grammar_config(&repo_root, &grammar_dir, name);
 
         // Create crate directory
         let crate_name = format!("arborium-{}", name);
@@ -1913,7 +1914,7 @@ fn update_grammar_crates() {
         }
 
         let license = grammars.get(name).map(|g| g.license.as_str()).unwrap_or("MIT");
-        let config = detect_grammar_config(&repo_root, name);
+        let config = detect_grammar_config(&repo_root, &grammar_dir, name);
 
         println!("  Updating {}...", crate_name);
 

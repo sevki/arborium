@@ -8,3 +8,8 @@ description = "High-Level Shading Language for DirectX; official reference in th
 wikipedia = "https://en.wikipedia.org/wiki/High-Level_Shading_Language"
 trivia = "Introduced with DirectX 9; modern compiler `dxc` targets DXIL and SPIR-V—see the [DirectX Shader Compiler repo](https://github.com/microsoft/DirectXShaderCompiler)."
 
+[[samples]]
+path = "samples/HelloTriangle.hlsl"
+description = "DirectX 12 HelloTriangle shader showing vertex/pixel stages and constant buffers."
+link = "https://github.com/microsoft/DirectX-Graphics-Samples/blob/master/Samples/Desktop/D3D12HelloWorld/src/HelloTriangle/shaders.hlsl"
+license = "MIT"

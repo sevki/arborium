@@ -8,3 +8,8 @@ description = "Caddyfile configuration language for the Caddy web server; offici
 wikipedia = "https://caddyserver.com/docs/"
 trivia = "Caddy launched in 2015 with automatic HTTPS via Let's Encrypt; minimal syntax allows a single-line site definition—documented in the [Caddyfile spec](https://caddyserver.com/docs/caddyfile)."
 
+[[samples]]
+path = "samples/Caddyfile"
+description = "Default Caddy distribution config showing sites, reverse proxy, and TLS settings."
+link = "https://github.com/caddyserver/dist/blob/master/config/Caddyfile"
+license = "Apache-2.0"

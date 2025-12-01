@@ -8,3 +8,8 @@ description = "Purely functional language with lazy evaluation and strong typing
 wikipedia = "https://en.wikipedia.org/wiki/Haskell"
 trivia = "Named after logician Haskell Curry; standardized in 1990 by a committee that published successive language reports—the 2010 Report remains the latest official spec."
 
+[[samples]]
+path = "samples/Config.hs"
+description = "xmonad configuration module showing imports, records, and IO actions."
+link = "https://github.com/xmonad/xmonad/blob/master/src/XMonad/Config.hs"
+license = "BSD-3-Clause"
