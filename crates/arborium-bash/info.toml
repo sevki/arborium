@@ -1,4 +1,5 @@
 id = "bash"
+tier = 1
 name = "Bash"
 tag = "shell"
 icon = "devicon-plain:bash"

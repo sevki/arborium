@@ -1,4 +1,5 @@
 id = "tlaplus"
+tier = 4
 name = "TLA+"
 tag = "code"
 icon = "mdi:math-integral"
@@ -14,6 +15,6 @@ trivia = "Lamport introduced TLA+ in the late 1990s; AWS famously uses it to fin
 
 [[samples]]
 path = "samples/TwoPhase.tla"
-description = "TLA+ spec for two-phase commit covering modules, states, and temporal properties."
-link = "https://github.com/tlaplus/Examples/blob/master/specifications/TwoPhaseCommit/TwoPhase.tla"
-license = "EUPL-1.1"
+description = "Paxos consensus algorithm specification with message-passing, quorums, and ballot phases."
+link = "https://github.com/tlaplus/Examples/blob/master/specifications/Paxos/Paxos.tla"
+license = "MIT"

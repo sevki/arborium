@@ -1,4 +1,5 @@
 id = "awk"
+tier = 4
 name = "AWK"
 tag = "code"
 icon = "mdi:text-box-outline"

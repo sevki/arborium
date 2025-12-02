@@ -1,4 +1,5 @@
 id = "powershell"
+tier = 1
 name = "PowerShell"
 tag = "shell"
 icon = "devicon-plain:powershell"

@@ -1,4 +1,5 @@
 id = "vhdl"
+tier = 5
 name = "VHDL"
 tag = "code"
 icon = "mdi:chip"
@@ -14,6 +15,6 @@ trivia = "Developed under the VHSIC program and standardized in 1987 as IEEE 107
 
 [[samples]]
 path = "samples/issue1220.vhdl"
-description = "GHDL test case exercising VHDL entities, architectures, signals, and synthesis edge cases."
-link = "https://github.com/ghdl/ghdl/blob/master/testsuite/synth/issue1220.vhdl"
+description = "GHDL finite state machine test with entity, architecture, process, and case statement."
+link = "https://github.com/ghdl/ghdl/blob/master/testsuite/synth/fsm01/fsm_2s.vhdl"
 license = "GPL-2.0-or-later"

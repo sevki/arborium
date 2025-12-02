@@ -1,4 +1,5 @@
 id = "jq"
+tier = 4
 name = "jq"
 tag = "query"
 icon = "mdi:code-json"

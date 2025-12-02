@@ -1,4 +1,5 @@
 id = "scheme"
+tier = 2
 name = "Scheme"
 tag = "code"
 icon = "mdi:lambda"

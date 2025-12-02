@@ -1,4 +1,5 @@
 id = "php"
+tier = 2
 name = "PHP"
 tag = "code"
 icon = "devicon-plain:php"
@@ -12,16 +13,8 @@ description = "Server-side scripting language; the official manual is at [php.ne
 link = "https://en.wikipedia.org/wiki/PHP"
 trivia = "Started as 'Personal Home Page Tools' in 1994/95; renamed 'PHP: Hypertext Preprocessor' in 1997. History is documented in the [PHP changelog](https://www.php.net/ChangeLog-8.php) and manual preface."
 
-# llm-picked sample
 [[samples]]
-path = "samples/web.php"
-description = "Laravel routes file defining closures, controllers, and middleware."
-link = "https://github.com/laravel/laravel/blob/10.x/routes/web.php"
-license = "MIT"
-
-# amos-picked sample
-[[samples]]
-path = "samples/Graph.php"
-description = "Grid UI Graph class with drawing routines, geometry, and rendering helpers."
-link = "https://github.com/KateMorley/grid/blob/main/classes/UI/Graph.php"
+path = "samples/Route.php"
+description = "Laravel Route facade with PHPDoc, method annotations, and static proxy pattern."
+link = "https://github.com/laravel/framework/blob/11.x/src/Illuminate/Support/Facades/Route.php"
 license = "MIT"

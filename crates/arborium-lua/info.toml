@@ -1,4 +1,5 @@
 id = "lua"
+tier = 1
 name = "Lua"
 tag = "code"
 icon = "devicon-plain:lua"

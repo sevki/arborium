@@ -1,4 +1,5 @@
 id = "julia"
+tier = 1
 name = "Julia"
 tag = "code"
 icon = "devicon-plain:julia"

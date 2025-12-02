@@ -1,4 +1,5 @@
 id = "vim"
+tier = 2
 name = "Vimscript"
 tag = "code"
 icon = "devicon-plain:vim"

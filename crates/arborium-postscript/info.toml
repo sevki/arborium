@@ -1,4 +1,5 @@
 id = "postscript"
+tier = 5
 name = "PostScript"
 tag = "code"
 icon = "mdi:printer"

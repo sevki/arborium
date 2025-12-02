@@ -1,4 +1,5 @@
 id = "lean"
+tier = 4
 name = "Lean"
 tag = "code"
 icon = "mdi:alpha-l-box-outline"

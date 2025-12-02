@@ -1,4 +1,5 @@
 id = "starlark"
+tier = 4
 name = "Starlark"
 tag = "build"
 icon = "mdi:star-outline"

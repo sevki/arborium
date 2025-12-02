@@ -1,4 +1,5 @@
 id = "fsharp"
+tier = 2
 name = "F#"
 tag = "code"
 icon = "devicon-plain:fsharp"
@@ -13,16 +14,7 @@ link = "https://en.wikipedia.org/wiki/F_Sharp_(programming_language)"
 trivia = "Developed at Microsoft Research and first released publicly in 2005; see Syme's early [F# design notes](https://learn.microsoft.com/dotnet/fsharp/language-reference/) and the 2010 [F# 2.0 language spec](https://learn.microsoft.com/dotnet/fsharp/language-reference/language-specification)."
 
 [[samples]]
-path = "samples/Library.fs"
-description = "MathService module showing functions, pipe operators, Seq operations, and namespace/module structure."
-link = "https://github.com/dotnet/samples/blob/main/core/getting-started/unit-testing-with-fsharp/MathService/Library.fs"
-license = "MIT"
-handpicked = false
-
-# amos-picked sample
-[[samples]]
-path = "samples/Diff.fs"
-description = "WoofWare.Expect diffing utility with pattern matching, recursion, and string processing."
-link = "https://github.com/Smaug123/WoofWare.Expect/blob/main/WoofWare.Expect/Diff.fs"
-license = "MIT"
-handpicked = true
+path = "samples/Http.fs"
+description = "FSharp.Data HTTP utilities with modules, constants, request headers, and content types."
+link = "https://github.com/fsprojects/FSharp.Data/blob/main/src/FSharp.Data.Http/Http.fs"
+license = "Apache-2.0"

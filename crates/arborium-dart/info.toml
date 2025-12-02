@@ -1,4 +1,5 @@
 id = "dart"
+tier = 2
 name = "Dart"
 tag = "code"
 icon = "devicon-plain:dart"

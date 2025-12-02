@@ -1,4 +1,5 @@
 id = "c-sharp"
+tier = 1
 name = "C#"
 tag = "code"
 icon = "devicon-plain:csharp"

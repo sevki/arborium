@@ -1,4 +1,5 @@
 id = "zsh"
+tier = 3
 name = "Zsh"
 tag = "shell"
 icon = "mdi:console"

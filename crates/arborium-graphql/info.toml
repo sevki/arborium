@@ -1,4 +1,5 @@
 id = "graphql"
+tier = 3
 name = "GraphQL"
 tag = "query"
 icon = "devicon-plain:graphql"

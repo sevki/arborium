@@ -1,4 +1,5 @@
 id = "typescript"
+tier = 1
 name = "TypeScript"
 tag = "code"
 icon = "devicon-plain:typescript"

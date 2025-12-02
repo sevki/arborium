@@ -505,10 +505,44 @@ function setMode(mode) {
             }
         }
     }
+
+    // Sync swatch filter in Theme support section
+    const swatches = document.querySelector('.theme-swatches');
+    if (swatches) {
+        swatches.dataset.showMode = mode;
+        document.getElementById('swatch-mode-dark')?.classList.toggle('active', mode === 'dark');
+        document.getElementById('swatch-mode-light')?.classList.toggle('active', mode === 'light');
+    }
 }
 
 modeDarkBtn.addEventListener('click', () => setMode('dark'));
 modeLightBtn.addEventListener('click', () => setMode('light'));
+
+// Swatch mode toggle (for Theme support section)
+const swatchModeToggle = document.getElementById('swatch-mode-toggle');
+const swatchModeDark = document.getElementById('swatch-mode-dark');
+const swatchModeLight = document.getElementById('swatch-mode-light');
+const themeSwatches = document.querySelector('.theme-swatches');
+
+function setSwatchMode(mode) {
+    if (themeSwatches) {
+        themeSwatches.dataset.showMode = mode;
+    }
+    if (swatchModeDark && swatchModeLight) {
+        swatchModeDark.classList.toggle('active', mode === 'dark');
+        swatchModeLight.classList.toggle('active', mode === 'light');
+    }
+}
+
+if (swatchModeDark) {
+    swatchModeDark.addEventListener('click', () => setSwatchMode('dark'));
+}
+if (swatchModeLight) {
+    swatchModeLight.addEventListener('click', () => setSwatchMode('light'));
+}
+
+// Sync swatch mode with main mode on load
+setSwatchMode(currentMode);
 
 // Theme picker elements
 const themePicker = document.getElementById('theme-picker');
@@ -874,7 +908,7 @@ function populateLangMarquee() {
     // Update tagline
     const tagline = document.getElementById('tagline');
     if (tagline) {
-        tagline.textContent = `— Regex hater club`;
+        tagline.textContent = `— regex hater club`;
     }
 }
 

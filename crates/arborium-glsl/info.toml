@@ -1,4 +1,5 @@
 id = "glsl"
+tier = 3
 name = "GLSL"
 tag = "code"
 icon = "devicon-plain:opengl"

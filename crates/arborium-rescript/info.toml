@@ -1,4 +1,5 @@
 id = "rescript"
+tier = 4
 name = "ReScript"
 tag = "code"
 icon = "simple-icons:rescript"
@@ -13,7 +14,7 @@ link = "https://rescript-lang.org/"
 trivia = "Rebranded from BuckleScript/Reason in 2020 to focus on a JS-centric pipeline; see the [ReScript announcement](https://rescript-lang.org/blog/announcement) and docs for the syntax and compiler."
 
 [[samples]]
-path = "samples/Demo.res"
-description = "ReScript project template demo component with JSX-like syntax and bindings."
-link = "https://github.com/rescript-lang/rescript-project-template/blob/master/src/Demo.res"
+path = "samples/Core__Array.res"
+description = "ReScript Core array module with external bindings, recursive functions, and comparisons."
+link = "https://github.com/rescript-association/rescript-core/blob/main/src/Core__Array.res"
 license = "MIT"

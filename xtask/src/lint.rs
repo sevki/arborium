@@ -34,6 +34,9 @@ const SAMPLE_REQUIRED_FIELDS: &[&str] = &[
     "license",
 ];
 
+/// Minimum number of lines for a sample file
+const MIN_SAMPLE_LINES: usize = 25;
+
 /// Crates that don't need info.toml (internal/utility crates, sub-grammars)
 const SKIP_CRATES: &[&str] = &[
     "sysroot",
@@ -178,7 +181,7 @@ fn lint_single_info_toml(path: &Path, lang_name: &str) -> LintResult {
 
     // Collect all keys for checking unknown fields
     let known_fields: HashSet<&str> = [
-        "name", "repo", "commit", "license", "description",
+        "id", "name", "repo", "commit", "license", "description",
         "inventor", "year", "link", "trivia", "handpicked",
         "tag", "icon", "tier", "aliases", "samples", "subdir",
         "wikipedia", // deprecated but still recognized
@@ -300,6 +303,9 @@ fn lint_single_info_toml(path: &Path, lang_name: &str) -> LintResult {
     // Check samples array
     if let Some(samples) = table.get("samples") {
         if let Some(arr) = samples.as_array() {
+            if arr.is_empty() {
+                result.errors.push("'samples' array is empty - at least one sample is required".to_string());
+            }
             for (i, sample) in arr.iter().enumerate() {
                 if let Some(sample_table) = sample.as_table() {
                     // Check sample required fields
@@ -309,12 +315,53 @@ fn lint_single_info_toml(path: &Path, lang_name: &str) -> LintResult {
                         }
                     }
 
-                    // Check sample path exists
+                    // Check sample path exists and has enough lines
                     if let Some(path_val) = sample_table.get("path") {
                         if let Some(sample_path) = path_val.as_str() {
-                            let full_path = path.parent().unwrap().join(sample_path);
-                            if !full_path.exists() {
-                                result.errors.push(format!("samples[{}].path does not exist: {}", i, sample_path));
+                            if sample_path.is_empty() {
+                                result.errors.push(format!("samples[{}].path is empty", i));
+                            } else {
+                                let full_path = path.parent().unwrap().join(sample_path);
+                                if !full_path.exists() {
+                                    result.errors.push(format!("samples[{}].path does not exist: {}", i, sample_path));
+                                } else if let Ok(content) = fs::read_to_string(&full_path) {
+                                    let line_count = content.lines().count();
+                                    let trimmed = content.trim();
+                                    if trimmed.is_empty() {
+                                        result.errors.push(format!(
+                                            "samples[{}].path is empty: {}",
+                                            i, sample_path
+                                        ));
+                                    } else if trimmed.starts_with("404:") || trimmed.starts_with("<!DOCTYPE") || trimmed == "Not Found" {
+                                        result.errors.push(format!(
+                                            "samples[{}].path contains HTTP error response (failed download?): {}",
+                                            i, sample_path
+                                        ));
+                                    } else if line_count < MIN_SAMPLE_LINES {
+                                        result.warnings.push(format!(
+                                            "samples[{}].path has only {} lines (minimum {} recommended): {}",
+                                            i, line_count, MIN_SAMPLE_LINES, sample_path
+                                        ));
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Check sample description is not empty
+                    if let Some(desc) = sample_table.get("description") {
+                        if desc.as_str().is_some_and(|s| s.is_empty()) {
+                            result.errors.push(format!("samples[{}].description is empty", i));
+                        }
+                    }
+
+                    // Check sample link (warn if empty, but allow "local")
+                    if let Some(link) = sample_table.get("link") {
+                        if let Some(s) = link.as_str() {
+                            if s.is_empty() {
+                                result.warnings.push(format!("samples[{}].link is empty", i));
+                            } else if s != "local" && !s.starts_with("https://") && !s.starts_with("http://") {
+                                result.warnings.push(format!("samples[{}].link should be a URL or 'local': {}", i, s));
                             }
                         }
                     }
@@ -325,6 +372,9 @@ fn lint_single_info_toml(path: &Path, lang_name: &str) -> LintResult {
         } else {
             result.errors.push("'samples' must be an array of tables (use [[samples]])".to_string());
         }
+    } else {
+        // No samples section at all
+        result.errors.push("Missing 'samples' section - at least one [[samples]] entry is required".to_string());
     }
 
     // Check that name matches directory

@@ -1,4 +1,5 @@
 id = "tsx"
+tier = 3
 name = "TSX"
 tag = "code"
 icon = "simple-icons:react"

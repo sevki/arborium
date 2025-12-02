@@ -1,4 +1,5 @@
 id = "kotlin"
+tier = 1
 name = "Kotlin"
 tag = "code"
 icon = "devicon-plain:kotlin"

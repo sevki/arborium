@@ -1,4 +1,5 @@
 id = "gleam"
+tier = 1
 name = "Gleam"
 tag = "code"
 icon = "devicon-plain:gleam"
@@ -12,7 +13,7 @@ link = "https://en.wikipedia.org/wiki/Gleam_(programming_language)"
 trivia = "Pilfold announced Gleam in 2016 to bring ML-style typing to Erlang; version 1.0 shipped in March 2024 per the [Gleam 1.0 release notes](https://gleam.run/news/gleam-v1.0/)."
 
 [[samples]]
-path = "samples/router.gleam"
-description = "Echo server router with pattern matching, imports, and piped middleware in Gleam."
-link = "https://github.com/gleam-lang/example-echo-server/blob/main/src/reply/router.gleam"
-license = "Apache-2.0"
+path = "samples/lustre.gleam"
+description = "Lustre framework core module with MVU architecture docs, imports, and public API."
+link = "https://github.com/lustre-labs/lustre/blob/main/src/lustre.gleam"
+license = "MIT"

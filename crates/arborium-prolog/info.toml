@@ -1,4 +1,5 @@
 id = "prolog"
+tier = 4
 name = "Prolog"
 tag = "code"
 icon = "mdi:head-question"

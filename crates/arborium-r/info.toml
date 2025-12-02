@@ -1,4 +1,5 @@
 id = "r"
+tier = 1
 name = "R"
 tag = "code"
 icon = "devicon-plain:r"

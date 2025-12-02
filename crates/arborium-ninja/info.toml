@@ -1,4 +1,5 @@
 id = "ninja"
+tier = 4
 name = "Ninja"
 tag = "build"
 icon = "mdi:ninja"

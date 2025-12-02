@@ -1,4 +1,5 @@
 id = "perl"
+tier = 2
 name = "Perl"
 tag = "code"
 icon = "devicon-plain:perl"
@@ -13,7 +14,7 @@ link = "https://en.wikipedia.org/wiki/Perl"
 trivia = "Wall released Perl 1.0 on 18 Dec 1987; the motto 'There's more than one way to do it' is from the official [perlstyle](https://perldoc.perl.org/perlstyle) and [perlintro](https://perldoc.perl.org/perlintro) documentation."
 
 [[samples]]
-path = "samples/hello.pl"
-description = "Mojolicious hello world showing routes, rendering, and startup."
-link = "https://github.com/mojolicious/mojo/blob/master/examples/hello.pl"
+path = "samples/gmtime.pm"
+description = "Perl5 Time::gmtime module with exports, OO wrappers, and POD documentation."
+link = "https://github.com/Perl/perl5/blob/blead/lib/Time/gmtime.pm"
 license = "Artistic-2.0"

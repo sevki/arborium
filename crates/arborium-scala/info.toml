@@ -1,4 +1,5 @@
 id = "scala"
+tier = 2
 name = "Scala"
 tag = "code"
 icon = "devicon-plain:scala"

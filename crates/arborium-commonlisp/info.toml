@@ -1,4 +1,5 @@
 id = "commonlisp"
+tier = 4
 name = "Common Lisp"
 tag = "code"
 icon = "mdi:lambda"

@@ -1,4 +1,5 @@
 id = "query"
+tier = 5
 name = "Tree-sitter Query"
 tag = "query"
 icon = "mdi:file-tree-outline"

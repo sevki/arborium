@@ -1,4 +1,5 @@
 id = "batch"
+tier = 5
 name = "Batch"
 tag = "shell"
 icon = "mdi:console"
@@ -13,16 +14,7 @@ link = "https://en.wikipedia.org/wiki/Batch_file"
 trivia = "Batch files originated with 86-DOS/MS-DOS; Microsoft retained backward compatibility through cmd.exe—see the historical MS-DOS manuals for syntax."
 
 [[samples]]
-path = "samples/bootstrap-vcpkg.bat"
-description = "vcpkg bootstrap script invoking PowerShell, showing variables and flow control."
-link = "https://github.com/microsoft/vcpkg/blob/master/bootstrap-vcpkg.bat"
+path = "samples/init.bat"
+description = "Cmder console emulator init script with argument parsing, path setup, and library calls."
+link = "https://github.com/cmderdev/cmder/blob/master/vendor/init.bat"
 license = "MIT"
-handpicked = false
-
-# amos-picked longer sample
-[[samples]]
-path = "samples/backup.bat"
-description = "Batch backup script with argument parsing, timestamps, logging, and xcopy."
-link = "local"
-license = "MIT"
-handpicked = true

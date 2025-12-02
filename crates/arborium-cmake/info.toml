@@ -1,4 +1,5 @@
 id = "cmake"
+tier = 3
 name = "CMake"
 tag = "build"
 icon = "devicon-plain:cmake"

@@ -1,4 +1,5 @@
 id = "scss"
+tier = 3
 name = "SCSS"
 tag = "markup"
 icon = "simple-icons:sass"

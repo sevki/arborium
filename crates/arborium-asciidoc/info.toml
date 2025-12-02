@@ -1,4 +1,5 @@
 id = "asciidoc"
+tier = 5
 name = "Asciidoc"
 tag = "markup"
 icon = "mdi:text-box"

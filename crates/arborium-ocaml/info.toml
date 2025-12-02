@@ -1,4 +1,5 @@
 id = "ocaml"
+tier = 2
 name = "OCaml"
 tag = "code"
 icon = "devicon-plain:ocaml"

@@ -1,4 +1,5 @@
 id = "ada"
+tier = 5
 name = "Ada"
 tag = "code"
 icon = "mdi:alpha-a-box-outline"

@@ -1,4 +1,5 @@
 id = "asm"
+tier = 3
 name = "Assembly"
 tag = "code"
 icon = "mdi:memory"

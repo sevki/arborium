@@ -1,4 +1,5 @@
 id = "cpp"
+tier = 1
 name = "C++"
 tag = "code"
 icon = "devicon-plain:cplusplus"

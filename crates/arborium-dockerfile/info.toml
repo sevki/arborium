@@ -1,4 +1,5 @@
 id = "dockerfile"
+tier = 3
 name = "Dockerfile"
 tag = "config"
 icon = "devicon-plain:docker"
@@ -13,7 +14,7 @@ link = "https://docs.docker.com/engine/reference/builder/"
 trivia = "Introduced with Docker's first public release in 2013; the reference documents each instruction and the layer-caching model that made Docker adoption explode ([Dockerfile reference](https://docs.docker.com/engine/reference/builder/))."
 
 [[samples]]
-path = "samples/devcontainer-node.Dockerfile"
-description = "VS Code devcontainer for Node.js with Debian base, build args, apt installs, non-root user setup, zsh defaults."
-link = "https://github.com/microsoft/vscode-dev-containers/blob/main/containers/javascript-node/.devcontainer/Dockerfile"
+path = "samples/python-bookworm.Dockerfile"
+description = "Official Python 3.12 Docker image with GPG verification, build optimization, and multi-arch support."
+link = "https://github.com/docker-library/python/blob/master/3.12/bookworm/Dockerfile"
 license = "MIT"

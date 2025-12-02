@@ -1,4 +1,5 @@
 id = "ron"
+tier = 4
 name = "RON"
 tag = "data"
 icon = "devicon-plain:rust"
@@ -12,7 +13,7 @@ link = "https://github.com/ron-rs/ron"
 trivia = "Designed for a (canceled) game project and revived by the Rust community; features trailing commas, comments, and Rust-like enums—see the crate docs on [docs.rs](https://docs.rs/ron)."
 
 [[samples]]
-path = "samples/scene.ron"
-description = "Bevy scene RON file with entities, components, and nested data."
-link = "https://github.com/bevyengine/bevy/blob/main/.github/example-run/scene.ron"
-license = "MIT OR Apache-2.0"
+path = "samples/kits.ron"
+description = "Veloren game server kit definitions with nested item tuples, comments, and RON extensions."
+link = "https://github.com/veloren/veloren/blob/master/assets/server/manifests/kits.ron"
+license = "GPL-3.0"

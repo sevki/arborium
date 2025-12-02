@@ -1,4 +1,5 @@
 id = "html"
+tier = 2
 name = "HTML"
 tag = "markup"
 icon = "devicon-plain:html5"

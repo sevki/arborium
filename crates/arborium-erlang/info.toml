@@ -1,4 +1,5 @@
 id = "erlang"
+tier = 2
 name = "Erlang"
 tag = "code"
 icon = "devicon-plain:erlang"

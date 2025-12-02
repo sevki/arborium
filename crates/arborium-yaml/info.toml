@@ -1,4 +1,5 @@
 id = "yaml"
+tier = 2
 name = "YAML"
 tag = "config"
 icon = "devicon-plain:yaml"
@@ -13,7 +14,7 @@ link = "https://en.wikipedia.org/wiki/YAML"
 trivia = "Originally ‘Yet Another Markup Language’, later ‘YAML Ain’t Markup Language’; first proposed in 2001—see the [YAML history](https://yaml.org/spec/history/2001-01.html)."
 
 [[samples]]
-path = "samples/deployment.yaml"
-description = "Kubernetes Deployment manifest with nested maps, lists, anchors, and strings."
-link = "https://github.com/kubernetes/website/blob/main/content/en/examples/application/deployment.yaml"
+path = "samples/bookinfo.yaml"
+description = "Istio Bookinfo sample with Services, ServiceAccounts, and Deployments for microservices."
+link = "https://github.com/istio/istio/blob/master/samples/bookinfo/platform/kube/bookinfo.yaml"
 license = "Apache-2.0"

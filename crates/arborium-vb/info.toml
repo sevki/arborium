@@ -1,4 +1,5 @@
 id = "vb"
+tier = 5
 name = "Visual Basic"
 tag = "code"
 icon = "devicon-plain:visualbasic"
@@ -14,6 +15,6 @@ trivia = "Launched with .NET Framework 1.0 in 2002 as a rewrite of VB6; the [VB 
 
 [[samples]]
 path = "samples/Math.vb"
-description = "VB.NET math example with functions, loops, and console IO."
-link = "https://github.com/dotnet/samples/blob/main/framework/basic-math/VisualBasic/Math.vb"
+description = "Roslyn VB.NET operation factory with Select Case, DirectCast, and compiler internals."
+link = "https://github.com/dotnet/roslyn/blob/main/src/Compilers/VisualBasic/Portable/Operations/VisualBasicOperationFactory.vb"
 license = "MIT"

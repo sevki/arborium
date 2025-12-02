@@ -1,4 +1,5 @@
 id = "dot"
+tier = 4
 name = "DOT/Graphviz"
 tag = "data"
 icon = "mdi:graph"

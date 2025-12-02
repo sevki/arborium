@@ -1,4 +1,5 @@
 id = "elm"
+tier = 2
 name = "Elm"
 tag = "code"
 icon = "devicon-plain:elm"

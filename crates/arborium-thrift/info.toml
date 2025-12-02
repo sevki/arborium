@@ -1,4 +1,5 @@
 id = "thrift"
+tier = 4
 name = "Thrift"
 tag = "data"
 icon = "mdi:swap-horizontal"

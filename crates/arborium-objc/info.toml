@@ -1,4 +1,5 @@
 id = "objc"
+tier = 3
 name = "Objective-C"
 tag = "code"
 icon = "devicon-plain:objectivec"

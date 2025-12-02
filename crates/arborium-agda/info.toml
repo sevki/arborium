@@ -1,4 +1,5 @@
 id = "agda"
+tier = 4
 name = "Agda"
 tag = "code"
 repo = ""

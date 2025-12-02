@@ -1,4 +1,5 @@
 id = "java"
+tier = 1
 name = "Java"
 tag = "code"
 icon = "devicon-plain:java"

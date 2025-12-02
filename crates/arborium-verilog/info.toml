@@ -1,4 +1,5 @@
 id = "verilog"
+tier = 5
 name = "Verilog"
 tag = "code"
 icon = "mdi:chip"
@@ -14,9 +15,9 @@ trivia = "Created at Gateway Design Automation (later Cadence) in 1984; became a
 
 [[samples]]
 path = "samples/lint_style.sv"
-description = "Verible lint test file demonstrating SystemVerilog constructs, modules, and style cases."
-link = "https://github.com/chipsalliance/verible/blob/master/verilog/tools/lint/testdata/lint_style.sv"
-license = "Apache-2.0"
+description = "CVA6 RISC-V ALU module with parameters, always_comb, generate blocks, and bit manipulation."
+link = "https://github.com/openhwgroup/cva6/blob/master/core/alu.sv"
+license = "SHL-0.51"
 handpicked = false
 
 # amos-picked sample

@@ -1,4 +1,5 @@
 id = "ini"
+tier = 3
 name = "INI"
 tag = "config"
 icon = "mdi:cog-outline"
@@ -14,6 +15,6 @@ trivia = "Windows 1.0 (1985) popularized `.ini` for application settings; the le
 
 [[samples]]
 path = "samples/pytest.ini"
-description = "pytest configuration demonstrating sections, key-value pairs, and comments."
-link = "https://github.com/pytest-dev/pytest/blob/main/pytest.ini"
+description = "Combined Python linting config with pycodestyle, flake8, pylint sections and pytest markers."
+link = "https://github.com/Bitmessage/PyBitmessage/blob/master/setup.cfg"
 license = "MIT"

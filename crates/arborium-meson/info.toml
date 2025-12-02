@@ -1,4 +1,5 @@
 id = "meson"
+tier = 4
 name = "Meson"
 tag = "build"
 icon = "mdi:hammer-wrench"

@@ -1,4 +1,5 @@
 id = "go"
+tier = 1
 name = "Go"
 tag = "code"
 icon = "devicon-plain:go"

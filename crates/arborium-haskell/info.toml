@@ -1,4 +1,5 @@
 id = "haskell"
+tier = 1
 name = "Haskell"
 tag = "code"
 icon = "devicon-plain:haskell"

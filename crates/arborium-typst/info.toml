@@ -1,4 +1,5 @@
 id = "typst"
+tier = 3
 name = "Typst"
 tag = "markup"
 icon = "simple-icons:typst"

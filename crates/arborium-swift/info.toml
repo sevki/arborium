@@ -1,4 +1,5 @@
 id = "swift"
+tier = 1
 name = "Swift"
 tag = "code"
 icon = "devicon-plain:swift"

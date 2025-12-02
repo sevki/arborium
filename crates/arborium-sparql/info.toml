@@ -1,4 +1,5 @@
 id = "sparql"
+tier = 5
 name = "SPARQL"
 tag = "query"
 icon = "mdi:graph-outline"

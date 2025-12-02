@@ -1,4 +1,5 @@
 id = "elisp"
+tier = 4
 name = "Emacs Lisp"
 tag = "code"
 icon = "simple-icons:gnuemacs"
