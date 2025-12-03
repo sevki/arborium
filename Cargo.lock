@@ -754,6 +754,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "arborium-plugin-runtime"
+version = "0.1.0"
+dependencies = [
+ "arborium-rust",
+ "arborium-wire",
+ "tree-sitter-patched-arborium",
+]
+
+[[package]]
 name = "arborium-postscript"
 version = "0.1.0"
 dependencies = [
@@ -1086,6 +1095,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "arborium-wire"
+version = "0.1.0"
+dependencies = [
+ "facet 0.31.8 (git+https://github.com/facet-rs/facet?rev=e06efea69a5c104a861429a15d81182cc9b01c0b)",
+ "facet-postcard",
+]
+
+[[package]]
 name = "arborium-x86asm"
 version = "0.1.0"
 dependencies = [
@@ -1398,7 +1415,7 @@ checksum = "6738d2e996274e499bc7b0d693c858b7720b9cd2543a0643a3087e6cb0a4fa16"
 dependencies = [
  "cfg-if",
  "libc",
- "windows-sys 0.61.2",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -1432,27 +1449,37 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.61.2",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
 name = "facet"
 version = "0.31.8"
-source = "git+https://github.com/facet-rs/facet#d57fc02075d5db5aef0d210d530947c2287400b7"
+source = "git+https://github.com/facet-rs/facet?rev=e06efea69a5c104a861429a15d81182cc9b01c0b#e06efea69a5c104a861429a15d81182cc9b01c0b"
 dependencies = [
- "facet-core",
- "facet-macros",
+ "facet-core 0.31.8 (git+https://github.com/facet-rs/facet?rev=e06efea69a5c104a861429a15d81182cc9b01c0b)",
+ "facet-macros 0.31.8 (git+https://github.com/facet-rs/facet?rev=e06efea69a5c104a861429a15d81182cc9b01c0b)",
+ "static_assertions",
+]
+
+[[package]]
+name = "facet"
+version = "0.31.8"
+source = "git+https://github.com/facet-rs/facet#40ab0de16221eae27b68b5234188e0142f9139b6"
+dependencies = [
+ "facet-core 0.31.8 (git+https://github.com/facet-rs/facet)",
+ "facet-macros 0.31.8 (git+https://github.com/facet-rs/facet)",
  "static_assertions",
 ]
 
 [[package]]
 name = "facet-args"
 version = "0.31.7"
-source = "git+https://github.com/facet-rs/facet#d57fc02075d5db5aef0d210d530947c2287400b7"
+source = "git+https://github.com/facet-rs/facet#40ab0de16221eae27b68b5234188e0142f9139b6"
 dependencies = [
- "facet",
- "facet-core",
- "facet-reflect",
+ "facet 0.31.8 (git+https://github.com/facet-rs/facet)",
+ "facet-core 0.31.8 (git+https://github.com/facet-rs/facet)",
+ "facet-reflect 0.31.8 (git+https://github.com/facet-rs/facet)",
  "heck 0.5.0",
  "miette",
  "owo-colors",
@@ -1462,7 +1489,17 @@ dependencies = [
 [[package]]
 name = "facet-core"
 version = "0.31.8"
-source = "git+https://github.com/facet-rs/facet#d57fc02075d5db5aef0d210d530947c2287400b7"
+source = "git+https://github.com/facet-rs/facet?rev=e06efea69a5c104a861429a15d81182cc9b01c0b#e06efea69a5c104a861429a15d81182cc9b01c0b"
+dependencies = [
+ "bitflags",
+ "impls",
+ "paste",
+]
+
+[[package]]
+name = "facet-core"
+version = "0.31.8"
+source = "git+https://github.com/facet-rs/facet#40ab0de16221eae27b68b5234188e0142f9139b6"
 dependencies = [
  "bitflags",
  "impls",
@@ -1472,11 +1509,11 @@ dependencies = [
 [[package]]
 name = "facet-json"
 version = "0.31.0"
-source = "git+https://github.com/facet-rs/facet#d57fc02075d5db5aef0d210d530947c2287400b7"
+source = "git+https://github.com/facet-rs/facet#40ab0de16221eae27b68b5234188e0142f9139b6"
 dependencies = [
- "facet",
- "facet-core",
- "facet-reflect",
+ "facet 0.31.8 (git+https://github.com/facet-rs/facet)",
+ "facet-core 0.31.8 (git+https://github.com/facet-rs/facet)",
+ "facet-reflect 0.31.8 (git+https://github.com/facet-rs/facet)",
  "facet-solver",
  "itoa",
  "lexical-parse-float",
@@ -1490,11 +1527,11 @@ dependencies = [
 [[package]]
 name = "facet-kdl"
 version = "0.31.0"
-source = "git+https://github.com/facet-rs/facet#d57fc02075d5db5aef0d210d530947c2287400b7"
+source = "git+https://github.com/facet-rs/facet#40ab0de16221eae27b68b5234188e0142f9139b6"
 dependencies = [
- "facet",
- "facet-core",
- "facet-reflect",
+ "facet 0.31.8 (git+https://github.com/facet-rs/facet)",
+ "facet-core 0.31.8 (git+https://github.com/facet-rs/facet)",
+ "facet-reflect 0.31.8 (git+https://github.com/facet-rs/facet)",
  "facet-solver",
  "kdl",
  "log",
@@ -1504,16 +1541,25 @@ dependencies = [
 [[package]]
 name = "facet-macros"
 version = "0.31.8"
-source = "git+https://github.com/facet-rs/facet#d57fc02075d5db5aef0d210d530947c2287400b7"
+source = "git+https://github.com/facet-rs/facet?rev=e06efea69a5c104a861429a15d81182cc9b01c0b#e06efea69a5c104a861429a15d81182cc9b01c0b"
 dependencies = [
- "facet-core",
- "facet-macros-impl",
+ "facet-core 0.31.8 (git+https://github.com/facet-rs/facet?rev=e06efea69a5c104a861429a15d81182cc9b01c0b)",
+ "facet-macros-impl 0.31.8 (git+https://github.com/facet-rs/facet?rev=e06efea69a5c104a861429a15d81182cc9b01c0b)",
+]
+
+[[package]]
+name = "facet-macros"
+version = "0.31.8"
+source = "git+https://github.com/facet-rs/facet#40ab0de16221eae27b68b5234188e0142f9139b6"
+dependencies = [
+ "facet-core 0.31.8 (git+https://github.com/facet-rs/facet)",
+ "facet-macros-impl 0.31.8 (git+https://github.com/facet-rs/facet)",
 ]
 
 [[package]]
 name = "facet-macros-impl"
 version = "0.31.8"
-source = "git+https://github.com/facet-rs/facet#d57fc02075d5db5aef0d210d530947c2287400b7"
+source = "git+https://github.com/facet-rs/facet?rev=e06efea69a5c104a861429a15d81182cc9b01c0b#e06efea69a5c104a861429a15d81182cc9b01c0b"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1522,22 +1568,52 @@ dependencies = [
 ]
 
 [[package]]
+name = "facet-macros-impl"
+version = "0.31.8"
+source = "git+https://github.com/facet-rs/facet#40ab0de16221eae27b68b5234188e0142f9139b6"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "strsim",
+ "unsynn",
+]
+
+[[package]]
+name = "facet-postcard"
+version = "0.1.0"
+source = "git+https://github.com/facet-rs/facet?rev=e06efea69a5c104a861429a15d81182cc9b01c0b#e06efea69a5c104a861429a15d81182cc9b01c0b"
+dependencies = [
+ "facet-core 0.31.8 (git+https://github.com/facet-rs/facet?rev=e06efea69a5c104a861429a15d81182cc9b01c0b)",
+ "facet-reflect 0.31.8 (git+https://github.com/facet-rs/facet?rev=e06efea69a5c104a861429a15d81182cc9b01c0b)",
+ "log",
+]
+
+[[package]]
 name = "facet-reflect"
 version = "0.31.8"
-source = "git+https://github.com/facet-rs/facet#d57fc02075d5db5aef0d210d530947c2287400b7"
+source = "git+https://github.com/facet-rs/facet?rev=e06efea69a5c104a861429a15d81182cc9b01c0b#e06efea69a5c104a861429a15d81182cc9b01c0b"
 dependencies = [
- "facet-core",
- "facet-macros",
+ "facet-core 0.31.8 (git+https://github.com/facet-rs/facet?rev=e06efea69a5c104a861429a15d81182cc9b01c0b)",
+ "facet-macros 0.31.8 (git+https://github.com/facet-rs/facet?rev=e06efea69a5c104a861429a15d81182cc9b01c0b)",
+]
+
+[[package]]
+name = "facet-reflect"
+version = "0.31.8"
+source = "git+https://github.com/facet-rs/facet#40ab0de16221eae27b68b5234188e0142f9139b6"
+dependencies = [
+ "facet-core 0.31.8 (git+https://github.com/facet-rs/facet)",
+ "facet-macros 0.31.8 (git+https://github.com/facet-rs/facet)",
  "miette",
 ]
 
 [[package]]
 name = "facet-solver"
 version = "0.31.7"
-source = "git+https://github.com/facet-rs/facet#d57fc02075d5db5aef0d210d530947c2287400b7"
+source = "git+https://github.com/facet-rs/facet#40ab0de16221eae27b68b5234188e0142f9139b6"
 dependencies = [
- "facet-core",
- "facet-reflect",
+ "facet-core 0.31.8 (git+https://github.com/facet-rs/facet)",
+ "facet-reflect 0.31.8 (git+https://github.com/facet-rs/facet)",
  "strsim",
 ]
 
@@ -2375,7 +2451,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys 0.11.0",
- "windows-sys 0.61.2",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -2643,7 +2719,7 @@ dependencies = [
  "getrandom 0.3.4",
  "once_cell",
  "rustix 1.1.2",
- "windows-sys 0.61.2",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -3068,7 +3144,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.61.2",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -3102,15 +3178,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f2f500e4d28234f72040990ec9d39e3a6b950f9f22d3dba18416c35882612bcb"
 dependencies = [
  "windows-targets 0.53.5",
-]
-
-[[package]]
-name = "windows-sys"
-version = "0.61.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ae137229bcbd6cdf0f7b80a31df61766145077ddf49416a728b02cb3921ff3fc"
-dependencies = [
- "windows-link",
 ]
 
 [[package]]
@@ -3303,7 +3370,7 @@ dependencies = [
  "boxen",
  "brotli",
  "camino",
- "facet",
+ "facet 0.31.8 (git+https://github.com/facet-rs/facet)",
  "facet-args",
  "facet-json",
  "facet-kdl",
