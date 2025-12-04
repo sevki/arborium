@@ -1,7 +1,7 @@
 //! CI workflow generation for GitHub Actions.
 //!
-//! This module provides typed representations of GitHub Actions workflow files
-//! and utilities to generate them from templates.
+//! This module generates a single unified workflow that handles both CI and releases.
+//! On regular pushes/PRs, it runs tests. On tag pushes, it also publishes.
 
 use facet::Facet;
 use indexmap::IndexMap;
@@ -43,6 +43,9 @@ structstruck::strike! {
             /// Branches to trigger on.
             #[facet(default, skip_serializing_if = Option::is_none)]
             pub branches: Option<Vec<String>>,
+            /// Tags to trigger on.
+            #[facet(default, skip_serializing_if = Option::is_none)]
+            pub tags: Option<Vec<String>>,
         }>,
 
         /// Trigger on pull request events.
@@ -56,6 +59,33 @@ structstruck::strike! {
         /// Trigger on merge group events.
         #[facet(default, skip_serializing_if = Option::is_none)]
         pub merge_group: Option<pub struct MergeGroupTrigger {}>,
+
+        /// Trigger on workflow_dispatch (manual).
+        #[facet(default, skip_serializing_if = Option::is_none)]
+        pub workflow_dispatch: Option<pub struct WorkflowDispatchTrigger {
+            /// Input parameters.
+            #[facet(default, skip_serializing_if = Option::is_none)]
+            pub inputs: Option<IndexMap<String, WorkflowInput>>,
+        }>,
+    }
+}
+
+structstruck::strike! {
+    /// A workflow input parameter.
+    #[strikethrough[derive(Debug, Clone, Facet)]]
+    #[facet(rename_all = "snake_case")]
+    pub struct WorkflowInput {
+        /// Description of the input.
+        pub description: String,
+        /// Whether the input is required.
+        #[facet(default)]
+        pub required: bool,
+        /// The type of input.
+        #[facet(rename = "type")]
+        pub input_type: String,
+        /// Default value.
+        #[facet(default, skip_serializing_if = Option::is_none)]
+        pub default: Option<String>,
     }
 }
 
@@ -78,6 +108,14 @@ structstruck::strike! {
         /// Jobs that must complete before this one.
         #[facet(default, skip_serializing_if = Option::is_none)]
         pub needs: Option<Vec<String>>,
+
+        /// Outputs from this job.
+        #[facet(default, skip_serializing_if = Option::is_none)]
+        pub outputs: Option<IndexMap<String, String>>,
+
+        /// Condition for running this job.
+        #[facet(default, skip_serializing_if = Option::is_none, rename = "if")]
+        pub if_condition: Option<String>,
 
         /// The steps to run.
         pub steps: Vec<Step>,
@@ -112,6 +150,10 @@ structstruck::strike! {
         /// Step ID for referencing outputs.
         #[facet(default, skip_serializing_if = Option::is_none)]
         pub id: Option<String>,
+
+        /// Condition for running this step.
+        #[facet(default, skip_serializing_if = Option::is_none, rename = "if")]
+        pub if_condition: Option<String>,
     }
 }
 
@@ -129,6 +171,7 @@ impl Step {
             with: None,
             env: None,
             id: None,
+            if_condition: None,
         }
     }
 
@@ -141,6 +184,7 @@ impl Step {
             with: None,
             env: None,
             id: None,
+            if_condition: None,
         }
     }
 
@@ -167,6 +211,12 @@ impl Step {
         self.env = Some(map);
         self
     }
+
+    /// Set step ID.
+    pub fn with_id(mut self, id: impl Into<String>) -> Self {
+        self.id = Some(id.into());
+        self
+    }
 }
 
 impl Job {
@@ -177,6 +227,8 @@ impl Job {
             runs_on: runs_on.into(),
             container: None,
             needs: None,
+            outputs: None,
+            if_condition: None,
             steps: Vec::new(),
         }
     }
@@ -196,6 +248,26 @@ impl Job {
     /// Add dependencies to this job.
     pub fn needs(mut self, deps: impl IntoIterator<Item = impl Into<String>>) -> Self {
         self.needs = Some(deps.into_iter().map(Into::into).collect());
+        self
+    }
+
+    /// Add outputs to this job.
+    pub fn outputs(
+        mut self,
+        outputs: impl IntoIterator<Item = (impl Into<String>, impl Into<String>)>,
+    ) -> Self {
+        self.outputs = Some(
+            outputs
+                .into_iter()
+                .map(|(k, v)| (k.into(), v.into()))
+                .collect(),
+        );
+        self
+    }
+
+    /// Add a condition for this job.
+    pub fn when(mut self, condition: impl Into<String>) -> Self {
+        self.if_condition = Some(condition.into());
         self
     }
 
@@ -224,20 +296,6 @@ pub mod common {
         Step::uses("Install Rust", "dtolnay/rust-toolchain@stable")
     }
 
-    /// Install Rust with specific components.
-    #[allow(dead_code)]
-    pub fn install_rust_with(components: &str) -> Step {
-        Step::uses("Install Rust", "dtolnay/rust-toolchain@stable")
-            .with_inputs([("components", components)])
-    }
-
-    /// Install Rust with WASM target.
-    #[allow(dead_code)]
-    pub fn install_rust_wasm() -> Step {
-        Step::uses("Install Rust", "dtolnay/rust-toolchain@stable")
-            .with_inputs([("targets", "wasm32-unknown-unknown")])
-    }
-
     /// Setup Rust cache.
     pub fn rust_cache() -> Step {
         Step::uses("Rust cache", "Swatinem/rust-cache@v2")
@@ -255,9 +313,17 @@ pub mod common {
             .with_inputs([("name", "grammar-sources")])
     }
 
-    /// Extract grammar sources tarball.
-    pub fn extract_grammar_sources() -> Step {
+    /// Extract grammar sources tarball (tar format).
+    pub fn extract_grammar_sources_tar() -> Step {
         Step::run("Extract grammar sources", "tar -xvf grammar-sources.tar")
+    }
+
+    /// Setup Node.js for npm publishing.
+    pub fn setup_node() -> Step {
+        Step::uses("Setup Node.js", "actions/setup-node@v4").with_inputs([
+            ("node-version", "20"),
+            ("registry-url", "https://registry.npmjs.org"),
+        ])
     }
 }
 
@@ -266,72 +332,104 @@ pub mod common {
 // =============================================================================
 
 /// Depot runner sizes.
-#[allow(dead_code)]
 pub mod runners {
     pub const UBUNTU_4: &str = "depot-ubuntu-24.04-4";
     pub const UBUNTU_32: &str = "depot-ubuntu-24.04-32";
-    pub const UBUNTU_64: &str = "depot-ubuntu-24.04-64";
     pub const MACOS: &str = "depot-macos-latest";
-    pub const WINDOWS_32: &str = "depot-windows-2022-32";
 }
 
-/// Configuration for CI workflow generation.
+const CONTAINER: &str = "ghcr.io/bearcove/arborium-plugin-builder:latest";
+
+/// Condition: this is a release (tag push).
+const IS_RELEASE: &str = "startsWith(github.ref, 'refs/tags/v')";
+
+/// Configuration for workflow generation.
 #[derive(Default)]
 pub struct CiConfig {
     /// Plugin build groups (if available)
     pub plugin_groups: Option<PluginGroups>,
 }
 
-/// Build the CI workflow.
-pub fn build_ci_workflow(config: &CiConfig) -> Workflow {
+/// Build the unified CI + Release workflow.
+pub fn build_workflow(config: &CiConfig) -> Workflow {
     use common::*;
 
     let mut jobs = IndexMap::new();
 
-    // Generate job - runs first, produces grammar sources artifact
+    // =========================================================================
+    // STAGE 1: Generate grammar sources
+    // =========================================================================
     jobs.insert(
         "generate".into(),
         Job::new(runners::UBUNTU_32)
-            .name("🌱 Generate Grammars")
-            .container("ghcr.io/bearcove/arborium-plugin-builder:latest")
+            .name("Generate")
+            .container(CONTAINER)
+            .outputs([
+                ("version".to_string(), "${{ steps.version.outputs.version }}".to_string()),
+                ("is_release".to_string(), "${{ steps.version.outputs.is_release }}".to_string()),
+            ])
             .steps([
-            checkout(),
-            Step::uses("Restore grammar generation cache", "actions/cache@v4")
-                .with_inputs([
-                    ("path", ".cache/arborium"),
-                    (
-                        "key",
-                        "grammar-cache-v2-${{ hashFiles('crates/*/grammar/grammar.js', 'crates/*/grammar/package.json', 'crates/*/common/**') }}",
-                    ),
-                    ("restore-keys", "grammar-cache-v2-"),
-                ]),
-            Step::run("Generate grammar sources", "arborium-xtask gen"),
-            Step::run(
-                "Create grammar sources tarball",
-                r#"# Collect all generated grammar/src directories
-find crates -type d -name 'src' -path '*/grammar/src' > grammar_dirs.txt
+                checkout(),
+                // Parse version from tag (if this is a release)
+                Step::run(
+                    "Parse version",
+                    r#"if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+  VERSION="${GITHUB_REF#refs/tags/v}"
+  IS_RELEASE="true"
+else
+  VERSION="0.0.0-dev"
+  IS_RELEASE="false"
+fi
+echo "version=$VERSION" >> $GITHUB_OUTPUT
+echo "is_release=$IS_RELEASE" >> $GITHUB_OUTPUT
+echo "Version: $VERSION (release: $IS_RELEASE)""#,
+                )
+                .with_id("version"),
+                // Grammar generation cache
+                Step::uses("Restore grammar generation cache", "actions/cache@v4")
+                    .with_inputs([
+                        ("path", ".cache/arborium"),
+                        (
+                            "key",
+                            "grammar-cache-v2-${{ hashFiles('crates/*/grammar/grammar.js', 'crates/*/grammar/package.json', 'crates/*/common/**') }}",
+                        ),
+                        ("restore-keys", "grammar-cache-v2-"),
+                    ]),
+                // Generate with version
+                Step::run(
+                    "Generate grammar sources",
+                    "arborium-xtask gen --version ${{ steps.version.outputs.version }}",
+                ),
+                // Create tarball for CI jobs (fast tar)
+                Step::run(
+                    "Create grammar sources tarball",
+                    r#"find crates -type d -name 'src' -path '*/grammar/src' > grammar_dirs.txt
 tar -cvf grammar-sources.tar -T grammar_dirs.txt"#,
-            ),
-            Step::uses("Upload grammar sources", "actions/upload-artifact@v4")
-                .with_inputs([
-                    ("name", "grammar-sources"),
-                    ("path", "grammar-sources.tar"),
-                    ("retention-days", "1"),
-                ]),
-        ]),
+                ),
+                Step::uses("Upload grammar sources", "actions/upload-artifact@v4")
+                    .with_inputs([
+                        ("name", "grammar-sources"),
+                        ("path", "grammar-sources.tar"),
+                        ("retention-days", "1"),
+                    ]),
+            ]),
     );
 
-    // Test Linux job
+    // =========================================================================
+    // STAGE 2: CI Jobs (always run)
+    // =========================================================================
+
+    // Test Linux
     jobs.insert(
         "test-linux".into(),
         Job::new(runners::UBUNTU_32)
-            .name("🐧 Test (Linux)")
-            .container("ghcr.io/bearcove/arborium-plugin-builder:latest")
+            .name("Test (Linux)")
+            .container(CONTAINER)
             .needs(["generate"])
             .steps([
                 checkout(),
                 download_grammar_sources(),
-                extract_grammar_sources(),
+                extract_grammar_sources_tar(),
                 Step::run("Build", "cargo build --locked --verbose"),
                 Step::run("Run tests", "cargo nextest run --locked --verbose"),
                 Step::run(
@@ -341,16 +439,16 @@ tar -cvf grammar-sources.tar -T grammar_dirs.txt"#,
             ]),
     );
 
-    // Test macOS job
+    // Test macOS
     jobs.insert(
         "test-macos".into(),
         Job::new(runners::MACOS)
-            .name("🍎 Test (macOS)")
+            .name("Test (macOS)")
             .needs(["generate"])
             .steps([
                 checkout(),
                 download_grammar_sources(),
-                extract_grammar_sources(),
+                extract_grammar_sources_tar(),
                 install_rust(),
                 rust_cache(),
                 install_nextest(),
@@ -359,25 +457,24 @@ tar -cvf grammar-sources.tar -T grammar_dirs.txt"#,
             ]),
     );
 
-    // WASM job
+    // WASM compatibility check
     jobs.insert(
         "wasm".into(),
         Job::new(runners::UBUNTU_32)
-            .name("🌐 WASM Compatibility")
-            .container("ghcr.io/bearcove/arborium-plugin-builder:latest")
+            .name("WASM Compatibility")
+            .container(CONTAINER)
             .needs(["generate"])
             .steps([
                 checkout(),
                 download_grammar_sources(),
-                extract_grammar_sources(),
+                extract_grammar_sources_tar(),
                 Step::run(
                     "Build arborium for WASM",
                     "cargo build --locked -p arborium --target wasm32-unknown-unknown",
                 ),
                 Step::run(
                     "Check for env imports in WASM",
-                    r#"# Find all .wasm files and check for env imports
-found_env_imports=false
+                    r#"found_env_imports=false
 for wasm_file in $(find target/wasm32-unknown-unknown -name "*.wasm" -type f); do
   if wasm-objdump -j Import -x "$wasm_file" 2>/dev/null | grep -q '<- env\.'; then
     echo "ERROR: Found env imports in $wasm_file:"
@@ -394,17 +491,17 @@ echo "No env imports found - WASM modules are browser-compatible""#,
             ]),
     );
 
-    // Clippy job
+    // Clippy
     jobs.insert(
         "clippy".into(),
         Job::new(runners::UBUNTU_32)
-            .name("📎 Clippy")
-            .container("ghcr.io/bearcove/arborium-plugin-builder:latest")
+            .name("Clippy")
+            .container(CONTAINER)
             .needs(["generate"])
             .steps([
                 checkout(),
                 download_grammar_sources(),
-                extract_grammar_sources(),
+                extract_grammar_sources_tar(),
                 Step::run(
                     "Run Clippy",
                     "cargo clippy --locked --all-targets -- -D warnings",
@@ -412,12 +509,12 @@ echo "No env imports found - WASM modules are browser-compatible""#,
             ]),
     );
 
-    // Fmt job (no dependency on generate)
+    // Format (no dependency on generate)
     jobs.insert(
         "fmt".into(),
         Job::new(runners::UBUNTU_4)
-            .name("📝 Format")
-            .container("ghcr.io/bearcove/arborium-plugin-builder:latest")
+            .name("Format")
+            .container(CONTAINER)
             .steps([
                 checkout(),
                 Step::run("Check formatting", "cargo fmt --all -- --check"),
@@ -428,37 +525,35 @@ echo "No env imports found - WASM modules are browser-compatible""#,
             ]),
     );
 
-    // Docs job
+    // Documentation
     jobs.insert(
         "docs".into(),
         Job::new(runners::UBUNTU_32)
-            .name("📚 Documentation")
-            .container("ghcr.io/bearcove/arborium-plugin-builder:latest")
+            .name("Documentation")
+            .container(CONTAINER)
             .needs(["generate"])
             .steps([
                 checkout(),
                 download_grammar_sources(),
-                extract_grammar_sources(),
+                extract_grammar_sources_tar(),
                 Step::run("Build docs", "cargo doc --locked --no-deps")
                     .with_env([("RUSTDOCFLAGS", "-D warnings")]),
             ]),
     );
 
-    // Plugin build jobs (if groups are available)
+    // =========================================================================
+    // STAGE 2b: Plugin builds (dynamic groups based on timing)
+    // =========================================================================
+    let mut plugin_job_ids = Vec::new();
+
     if let Some(ref groups) = config.plugin_groups {
         let total_groups = groups.groups.len();
-        let mut plugin_job_ids = Vec::new();
 
         for group in &groups.groups {
             let job_id = format!("build-plugins-{}", group.index);
             let grammars_list = group.grammars.join(" ");
             let display_grammars = group.grammars.join(", ");
-            let job_name = format!(
-                "🔌 Plugins ({} of {}): {}",
-                group.index + 1,
-                total_groups,
-                display_grammars
-            );
+            let job_name = format!("Plugins ({}/{}): {}", group.index + 1, total_groups, display_grammars);
 
             plugin_job_ids.push(job_id.clone());
 
@@ -466,15 +561,20 @@ echo "No env imports found - WASM modules are browser-compatible""#,
                 job_id,
                 Job::new(runners::UBUNTU_32)
                     .name(job_name)
-                    .container("ghcr.io/bearcove/arborium-plugin-builder:latest")
+                    .container(CONTAINER)
                     .needs(["generate"])
                     .steps([
                         checkout(),
                         download_grammar_sources(),
-                        extract_grammar_sources(),
+                        extract_grammar_sources_tar(),
                         Step::run(
                             format!("Build {}", display_grammars),
                             format!("arborium-xtask plugins build {}", grammars_list),
+                        ),
+                        // Generate npm package.json with version from generate job
+                        Step::run(
+                            "Generate npm package.json",
+                            "arborium-xtask plugins npm --version ${{ needs.generate.outputs.version }}",
                         ),
                         Step::uses("Upload plugins artifact", "actions/upload-artifact@v4")
                             .with_inputs([
@@ -485,52 +585,89 @@ echo "No env imports found - WASM modules are browser-compatible""#,
                     ]),
             );
         }
+    }
 
-        // Collect all plugins and package for npm
-        let mut collect_steps = vec![
-            checkout(),
-            Step::run("Create dist directory", "mkdir -p dist/plugins"),
-        ];
+    // =========================================================================
+    // STAGE 3: Publish to crates.io (only on release)
+    // =========================================================================
+    jobs.insert(
+        "publish-crates".into(),
+        Job::new(runners::UBUNTU_32)
+            .name("Publish crates.io")
+            .container(CONTAINER)
+            .needs(["generate", "test-linux", "test-macos", "clippy"])
+            .when(IS_RELEASE)
+            .steps([
+                checkout(),
+                download_grammar_sources(),
+                extract_grammar_sources_tar(),
+                // Regenerate with version to get Cargo.toml files
+                Step::run(
+                    "Regenerate with version",
+                    "arborium-xtask gen --version ${{ needs.generate.outputs.version }}",
+                ),
+                Step::run("Publish to crates.io", "arborium-xtask publish crates")
+                    .with_env([("CARGO_REGISTRY_TOKEN", "${{ secrets.CARGO_REGISTRY_TOKEN }}")]),
+            ]),
+    );
+
+    // =========================================================================
+    // STAGE 3b: Publish to npm (only on release, after plugins built)
+    // =========================================================================
+    if !plugin_job_ids.is_empty() {
+        let mut npm_needs = vec!["generate".to_string()];
+        npm_needs.extend(plugin_job_ids.iter().cloned());
+
+        let mut npm_steps = vec![checkout(), setup_node()];
 
         // Download all plugin artifacts
-        for group in &groups.groups {
-            collect_steps.push(
+        for (i, _) in plugin_job_ids.iter().enumerate() {
+            npm_steps.push(
                 Step::uses(
-                    format!("Download plugins group {}", group.index),
+                    format!("Download plugins group {}", i),
                     "actions/download-artifact@v4",
                 )
                 .with_inputs([
-                    ("name", format!("plugins-group-{}", group.index)),
+                    ("name", format!("plugins-group-{}", i)),
                     ("path", "dist/plugins".to_string()),
                 ]),
             );
         }
 
-        // TODO: Add npm packaging step here
-        collect_steps.push(Step::run(
-            "List collected plugins",
-            "find dist/plugins -type f | sort",
-        ));
+        npm_steps.extend([
+            Step::run("List plugins", "find dist/plugins -name 'package.json' | head -20"),
+            install_rust(),
+            rust_cache(),
+            Step::run("Build xtask", "cargo build --release -p xtask"),
+            Step::run("Publish to npm", "./target/release/xtask publish npm -o dist/plugins")
+                .with_env([("NODE_AUTH_TOKEN", "${{ secrets.NPM_TOKEN }}")]),
+        ]);
 
         jobs.insert(
-            "collect-plugins".into(),
-            Job::new(runners::UBUNTU_4)
-                .name("📦 Collect Plugins")
-                .needs(plugin_job_ids)
-                .steps(collect_steps),
+            "publish-npm".into(),
+            Job::new("ubuntu-latest")
+                .name("Publish npm")
+                .needs(npm_needs)
+                .when(IS_RELEASE)
+                .steps(npm_steps),
         );
     }
 
+    // =========================================================================
+    // Build the workflow
+    // =========================================================================
     Workflow {
         name: "CI".into(),
         on: On {
             push: Some(PushTrigger {
                 branches: Some(vec!["main".into()]),
+                tags: Some(vec!["v*".into()]),
             }),
             pull_request: Some(PullRequestTrigger {
                 branches: Some(vec!["main".into()]),
             }),
             merge_group: Some(MergeGroupTrigger {}),
+            workflow_dispatch: None,
         },
         env: Some(
             [
@@ -551,8 +688,6 @@ echo "No env imports found - WASM modules are browser-compatible""#,
 // =============================================================================
 
 use camino::Utf8Path;
-use facet_diff::FacetDiff;
-use facet_pretty::FacetPretty;
 use miette::Result;
 
 const GENERATED_HEADER: &str =
@@ -593,7 +728,7 @@ pub fn generate(repo_root: &Utf8Path, check: bool) -> Result<()> {
     };
 
     let config = CiConfig { plugin_groups };
-    let workflow = build_ci_workflow(&config);
+    let workflow = build_workflow(&config);
     let yaml_content = format!(
         "{}{}\n",
         GENERATED_HEADER,
@@ -609,14 +744,6 @@ pub fn generate(repo_root: &Utf8Path, check: bool) -> Result<()> {
             .map_err(|e| miette::miette!("failed to read {}: {}", ci_path, e))?;
 
         if existing != yaml_content {
-            // Show diff using facet-diff
-            let existing_workflow: Workflow = facet_yaml::from_str(&existing)
-                .map_err(|e| miette::miette!("failed to parse existing workflow: {}", e))?;
-
-            println!("Workflow diff:");
-            let diff = existing_workflow.diff(&workflow);
-            println!("{}", diff);
-
             return Err(miette::miette!(
                 "CI workflow is out of date. Run `cargo xtask ci generate` to update."
             ));
@@ -624,13 +751,18 @@ pub fn generate(repo_root: &Utf8Path, check: bool) -> Result<()> {
         println!("CI workflow is up to date.");
     } else {
         // Generate mode: write the file
-        println!("Generated workflow:");
-        println!("{}", workflow.pretty());
-
         fs_err::write(&ci_path, &yaml_content)
             .map_err(|e| miette::miette!("failed to write {}: {}", ci_path, e))?;
 
-        println!("\nWritten to: {}", ci_path);
+        println!("Written to: {}", ci_path);
+    }
+
+    // Delete old release.yml if it exists (now unified into ci.yml)
+    let release_path = repo_root.join(".github/workflows/release.yml");
+    if release_path.exists() {
+        fs_err::remove_file(&release_path)
+            .map_err(|e| miette::miette!("failed to remove {}: {}", release_path, e))?;
+        println!("Removed old release.yml (now unified into ci.yml)");
     }
 
     Ok(())

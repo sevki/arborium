@@ -7,6 +7,9 @@ name: CI
     branches: 
       - main
 
+    tags: 
+      - v*
+
   pull_request: 
     branches: 
       - main
@@ -19,13 +22,21 @@ env:
 
 jobs: 
   generate: 
-    name: 🌱 Generate Grammars
+    name: Generate
     runs-on: depot-ubuntu-24.04-32
     container: "ghcr.io/bearcove/arborium-plugin-builder:latest"
+    outputs: 
+      version: ${{ steps.version.outputs.version }}
+      is_release: ${{ steps.version.outputs.is_release }}
+
     steps: 
       - 
         name: Checkout
         uses: actions/checkout@v4
+      - 
+        name: Parse version
+        run: "if [[ \"$GITHUB_REF\" == refs/tags/v* ]]; then\n  VERSION=\"${GITHUB_REF#refs/tags/v}\"\n  IS_RELEASE=\"true\"\nelse\n  VERSION=\"0.0.0-dev\"\n  IS_RELEASE=\"false\"\nfi\necho \"version=$VERSION\" >> $GITHUB_OUTPUT\necho \"is_release=$IS_RELEASE\" >> $GITHUB_OUTPUT\necho \"Version: $VERSION (release: $IS_RELEASE)\""
+        id: version
       - 
         name: Restore grammar generation cache
         uses: actions/cache@v4
@@ -36,10 +47,10 @@ jobs:
 
       - 
         name: Generate grammar sources
-        run: arborium-xtask gen
+        run: arborium-xtask gen --version ${{ steps.version.outputs.version }}
       - 
         name: Create grammar sources tarball
-        run: "# Collect all generated grammar/src directories\nfind crates -type d -name 'src' -path '*/grammar/src' > grammar_dirs.txt\ntar -cvf grammar-sources.tar -T grammar_dirs.txt"
+        run: "find crates -type d -name 'src' -path '*/grammar/src' > grammar_dirs.txt\ntar -cvf grammar-sources.tar -T grammar_dirs.txt"
       - 
         name: Upload grammar sources
         uses: actions/upload-artifact@v4
@@ -50,7 +61,7 @@ jobs:
 
 
   test-linux: 
-    name: 🐧 Test (Linux)
+    name: Test (Linux)
     runs-on: depot-ubuntu-24.04-32
     container: "ghcr.io/bearcove/arborium-plugin-builder:latest"
     needs: 
@@ -80,7 +91,7 @@ jobs:
         run: cargo build --locked --all-features --verbose
 
   test-macos: 
-    name: 🍎 Test (macOS)
+    name: Test (macOS)
     runs-on: depot-macos-latest
     needs: 
       - generate
@@ -118,7 +129,7 @@ jobs:
         run: cargo nextest run --locked --verbose
 
   wasm: 
-    name: 🌐 WASM Compatibility
+    name: WASM Compatibility
     runs-on: depot-ubuntu-24.04-32
     container: "ghcr.io/bearcove/arborium-plugin-builder:latest"
     needs: 
@@ -142,10 +153,10 @@ jobs:
         run: cargo build --locked -p arborium --target wasm32-unknown-unknown
       - 
         name: Check for env imports in WASM
-        run: "# Find all .wasm files and check for env imports\nfound_env_imports=false\nfor wasm_file in $(find target/wasm32-unknown-unknown -name \"*.wasm\" -type f); do\n  if wasm-objdump -j Import -x \"$wasm_file\" 2>/dev/null | grep -q '<- env\\.'; then\n    echo \"ERROR: Found env imports in $wasm_file:\"\n    wasm-objdump -j Import -x \"$wasm_file\" | grep '<- env\\.'\n    found_env_imports=true\n  fi\ndone\nif [ \"$found_env_imports\" = true ]; then\n  echo \"WASM modules should not have env imports - these won't work in the browser\"\n  exit 1\nfi\necho \"No env imports found - WASM modules are browser-compatible\""
+        run: "found_env_imports=false\nfor wasm_file in $(find target/wasm32-unknown-unknown -name \"*.wasm\" -type f); do\n  if wasm-objdump -j Import -x \"$wasm_file\" 2>/dev/null | grep -q '<- env\\.'; then\n    echo \"ERROR: Found env imports in $wasm_file:\"\n    wasm-objdump -j Import -x \"$wasm_file\" | grep '<- env\\.'\n    found_env_imports=true\n  fi\ndone\nif [ \"$found_env_imports\" = true ]; then\n  echo \"WASM modules should not have env imports - these won't work in the browser\"\n  exit 1\nfi\necho \"No env imports found - WASM modules are browser-compatible\""
 
   clippy: 
-    name: 📎 Clippy
+    name: Clippy
     runs-on: depot-ubuntu-24.04-32
     container: "ghcr.io/bearcove/arborium-plugin-builder:latest"
     needs: 
@@ -169,7 +180,7 @@ jobs:
         run: cargo clippy --locked --all-targets -- -D warnings
 
   fmt: 
-    name: 📝 Format
+    name: Format
     runs-on: depot-ubuntu-24.04-4
     container: "ghcr.io/bearcove/arborium-plugin-builder:latest"
     steps: 
@@ -184,7 +195,7 @@ jobs:
         run: arborium-xtask ci generate --check
 
   docs: 
-    name: 📚 Documentation
+    name: Documentation
     runs-on: depot-ubuntu-24.04-32
     container: "ghcr.io/bearcove/arborium-plugin-builder:latest"
     needs: 
@@ -211,7 +222,7 @@ jobs:
 
 
   build-plugins-0: 
-    name: "🔌 Plugins (1 of 2): rust"
+    name: "Plugins (1/2): rust"
     runs-on: depot-ubuntu-24.04-32
     container: "ghcr.io/bearcove/arborium-plugin-builder:latest"
     needs: 
@@ -234,6 +245,9 @@ jobs:
         name: Build rust
         run: arborium-xtask plugins build rust
       - 
+        name: Generate npm package.json
+        run: arborium-xtask plugins npm --version ${{ needs.generate.outputs.version }}
+      - 
         name: Upload plugins artifact
         uses: actions/upload-artifact@v4
         with: 
@@ -243,7 +257,7 @@ jobs:
 
 
   build-plugins-1: 
-    name: "🔌 Plugins (2 of 2): javascript, html"
+    name: "Plugins (2/2): javascript, html"
     runs-on: depot-ubuntu-24.04-32
     container: "ghcr.io/bearcove/arborium-plugin-builder:latest"
     needs: 
@@ -266,6 +280,9 @@ jobs:
         name: Build javascript, html
         run: arborium-xtask plugins build javascript html
       - 
+        name: Generate npm package.json
+        run: arborium-xtask plugins npm --version ${{ needs.generate.outputs.version }}
+      - 
         name: Upload plugins artifact
         uses: actions/upload-artifact@v4
         with: 
@@ -274,20 +291,60 @@ jobs:
           retention-days: "7"
 
 
-  collect-plugins: 
-    name: 📦 Collect Plugins
-    runs-on: depot-ubuntu-24.04-4
+  publish-crates: 
+    name: Publish crates.io
+    runs-on: depot-ubuntu-24.04-32
+    container: "ghcr.io/bearcove/arborium-plugin-builder:latest"
     needs: 
-      - build-plugins-0
-      - build-plugins-1
+      - generate
+      - test-linux
+      - test-macos
+      - clippy
 
+    if: "startsWith(github.ref, 'refs/tags/v')"
     steps: 
       - 
         name: Checkout
         uses: actions/checkout@v4
       - 
-        name: Create dist directory
-        run: mkdir -p dist/plugins
+        name: Download grammar sources
+        uses: actions/download-artifact@v4
+        with: 
+          name: grammar-sources
+
+      - 
+        name: Extract grammar sources
+        run: tar -xvf grammar-sources.tar
+      - 
+        name: Regenerate with version
+        run: arborium-xtask gen --version ${{ needs.generate.outputs.version }}
+      - 
+        name: Publish to crates.io
+        run: arborium-xtask publish crates
+        env: 
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+
+  publish-npm: 
+    name: Publish npm
+    runs-on: ubuntu-latest
+    needs: 
+      - generate
+      - build-plugins-0
+      - build-plugins-1
+
+    if: "startsWith(github.ref, 'refs/tags/v')"
+    steps: 
+      - 
+        name: Checkout
+        uses: actions/checkout@v4
+      - 
+        name: Setup Node.js
+        uses: actions/setup-node@v4
+        with: 
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+
       - 
         name: Download plugins group 0
         uses: actions/download-artifact@v4
@@ -303,7 +360,22 @@ jobs:
           path: dist/plugins
 
       - 
-        name: List collected plugins
-        run: find dist/plugins -type f | sort
+        name: List plugins
+        run: "find dist/plugins -name 'package.json' | head -20"
+      - 
+        name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      - 
+        name: Rust cache
+        uses: Swatinem/rust-cache@v2
+      - 
+        name: Build xtask
+        run: cargo build --release -p xtask
+      - 
+        name: Publish to npm
+        run: ./target/release/xtask publish npm -o dist/plugins
+        env: 
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
 
 
