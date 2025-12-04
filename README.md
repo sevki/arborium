@@ -27,6 +27,111 @@ By default, all permissively-licensed grammars are included. To select specific 
 arborium = { version = "0.1", default-features = false, features = ["lang-rust", "lang-javascript"] }
 ```
 
+## Browser Usage
+
+Arborium can be used in the browser in two ways:
+
+### Option 1: Drop-in Script (Easiest)
+
+Add a single script tag and arborium auto-highlights all code blocks:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/@arborium/arborium/dist/arborium.iife.js"></script>
+```
+
+That's it! Arborium will:
+- Auto-detect languages from `class="language-*"` or `data-lang="*"` attributes
+- Load grammar WASM plugins on-demand from jsDelivr CDN
+- Inject the default theme CSS
+
+**Configuration via data attributes:**
+
+```html
+<script
+  src="https://cdn.jsdelivr.net/npm/@arborium/arborium/dist/arborium.iife.js"
+  data-theme="mocha"
+  data-selector="pre code"
+  data-manual
+></script>
+```
+
+**Configuration via JavaScript:**
+
+```html
+<script>
+  window.Arborium = {
+    theme: 'tokyo-night',
+    selector: 'pre code, .highlight',
+    cdn: 'jsdelivr',  // or 'unpkg' or a custom URL
+    version: '0.1.3', // or 'latest'
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@arborium/arborium/dist/arborium.iife.js"></script>
+```
+
+**Manual highlighting:**
+
+```html
+<script src="..." data-manual></script>
+<script>
+  // Highlight all code blocks
+  arborium.highlightAll();
+
+  // Highlight a specific element
+  arborium.highlightElement(document.querySelector('code'), 'rust');
+</script>
+```
+
+### Option 2: ESM Module (Programmatic)
+
+For bundlers (Vite, webpack, etc.) or ESM-native environments:
+
+```bash
+npm install @arborium/arborium
+```
+
+```typescript
+import { loadGrammar, highlight } from '@arborium/arborium';
+
+// Load a grammar (fetched from CDN on first use)
+const grammar = await loadGrammar('rust');
+
+// Highlight code
+const html = grammar.highlight('fn main() { println!("Hello!"); }');
+
+// Or use the convenience function
+const html = await highlight('rust', code);
+```
+
+### Option 3: Compile Rust to WASM (Maximum Control)
+
+For complete control and offline-first apps, compile the Rust crate directly to WASM:
+
+```toml
+[dependencies]
+arborium = { version = "0.1", default-features = false, features = ["lang-rust", "lang-javascript"] }
+```
+
+```bash
+# Requires LLVM with WASM support (see FAQ below)
+cargo build --target wasm32-unknown-unknown
+```
+
+This embeds selected grammars directly in your WASM binary - no CDN required at runtime.
+
+### Themes
+
+Available themes (dark): `mocha`, `macchiato`, `frappe`, `tokyo-night`, `dracula`, `monokai`, `one-dark`, `nord`, `gruvbox-dark`, `github-dark`
+
+Available themes (light): `latte`, `gruvbox-light`, `github-light`, `alabaster`, `dayfox`
+
+Import theme CSS:
+```html
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@arborium/arborium/dist/themes/tokyo-night.css">
+```
+
+Or let the IIFE bundle auto-inject it via the `data-theme` attribute.
+
 ## Feature Flags
 
 ### Grammar Collections

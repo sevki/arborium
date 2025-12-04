@@ -1,4 +1,4 @@
-/target
+target
 
 # Grammar generation cache
 .cache/
@@ -19,41 +19,6 @@ crates/*/grammar/src/
 crates/*/Cargo.toml
 crates/*/build.rs
 crates/*/src/lib.rs
-
-# EXCEPT: Non-generated crates (no arborium.kdl, hand-written)
-!crates/arborium/
-!crates/arborium/Cargo.toml
-!crates/arborium/src/
-!crates/arborium-host/
-!crates/arborium-host/Cargo.toml
-!crates/arborium-host/src/
-!crates/arborium-html-plugin/
-!crates/arborium-html-plugin/Cargo.toml
-!crates/arborium-html-plugin/src/
-!crates/arborium-javascript-plugin/
-!crates/arborium-javascript-plugin/Cargo.toml
-!crates/arborium-javascript-plugin/src/
-!crates/arborium-minimal/
-!crates/arborium-minimal/Cargo.toml
-!crates/arborium-minimal/src/
-!crates/arborium-plugin-runtime/
-!crates/arborium-plugin-runtime/Cargo.toml
-!crates/arborium-plugin-runtime/src/
-!crates/arborium-rust-plugin/
-!crates/arborium-rust-plugin/Cargo.toml
-!crates/arborium-rust-plugin/src/
-!crates/arborium-sysroot/
-!crates/arborium-sysroot/Cargo.toml
-!crates/arborium-sysroot/src/
-!crates/arborium-test-harness/
-!crates/arborium-test-harness/Cargo.toml
-!crates/arborium-test-harness/src/
-!crates/arborium-wire/
-!crates/arborium-wire/Cargo.toml
-!crates/arborium-wire/src/
-!crates/miette-arborium/
-!crates/miette-arborium/Cargo.toml
-!crates/miette-arborium/src/
 
 # ============================================================
 

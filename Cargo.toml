@@ -104,20 +104,23 @@ members = [
     "crates/miette-arborium",
     "crates/arborium-wire",
     "crates/arborium-plugin-runtime",
-    "xtask",
     "demo",
     "tree-sitter",
     "tree-sitter/language",
     "tree-sitter-highlight",
 ]
 
-# Plugin crates are excluded from workspace - they must be built with cargo-component
-# for wasm32-wasip2 target only. Use `cargo xtask plugins build` instead.
+# xtask is excluded so it doesn't rebuild when grammar crates change
+# Plugin crates are excluded - they must be built with cargo-component
 exclude = [
+    "xtask",
     "crates/arborium-rust-plugin",
     "crates/arborium-html-plugin",
     "crates/arborium-javascript-plugin",
     "crates/arborium-host",
+    "crates/arborium-ada-plugin",
+    "crates/arborium-agda-plugin",
+    "crates/arborium-asciidoc-plugin",
 ]
 
 [workspace.package]

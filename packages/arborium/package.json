@@ -22,7 +22,9 @@
   ],
   "scripts": {
     "dev": "vite",
-    "build": "vite build && tsc --emitDeclarationOnly",
+    "build": "vite build && vite build --config vite.config.iife.ts && tsc --emitDeclarationOnly",
+    "build:esm": "vite build",
+    "build:iife": "vite build --config vite.config.iife.ts",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit"
   },

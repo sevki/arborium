@@ -20,3 +20,8 @@ typedef long intptr_t;
 #define UINT16_MAX 65535U
 #define UINT32_MAX 4294967295U
 #define UINT64_MAX 18446744073709551615ULL
+
+// wasm32 pointer limits
+#define INTPTR_MAX INT32_MAX
+#define INTPTR_MIN (-INT32_MAX - 1)
+#define UINTPTR_MAX UINT32_MAX

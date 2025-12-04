@@ -10,12 +10,13 @@ use std::process::{Command, Stdio};
 
 /// Publish all crates to crates.io.
 ///
-/// Uses `cargo publish --workspace` which gracefully skips already-published versions.
+/// Uses `cargo workspaces publish` which handles inter-crate dependencies correctly
+/// and gracefully skips already-published versions.
 pub fn publish_crates(repo_root: &Utf8Path, dry_run: bool) -> Result<()> {
     println!("{}", "Publishing to crates.io...".cyan().bold());
 
     let mut cmd = Command::new("cargo");
-    cmd.arg("publish").arg("--workspace");
+    cmd.args(["workspaces", "publish", "--publish-as-is"]);
 
     if dry_run {
         cmd.arg("--dry-run");
@@ -30,11 +31,11 @@ pub fn publish_crates(repo_root: &Utf8Path, dry_run: bool) -> Result<()> {
     let status = cmd
         .status()
         .into_diagnostic()
-        .wrap_err("Failed to run cargo publish")?;
+        .wrap_err("Failed to run cargo workspaces publish")?;
 
     if !status.success() {
         return Err(miette::miette!(
-            "cargo publish failed with exit code {:?}",
+            "cargo workspaces publish failed with exit code {:?}",
             status.code()
         ));
     }

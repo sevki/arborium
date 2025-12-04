@@ -3,12 +3,14 @@
 //! This module handles building grammar plugins as WASM components
 //! and transpiling them to JavaScript for browser usage.
 
+use std::sync::Mutex;
 use std::time::Instant;
 
 use camino::{Utf8Path, Utf8PathBuf};
 use chrono::Utc;
 use miette::{Context, IntoDiagnostic, Result};
 use owo_colors::OwoColorize;
+use rayon::prelude::*;
 
 use crate::tool::Tool;
 use crate::types::{CompressionConfig, CrateRegistry};
@@ -140,123 +142,40 @@ pub fn build_plugins(repo_root: &Utf8Path, options: &BuildOptions) -> Result<()>
     };
 
     // Track timings if profiling is enabled
-    let mut timings: Vec<PluginTiming> = Vec::new();
+    let timings: Mutex<Vec<PluginTiming>> = Mutex::new(Vec::new());
+    let errors: Mutex<Vec<String>> = Mutex::new(Vec::new());
 
-    for grammar in &grammars {
-        let grammar_start = Instant::now();
-        println!("{} {}", "Building plugin:".cyan().bold(), grammar);
+    // Build plugins in parallel
+    grammars.par_iter().for_each(|grammar| {
+        let result = build_single_plugin(
+            repo_root,
+            grammar,
+            &output_dir,
+            &cargo_component,
+            jco.as_ref(),
+            options.profile,
+        );
 
-        let plugin_crate = format!("arborium-{}-plugin", grammar);
-        let plugin_dir = repo_root.join("crates").join(&plugin_crate);
-
-        // Check if plugin crate exists
-        if !plugin_dir.exists() {
-            println!(
-                "  {} Plugin crate {} does not exist, creating...",
-                "⚠".yellow(),
-                plugin_crate
-            );
-            create_plugin_crate(repo_root, grammar)?;
-        }
-
-        // Build with cargo component from the plugin crate directory
-        // (plugin crates are excluded from workspace, so we build from their directory)
-        let cargo_start = Instant::now();
-        let status = cargo_component
-            .command()
-            .args(["build", "--release"])
-            .current_dir(&plugin_dir)
-            .status()
-            .into_diagnostic()
-            .context("failed to run cargo-component")?;
-        let cargo_component_ms = cargo_start.elapsed().as_millis() as u64;
-
-        if !status.success() {
-            miette::bail!("cargo-component build failed for {}", grammar);
-        }
-
-        // Find the built wasm file (in the plugin crate's own target directory)
-        let wasm_file = plugin_dir
-            .join("target/wasm32-wasip1/release")
-            .join(format!("{}.wasm", plugin_crate.replace('-', "_")));
-
-        if !wasm_file.exists() {
-            miette::bail!("expected wasm file not found: {}", wasm_file);
-        }
-
-        // Copy to output directory
-        let plugin_output = output_dir.join(grammar);
-        std::fs::create_dir_all(&plugin_output)
-            .into_diagnostic()
-            .context("failed to create plugin output directory")?;
-
-        let dest_wasm = plugin_output.join("grammar.wasm");
-        std::fs::copy(&wasm_file, &dest_wasm)
-            .into_diagnostic()
-            .context("failed to copy wasm file")?;
-
-        // Transpile with jco if enabled
-        let mut transpile_ms = 0u64;
-        if let Some(ref jco) = jco {
-            println!("  {} Transpiling with jco...", "→".blue());
-            let transpile_start = Instant::now();
-            let status = jco
-                .command()
-                .args([
-                    "transpile",
-                    dest_wasm.as_str(),
-                    "--instantiation",
-                    "async",
-                    "--quiet",
-                    "-o",
-                    plugin_output.as_str(),
-                ])
-                .status()
-                .into_diagnostic()
-                .context("failed to run jco")?;
-            transpile_ms = transpile_start.elapsed().as_millis() as u64;
-
-            if !status.success() {
-                miette::bail!("jco transpile failed for {}", grammar);
+        match result {
+            Ok(timing) => {
+                timings.lock().unwrap().push(timing);
             }
-
-            // Calculate total wasm bundle size
-            let total_wasm_size: u64 = std::fs::read_dir(&plugin_output)
-                .into_diagnostic()?
-                .filter_map(|e| e.ok())
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "wasm"))
-                .filter_map(|e| e.metadata().ok())
-                .map(|m| m.len())
-                .sum();
-
-            println!(
-                "  {} Transpiled ({})",
-                "✓".green(),
-                format_size(total_wasm_size as usize)
-            );
+            Err(e) => {
+                errors.lock().unwrap().push(format!("{}: {}", grammar, e));
+            }
         }
+    });
 
-        let build_ms = grammar_start.elapsed().as_millis() as u64;
-
-        if options.profile {
-            println!(
-                "  {} Timing: {}ms total (cargo-component: {}ms, transpile: {}ms)",
-                "⏱".dimmed(),
-                build_ms,
-                cargo_component_ms,
-                transpile_ms
-            );
+    // Check for errors
+    let errors = errors.into_inner().unwrap();
+    if !errors.is_empty() {
+        for err in &errors {
+            eprintln!("{} {}", "✗".red(), err);
         }
-
-        timings.push(PluginTiming {
-            grammar: grammar.clone(),
-            build_ms,
-            cargo_component_ms,
-            transpile_ms,
-        });
-
-        println!("  {} Built {}", "✓".green(), grammar);
+        miette::bail!("{} plugin(s) failed to build", errors.len());
     }
+
+    let timings = timings.into_inner().unwrap();
 
     // Run deduplication if we transpiled
     if options.transpile && grammars.len() > 1 {
@@ -299,6 +218,128 @@ pub fn build_plugins(repo_root: &Utf8Path, options: &BuildOptions) -> Result<()>
     }
 
     Ok(())
+}
+
+/// Build a single plugin and return timing info.
+fn build_single_plugin(
+    repo_root: &Utf8Path,
+    grammar: &str,
+    output_dir: &Utf8Path,
+    cargo_component: &crate::tool::ToolPath,
+    jco: Option<&crate::tool::ToolPath>,
+    profile: bool,
+) -> Result<PluginTiming> {
+    let grammar_start = Instant::now();
+    println!("{} {}", "Building:".cyan(), grammar);
+
+    let plugin_crate = format!("arborium-{}-plugin", grammar);
+    let plugin_dir = repo_root.join("crates").join(&plugin_crate);
+
+    // Check if plugin crate exists
+    if !plugin_dir.exists() {
+        create_plugin_crate(repo_root, grammar)?;
+    }
+
+    // Build with cargo component from the plugin crate directory
+    let cargo_start = Instant::now();
+    let status = cargo_component
+        .command()
+        .args(["build", "--release"])
+        .current_dir(&plugin_dir)
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::piped())
+        .status()
+        .into_diagnostic()
+        .context("failed to run cargo-component")?;
+    let cargo_component_ms = cargo_start.elapsed().as_millis() as u64;
+
+    if !status.success() {
+        miette::bail!("cargo-component build failed");
+    }
+
+    // Find the built wasm file
+    let wasm_file = plugin_dir
+        .join("target/wasm32-wasip1/release")
+        .join(format!("{}.wasm", plugin_crate.replace('-', "_")));
+
+    if !wasm_file.exists() {
+        miette::bail!("expected wasm file not found: {}", wasm_file);
+    }
+
+    // Copy to output directory
+    let plugin_output = output_dir.join(grammar);
+    std::fs::create_dir_all(&plugin_output)
+        .into_diagnostic()
+        .context("failed to create plugin output directory")?;
+
+    let dest_wasm = plugin_output.join("grammar.wasm");
+    std::fs::copy(&wasm_file, &dest_wasm)
+        .into_diagnostic()
+        .context("failed to copy wasm file")?;
+
+    // Transpile with jco if enabled
+    let mut transpile_ms = 0u64;
+    if let Some(jco) = jco {
+        let transpile_start = Instant::now();
+        let status = jco
+            .command()
+            .args([
+                "transpile",
+                dest_wasm.as_str(),
+                "--instantiation",
+                "async",
+                "--quiet",
+                "-o",
+                plugin_output.as_str(),
+            ])
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::piped())
+            .status()
+            .into_diagnostic()
+            .context("failed to run jco")?;
+        transpile_ms = transpile_start.elapsed().as_millis() as u64;
+
+        if !status.success() {
+            miette::bail!("jco transpile failed");
+        }
+
+        // Calculate total wasm bundle size
+        let total_wasm_size: u64 = std::fs::read_dir(&plugin_output)
+            .into_diagnostic()?
+            .filter_map(|e| e.ok())
+            .filter(|e| e.path().extension().is_some_and(|ext| ext == "wasm"))
+            .filter_map(|e| e.metadata().ok())
+            .map(|m| m.len())
+            .sum();
+
+        println!(
+            "  {} {} ({})",
+            "✓".green(),
+            grammar,
+            format_size(total_wasm_size as usize)
+        );
+    } else {
+        println!("  {} {}", "✓".green(), grammar);
+    }
+
+    let build_ms = grammar_start.elapsed().as_millis() as u64;
+
+    if profile {
+        println!(
+            "    {} {}ms (cargo: {}ms, jco: {}ms)",
+            "⏱".dimmed(),
+            build_ms,
+            cargo_component_ms,
+            transpile_ms
+        );
+    }
+
+    Ok(PluginTiming {
+        grammar: grammar.to_string(),
+        build_ms,
+        cargo_component_ms,
+        transpile_ms,
+    })
 }
 
 /// Create a new plugin crate for a grammar.

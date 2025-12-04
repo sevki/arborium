@@ -33,23 +33,9 @@ export default defineConfig({
   ],
   build: {
     lib: {
-      entry: {
-        arborium: resolve(__dirname, 'src/index.ts'),
-        'arborium.iife': resolve(__dirname, 'src/iife.ts'),
-      },
+      entry: resolve(__dirname, 'src/index.ts'),
       formats: ['es'],
-      fileName: (_format, entryName) => {
-        if (entryName === 'arborium.iife') {
-          return 'arborium.iife.js';
-        }
-        return `${entryName}.js`;
-      },
-    },
-    rollupOptions: {
-      output: {
-        // For the IIFE entry, we want it self-contained
-        inlineDynamicImports: false,
-      },
+      fileName: () => 'arborium.js',
     },
     target: 'es2022',
     minify: 'esbuild',

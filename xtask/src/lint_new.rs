@@ -35,9 +35,12 @@ pub fn run_lints(crates_dir: &Utf8Path, options: LintOptions) -> miette::Result<
     let mut warnings = 0;
 
     // First pass: check for crates without arborium.kdl
+    // Only check grammar crates (those with a grammar/ subdirectory)
     println!("{}", "Checking for missing arborium.kdl files...".cyan());
     for (name, state) in registry.iter() {
-        if state.config.is_none() {
+        // Only grammar crates need arborium.kdl - they have a grammar/ directory
+        let has_grammar_dir = state.path.join("grammar").is_dir();
+        if state.config.is_none() && has_grammar_dir {
             println!(
                 "  {} {} - {}",
                 "!".yellow(),

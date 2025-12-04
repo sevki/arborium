@@ -380,11 +380,12 @@ impl GrammarConfig {
     }
 
     /// Whether to generate a WASM component plugin for this grammar.
+    /// Defaults to true.
     pub fn generate_component(&self) -> bool {
         self.generate_component
             .as_ref()
             .map(|g| g.value)
-            .unwrap_or(false)
+            .unwrap_or(true)
     }
 }
 
