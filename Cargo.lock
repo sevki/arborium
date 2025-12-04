@@ -3790,6 +3790,7 @@ dependencies = [
  "tiny_http",
  "toml",
  "ureq",
+ "walkdir",
  "wasm-opt",
  "which",
  "zopfli",

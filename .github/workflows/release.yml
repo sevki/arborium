@@ -28,16 +28,14 @@ jobs:
       - name: Generate grammar sources
         run: arborium-xtask gen
 
-      - name: Create grammar sources tarball
-        run: |
-          find crates -type d -name 'src' -path '*/grammar/src' > grammar_dirs.txt
-          tar -cvf grammar-sources.tar -T grammar_dirs.txt
+      - name: Pack grammar sources
+        run: arborium-xtask pack create -o grammar-sources.tar.zst
 
       - name: Upload grammar sources
         uses: actions/upload-artifact@v4
         with:
           name: grammar-sources
-          path: grammar-sources.tar
+          path: grammar-sources.tar.zst
           retention-days: 1
 
   publish:
@@ -53,7 +51,7 @@ jobs:
           name: grammar-sources
 
       - name: Extract grammar sources
-        run: tar -xvf grammar-sources.tar
+        run: arborium-xtask pack extract -i grammar-sources.tar.zst
 
       - name: Publish to crates.io
         run: cargo publish --workspace

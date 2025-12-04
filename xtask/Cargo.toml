@@ -39,4 +39,5 @@ atomicwrites = "0.4"
 zstd = "0.13"
 wasm-opt = "0.116"
 zopfli = "0.8"
+walkdir = "2"
 # arborium = { path = "../crates/arborium", features = ["all-languages"] }  # TODO: re-enable for theme CSS generation and highlight linting
