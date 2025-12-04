@@ -28,11 +28,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build xtask from source
-        run: |
-          cargo build --release -p xtask
-          cp target/release/xtask /usr/local/bin/arborium-xtask
-
       - name: Generate grammar sources
         run: arborium-xtask gen
 
