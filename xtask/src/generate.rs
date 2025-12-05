@@ -12,6 +12,20 @@ use crate::types::{CrateRegistry, CrateState};
 use crate::util::find_repo_root;
 use crate::version_store;
 use camino::{Utf8Path, Utf8PathBuf};
+
+/// Options for the generate command.
+pub struct GenerateOptions<'a> {
+    /// Optional grammar name to regenerate (regenerates all if None)
+    pub name: Option<&'a str>,
+    /// Dry run mode vs execute mode
+    pub mode: PlanMode,
+    /// Version string for generated Cargo.toml files
+    pub version: &'a str,
+    /// Continue processing all crates even if some fail
+    pub no_fail_fast: bool,
+    /// Number of parallel jobs for tree-sitter generation
+    pub jobs: usize,
+}
 use fs_err as fs;
 use owo_colors::OwoColorize;
 use rayon::prelude::*;
@@ -218,13 +232,7 @@ fn generate_workspace_dependencies(
 /// 3. Validate all grammars
 /// 4. Generate all grammars (tree-sitter)
 /// 5. Generate all crates (Cargo.toml, lib.rs, etc.)
-pub fn plan_generate(
-    crates_dir: &Utf8Path,
-    name: Option<&str>,
-    mode: PlanMode,
-    version: &str,
-    no_fail_fast: bool,
-) -> Result<PlanSet, Report> {
+pub fn plan_generate(crates_dir: &Utf8Path, options: GenerateOptions<'_>) -> Result<PlanSet, Report> {
     use std::time::Instant;
     let total_start = Instant::now();
 
@@ -232,7 +240,7 @@ pub fn plan_generate(
     let registry = load_registry(crates_dir)?;
 
     // 2. Prepare temp structures (SHARED by validation & generation)
-    let prepared = prepare_temp_structures(&registry, crates_dir, name, version)?;
+    let prepared = prepare_temp_structures(&registry, crates_dir, options.name, options.version)?;
 
     if prepared.prepared_temps.is_empty() {
         println!("No grammars to process");
@@ -243,7 +251,8 @@ pub fn plan_generate(
     validate_all_grammars(&prepared)?;
 
     // 4. Generate all grammars using same prepared structures
-    let generation_results = generate_all_grammars(&prepared, mode, no_fail_fast)?;
+    let generation_results =
+        generate_all_grammars(&prepared, options.mode, options.no_fail_fast, options.jobs)?;
 
     // 5. Generate all crates using templates
     let plan_set = generate_all_crates(&prepared, &generation_results)?;
@@ -884,14 +893,21 @@ fn generate_all_grammars(
     prepared: &PreparedStructures,
     mode: PlanMode,
     no_fail_fast: bool,
+    jobs: usize,
 ) -> Result<GenerationResults, Report> {
     let cache_hits = AtomicUsize::new(0);
     let cache_misses = AtomicUsize::new(0);
     let plans = Mutex::new(PlanSet::new());
     let errors: Mutex<Vec<(String, Report)>> = Mutex::new(Vec::new());
+    let first_error_seen = AtomicUsize::new(0); // 0 = no error, 1 = error seen
 
     // Process grammars in parallel using prepared temp directories
     let process_grammar = |prepared_temp: &PreparedTemp| {
+        // In fail-fast mode, skip if we already saw an error
+        if !no_fail_fast && first_error_seen.load(Ordering::Relaxed) == 1 {
+            return;
+        }
+
         let crate_name = &prepared_temp.crate_state.name;
         let result = plan_grammar_generation_with_prepared_temp(
             prepared_temp,
@@ -910,25 +926,21 @@ fn generate_all_grammars(
                 plans.lock().unwrap().add(plan);
             }
             Err(e) => {
+                first_error_seen.store(1, Ordering::Relaxed);
                 errors.lock().unwrap().push((crate_name.clone(), e));
             }
         }
     };
 
-    if no_fail_fast {
-        // Parallel processing - collect all errors
+    // Always parallel, with configurable thread pool
+    let pool = rayon::ThreadPoolBuilder::new()
+        .num_threads(jobs)
+        .build()
+        .expect("Failed to build thread pool");
+
+    pool.install(|| {
         prepared.prepared_temps.par_iter().for_each(process_grammar);
-    } else {
-        // Sequential processing - fail fast
-        for prepared_temp in &prepared.prepared_temps {
-            process_grammar(prepared_temp);
-            let errors = errors.lock().unwrap();
-            if !errors.is_empty() {
-                let (name, error) = &errors[0];
-                return Err(std::io::Error::other(format!("Error in {}: {}", name, error)).into());
-            }
-        }
-    }
+    });
 
     // Check for errors
     let errors = errors.into_inner().unwrap();

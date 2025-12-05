@@ -209,8 +209,7 @@ pub fn serve(crates_dir: &Utf8Path, addr: &str, port: Option<u16>, dev: bool) {
     );
 
     let (server, actual_port) = bind_server(addr, port);
-    let display_addr = if addr == "0.0.0.0" { "localhost" } else { addr };
-    let url = format!("http://{}:{}", display_addr, actual_port);
+    let url = format!("http://{}:{}", addr, actual_port);
 
     println!();
     println!(
