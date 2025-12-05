@@ -1,5 +1,7 @@
-use std::io::Write;
-use std::sync::Mutex;
+use std::io::{BufRead, BufReader, Write};
+use std::process::{Command, ExitStatus, Stdio};
+use std::sync::{Arc, Mutex};
+use std::thread;
 use std::time::Instant;
 
 use camino::{Utf8Path, Utf8PathBuf};
@@ -12,50 +14,79 @@ use crate::tool::Tool;
 use crate::types::CrateRegistry;
 use crate::version_store;
 
-/// Prefixes each line of output with a grammar tag.
-fn prefix_output(grammar: &str, output: &[u8], is_stderr: bool) -> String {
-    let text = String::from_utf8_lossy(output);
-    if text.is_empty() {
-        return String::new();
-    }
-    let prefix = format!("[{}]", grammar);
-    let colored_prefix = if is_stderr {
-        prefix.red().to_string()
-    } else {
-        prefix.cyan().to_string()
-    };
-    text.lines()
-        .map(|line| format!("{} {}", colored_prefix, line))
-        .collect::<Vec<_>>()
-        .join("\n")
-}
-
 /// Thread-safe output printer for parallel builds.
+#[derive(Clone)]
 struct OutputPrinter {
-    mutex: Mutex<()>,
+    mutex: Arc<Mutex<()>>,
 }
 
 impl OutputPrinter {
     fn new() -> Self {
         Self {
-            mutex: Mutex::new(()),
+            mutex: Arc::new(Mutex::new(())),
         }
     }
 
-    fn print_output(&self, grammar: &str, stdout: &[u8], stderr: &[u8]) {
+    fn print_line(&self, grammar: &str, line: &str, is_stderr: bool) {
         let _lock = self.mutex.lock().unwrap();
-        let stdout_prefixed = prefix_output(grammar, stdout, false);
-        let stderr_prefixed = prefix_output(grammar, stderr, true);
-        if !stdout_prefixed.is_empty() {
-            println!("{}", stdout_prefixed);
+        let prefix = format!("[{}]", grammar);
+        let colored_prefix = if is_stderr {
+            prefix.red().to_string()
+        } else {
+            prefix.cyan().to_string()
+        };
+        if is_stderr {
+            eprintln!("{} {}", colored_prefix, line);
+            let _ = std::io::stderr().flush();
+        } else {
+            println!("{} {}", colored_prefix, line);
+            let _ = std::io::stdout().flush();
         }
-        if !stderr_prefixed.is_empty() {
-            eprintln!("{}", stderr_prefixed);
-        }
-        // Flush to ensure output is visible immediately
-        let _ = std::io::stdout().flush();
-        let _ = std::io::stderr().flush();
     }
+}
+
+/// Run a command and stream its output with prefixed lines.
+fn run_streaming(
+    mut cmd: Command,
+    grammar: &str,
+    printer: &OutputPrinter,
+) -> std::io::Result<ExitStatus> {
+    cmd.stdout(Stdio::piped()).stderr(Stdio::piped());
+
+    let mut child = cmd.spawn()?;
+
+    let stdout = child.stdout.take().expect("stdout piped");
+    let stderr = child.stderr.take().expect("stderr piped");
+
+    let grammar_out = grammar.to_string();
+    let grammar_err = grammar.to_string();
+    let printer_out = printer.clone();
+    let printer_err = printer.clone();
+
+    let stdout_thread = thread::spawn(move || {
+        let reader = BufReader::new(stdout);
+        for line in reader.lines() {
+            if let Ok(line) = line {
+                printer_out.print_line(&grammar_out, &line, false);
+            }
+        }
+    });
+
+    let stderr_thread = thread::spawn(move || {
+        let reader = BufReader::new(stderr);
+        for line in reader.lines() {
+            if let Ok(line) = line {
+                printer_err.print_line(&grammar_err, &line, true);
+            }
+        }
+    });
+
+    let status = child.wait()?;
+
+    stdout_thread.join().expect("stdout thread panicked");
+    stderr_thread.join().expect("stderr thread panicked");
+
+    Ok(status)
 }
 
 pub struct BuildOptions {
@@ -353,7 +384,7 @@ fn build_single_plugin(
     printer: &OutputPrinter,
 ) -> Result<PluginTiming> {
     let grammar_start = Instant::now();
-    printer.print_output(grammar, b"Building...\n", b"");
+    printer.print_line(grammar, "Building...", false);
 
     let (crate_state, _) = locate_grammar(registry, grammar).ok_or_else(|| {
         miette::miette!(
@@ -390,19 +421,15 @@ fn build_single_plugin(
     }
 
     let cargo_start = Instant::now();
-    let output = cargo_component
-        .command()
-        .args(["build", "--release", "--target", "wasm32-wasip1"])
-        .current_dir(&plugin_output)
-        .output()
+    let mut cmd = cargo_component.command();
+    cmd.args(["build", "--release", "--target", "wasm32-wasip1"])
+        .current_dir(&plugin_output);
+    let status = run_streaming(cmd, grammar, printer)
         .into_diagnostic()
         .context("failed to run cargo-component")?;
     let cargo_component_ms = cargo_start.elapsed().as_millis() as u64;
 
-    // Print captured output with grammar prefix
-    printer.print_output(grammar, &output.stdout, &output.stderr);
-
-    if !output.status.success() {
+    if !status.success() {
         miette::bail!("cargo-component build failed (see output above)");
     }
 
@@ -425,26 +452,22 @@ fn build_single_plugin(
     let mut transpile_ms = 0u64;
     if let Some(jco) = jco {
         let transpile_start = Instant::now();
-        let output = jco
-            .command()
-            .args([
-                "transpile",
-                dest_wasm.as_str(),
-                "--instantiation",
-                "async",
-                "--quiet",
-                "-o",
-                plugin_output.as_str(),
-            ])
-            .output()
+        let mut cmd = jco.command();
+        cmd.args([
+            "transpile",
+            dest_wasm.as_str(),
+            "--instantiation",
+            "async",
+            "--quiet",
+            "-o",
+            plugin_output.as_str(),
+        ]);
+        let status = run_streaming(cmd, grammar, printer)
             .into_diagnostic()
             .context("failed to run jco")?;
         transpile_ms = transpile_start.elapsed().as_millis() as u64;
 
-        // Print captured output with grammar prefix
-        printer.print_output(grammar, &output.stdout, &output.stderr);
-
-        if !output.status.success() {
+        if !status.success() {
             miette::bail!("jco transpile failed (see output above)");
         }
     }
