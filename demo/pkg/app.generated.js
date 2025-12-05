@@ -2456,6 +2456,7 @@ async function initialize() {
         }
 
     } catch (error) {
+        console.error('Failed to initialize:', error);
         document.getElementById('output').innerHTML = `<span class="error">Failed to initialize: ${error}</span>`;
         updateStatus('Failed to load registry', false);
     }

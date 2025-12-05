@@ -2085,6 +2085,7 @@ dependencies = [
  "regex",
  "rootcause",
  "sailfish",
+ "serde_json",
  "structstruck",
  "tempfile",
  "thiserror",
