@@ -177,15 +177,11 @@ pub fn plan_generate(
         return Ok(PlanSet::new());
     }
 
-    // Pre-generation grammar validation
-    println!("{}", "Validating grammar dependencies...".cyan().bold());
+    // Pre-generation grammar validation - validate ALL grammars with grammar.js
+    println!("{}", "Validating grammar requires...".cyan().bold());
     for (_name, crate_state) in &crates_to_process {
         if let Some(config) = &crate_state.config {
-            // Only validate grammars that have external dependencies
-            let has_dependencies = !get_grammar_dependencies(config).is_empty();
-            if has_dependencies {
-                validate_grammar_requires(crate_state, config)?;
-            }
+            validate_grammar_requires(crate_state, config, crates_dir)?;
         }
     }
     println!("{} All grammar requires validated", "✓".green());
@@ -260,19 +256,10 @@ pub fn plan_generate(
                 }
             });
     } else {
-        // Parallel processing with fail-fast - stop on first error
-        use std::sync::atomic::AtomicBool;
-        let should_stop = AtomicBool::new(false);
-        let first_error = Mutex::new(None::<(String, Report)>);
-
+        // Parallel processing with fail-fast - exit process immediately on first error
         crates_to_process
             .par_iter()
-            .try_for_each(|(_name, crate_state)| -> Result<(), ()> {
-                // Check if we should stop due to an earlier error
-                if should_stop.load(Ordering::Relaxed) {
-                    return Err(());
-                }
-
+            .for_each(|(_name, crate_state)| {
                 let config = crate_state.config.as_ref().unwrap();
                 let crate_name = &crate_state.name;
 
@@ -310,25 +297,17 @@ pub fn plan_generate(
                                 elapsed.as_secs_f64()
                             );
                         }
-                        Ok(())
                     }
                     Err(e) => {
-                        // Fail fast - signal stop and store first error
+                        // Fail fast - show error and exit process immediately
                         if needs_generation {
                             println!("{} ✗ {}", "●".red(), crate_name);
                         }
-                        should_stop.store(true, Ordering::Relaxed);
-                        *first_error.lock().unwrap() = Some((crate_name.clone(), e));
-                        Err(())
+                        eprintln!("Error: {}: {}", crate_name.bold(), e);
+                        std::process::exit(1);
                     }
                 }
-            })
-            .ok(); // Ignore the Result from try_for_each, we handle errors below
-
-        // Check if we had a fail-fast error
-        if let Some((_crate_name, error)) = first_error.into_inner().unwrap() {
-            return Err(error);
-        }
+            });
     }
 
     let processing_elapsed = total_start.elapsed();
@@ -919,7 +898,8 @@ fn plan_file_update(
 /// Validate grammar.js require() statements by running Node.js with dummy globals
 fn validate_grammar_requires(
     crate_state: &CrateState,
-    _config: &crate::types::CrateConfig,
+    config: &crate::types::CrateConfig,
+    crates_dir: &Utf8Path,
 ) -> Result<(), Report> {
     let grammar_js = crate_state.def_path.join("grammar/grammar.js");
 
@@ -927,9 +907,30 @@ fn validate_grammar_requires(
         return Ok(());
     }
 
-    // Create a temporary wrapper script with dummy tree-sitter functions
+    // Create temp directory with grammar and dependencies set up
     let temp_dir = tempfile::tempdir()?;
+    let temp_root = Utf8PathBuf::from_path_buf(temp_dir.path().to_path_buf())
+        .map_err(|_| std::io::Error::other("Non-UTF8 temp path"))?;
+    let temp_grammar = temp_root.join("grammar");
+
+    // Copy grammar files to temp
+    let def_path = &crate_state.def_path;
+    let grammar_dir = def_path.join("grammar");
+    copy_dir_contents(&grammar_dir, &temp_grammar)?;
+
+    // Copy common/ directories if they exist
+    let def_common_dir = def_path.join("common");
+    if def_common_dir.exists() {
+        let temp_common = temp_root.join("common");
+        copy_dir_contents(&def_common_dir, &temp_common)?;
+    }
+
+    // Set up cross-grammar dependencies
+    setup_grammar_dependencies(&temp_grammar, crates_dir, config)?;
+
+    // Create wrapper script
     let wrapper_path = temp_dir.path().join("validate_grammar.js");
+    let temp_grammar_js = temp_grammar.join("grammar.js");
 
     let wrapper_content = format!(
         r#"
@@ -957,21 +958,10 @@ global.NUMBER = 'number';
 global.STRING = 'string';
 global.COMMENT = 'comment';
 
-// Try to require the grammar file - this will fail if requires are broken
-try {{
-    require('{}');
-    console.log('OK');
-}} catch (error) {{
-    if (error.code === 'MODULE_NOT_FOUND') {{
-        console.error('MISSING_MODULE:' + error.message);
-        process.exit(1);
-    }} else {{
-        console.error('SYNTAX_ERROR:' + error.message);
-        process.exit(2);
-    }}
-}}
+// Try to require the grammar file
+require('{}');
 "#,
-        grammar_js.as_str().replace('\\', "\\\\")
+        temp_grammar_js.as_str().replace('\\', "\\\\")
     );
 
     fs::write(&wrapper_path, wrapper_content)?;
@@ -979,66 +969,21 @@ try {{
     // Run Node.js on the wrapper
     let output = std::process::Command::new("node")
         .arg(&wrapper_path)
-        .current_dir(&crate_state.def_path)
+        .current_dir(&temp_root)
         .output()
         .map_err(|e| std::io::Error::other(format!("Failed to run node: {}", e)))?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
-        let stdout = String::from_utf8_lossy(&output.stdout);
-
-        // Check if this is a missing dependency that should be handled by setup_grammar_dependencies
-        if stderr.contains("Cannot find module 'tree-sitter-") {
-            // This is expected - we have a cross-grammar dependency
-            // Let setup_grammar_dependencies handle it during generation
-            println!(
-                "  {} {} - has cross-grammar dependencies (will be resolved during generation)",
-                "→".blue(),
-                crate_state
-                    .name
-                    .strip_prefix("arborium-")
-                    .unwrap_or(&crate_state.name)
-            );
-            return Ok(());
-        }
-
-        if stdout.starts_with("MISSING_MODULE:") || stderr.contains("Cannot find module") {
-            let error_msg = if stdout.starts_with("MISSING_MODULE:") {
-                stdout.strip_prefix("MISSING_MODULE:").unwrap_or(&stdout)
-            } else {
-                &stderr
-            };
-            return Err(std::io::Error::other(format!(
-                "Missing file dependency in {}: {}",
-                crate_state
-                    .name
-                    .strip_prefix("arborium-")
-                    .unwrap_or(&crate_state.name),
-                error_msg.trim().lines().next().unwrap_or(error_msg.trim())
-            ))
-            .into());
-        } else if stdout.starts_with("SYNTAX_ERROR:") {
-            let error_msg = stdout.strip_prefix("SYNTAX_ERROR:").unwrap_or(&stdout);
-            return Err(std::io::Error::other(format!(
-                "Grammar syntax error in {}: {}",
-                crate_state
-                    .name
-                    .strip_prefix("arborium-")
-                    .unwrap_or(&crate_state.name),
-                error_msg.trim()
-            ))
-            .into());
-        } else {
-            return Err(std::io::Error::other(format!(
-                "Grammar validation failed for {}: {}",
-                crate_state
-                    .name
-                    .strip_prefix("arborium-")
-                    .unwrap_or(&crate_state.name),
-                stderr.trim().lines().next().unwrap_or("unknown error")
-            ))
-            .into());
-        }
+        return Err(std::io::Error::other(format!(
+            "Grammar validation failed for {}: {}",
+            crate_state
+                .name
+                .strip_prefix("arborium-")
+                .unwrap_or(&crate_state.name),
+            stderr.trim()
+        ))
+        .into());
     }
 
     Ok(())
