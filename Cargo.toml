@@ -13,9 +13,9 @@ arborium-agda = { path = "langs/group-fern/agda/crate", version = "0.2.0" }
 arborium-asciidoc = { path = "langs/group-willow/asciidoc/crate", version = "0.2.0" }
 arborium-asciidoc_inline = { path = "langs/group-willow/asciidoc_inline/crate", version = "0.2.0" }
 arborium-asm = { path = "langs/group-birch/asm/crate", version = "0.2.0" }
-arborium-awk = { path = "langs/group-hazell/awk/crate", version = "0.2.0" }
-arborium-bash = { path = "langs/group-hazell/bash/crate", version = "0.2.0" }
-arborium-batch = { path = "langs/group-hazell/batch/crate", version = "0.2.0" }
+arborium-awk = { path = "langs/group-hazel/awk/crate", version = "0.2.0" }
+arborium-bash = { path = "langs/group-hazel/bash/crate", version = "0.2.0" }
+arborium-batch = { path = "langs/group-hazel/batch/crate", version = "0.2.0" }
 arborium-c = { path = "langs/group-birch/c/crate", version = "0.2.0" }
 arborium-c-sharp = { path = "langs/group-sage/c-sharp/crate", version = "0.2.0" }
 arborium-caddy = { path = "langs/group-maple/caddy/crate", version = "0.2.0" }
@@ -35,7 +35,7 @@ arborium-elisp = { path = "langs/group-sage/elisp/crate", version = "0.2.0" }
 arborium-elixir = { path = "langs/group-fern/elixir/crate", version = "0.2.0" }
 arborium-elm = { path = "langs/group-fern/elm/crate", version = "0.2.0" }
 arborium-erlang = { path = "langs/group-fern/erlang/crate", version = "0.2.0" }
-arborium-fish = { path = "langs/group-hazell/fish/crate", version = "0.2.0" }
+arborium-fish = { path = "langs/group-hazel/fish/crate", version = "0.2.0" }
 arborium-fsharp = { path = "langs/group-sage/fsharp/crate", version = "0.2.0" }
 arborium-gleam = { path = "langs/group-fern/gleam/crate", version = "0.2.0" }
 arborium-glsl = { path = "langs/group-moss/glsl/crate", version = "0.2.0" }
@@ -57,7 +57,7 @@ arborium-julia = { path = "langs/group-moss/julia/crate", version = "0.2.0" }
 arborium-kdl = { path = "langs/group-maple/kdl/crate", version = "0.2.0" }
 arborium-kotlin = { path = "langs/group-cedar/kotlin/crate", version = "0.2.0" }
 arborium-lean = { path = "langs/group-fern/lean/crate", version = "0.2.0" }
-arborium-lua = { path = "langs/group-hazell/lua/crate", version = "0.2.0" }
+arborium-lua = { path = "langs/group-hazel/lua/crate", version = "0.2.0" }
 arborium-markdown = { path = "langs/group-willow/markdown/crate", version = "0.2.0" }
 arborium-markdown-inline = { path = "langs/group-willow/markdown-inline/crate", version = "0.2.0" }
 arborium-matlab = { path = "langs/group-moss/matlab/crate", version = "0.2.0" }
@@ -67,18 +67,18 @@ arborium-ninja = { path = "langs/group-maple/ninja/crate", version = "0.2.0" }
 arborium-nix = { path = "langs/group-maple/nix/crate", version = "0.2.0" }
 arborium-objc = { path = "langs/group-birch/objc/crate", version = "0.2.0" }
 arborium-ocaml = { path = "langs/group-fern/ocaml/crate", version = "0.2.0" }
-arborium-perl = { path = "langs/group-hazell/perl/crate", version = "0.2.0" }
-arborium-php = { path = "langs/group-hazell/php/crate", version = "0.2.0" }
+arborium-perl = { path = "langs/group-hazel/perl/crate", version = "0.2.0" }
+arborium-php = { path = "langs/group-hazel/php/crate", version = "0.2.0" }
 arborium-plugin-runtime = { path = "crates/arborium-plugin-runtime", version = "0.2.0" }
 arborium-postscript = { path = "langs/group-sage/postscript/crate", version = "0.2.0" }
-arborium-powershell = { path = "langs/group-hazell/powershell/crate", version = "0.2.0" }
+arborium-powershell = { path = "langs/group-hazel/powershell/crate", version = "0.2.0" }
 arborium-prolog = { path = "langs/group-moss/prolog/crate", version = "0.2.0" }
-arborium-python = { path = "langs/group-hazell/python/crate", version = "0.2.0" }
+arborium-python = { path = "langs/group-hazel/python/crate", version = "0.2.0" }
 arborium-query = { path = "langs/group-maple/query/crate", version = "0.2.0" }
 arborium-r = { path = "langs/group-moss/r/crate", version = "0.2.0" }
 arborium-rescript = { path = "langs/group-pine/rescript/crate", version = "0.2.0" }
 arborium-ron = { path = "langs/group-maple/ron/crate", version = "0.2.0" }
-arborium-ruby = { path = "langs/group-hazell/ruby/crate", version = "0.2.0" }
+arborium-ruby = { path = "langs/group-hazel/ruby/crate", version = "0.2.0" }
 arborium-rust = { path = "langs/group-birch/rust/crate", version = "0.2.0" }
 arborium-scala = { path = "langs/group-cedar/scala/crate", version = "0.2.0" }
 arborium-scheme = { path = "langs/group-fern/scheme/crate", version = "0.2.0" }
@@ -108,7 +108,7 @@ arborium-xml = { path = "langs/group-acorn/xml/crate", version = "0.2.0" }
 arborium-yaml = { path = "langs/group-maple/yaml/crate", version = "0.2.0" }
 arborium-yuri = { path = "langs/group-pine/yuri/crate", version = "0.2.0" }
 arborium-zig = { path = "langs/group-birch/zig/crate", version = "0.2.0" }
-arborium-zsh = { path = "langs/group-hazell/zsh/crate", version = "0.2.0" }
+arborium-zsh = { path = "langs/group-hazel/zsh/crate", version = "0.2.0" }
 
 [workspace.package]
 version = "0.2.0"
