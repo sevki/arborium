@@ -34,5 +34,6 @@ blake3 = "1"
 
 ignore = "0.4"
 tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
+leon = "2"
 
 # arborium = { path = "../crates/arborium", features = ["all-languages"] }  # TODO: re-enable for theme CSS generation and highlight linting

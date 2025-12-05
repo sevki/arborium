@@ -289,7 +289,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.59.0",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -311,7 +311,7 @@ dependencies = [
  "facet-core",
  "facet-reflect",
  "heck 0.5.0",
- "miette",
+ "miette 7.6.0",
  "owo-colors",
  "tracing",
 ]
@@ -353,7 +353,7 @@ dependencies = [
  "lexical-parse-float",
  "lexical-parse-integer",
  "log",
- "miette",
+ "miette 7.6.0",
  "ryu",
  "strsim",
 ]
@@ -370,7 +370,7 @@ dependencies = [
  "facet-solver",
  "kdl",
  "log",
- "miette",
+ "miette 7.6.0",
 ]
 
 [[package]]
@@ -410,7 +410,7 @@ source = "git+https://github.com/facet-rs/facet#829ed190940549d989d01e769e7de594
 dependencies = [
  "facet-core",
  "facet-macros",
- "miette",
+ "miette 7.6.0",
 ]
 
 [[package]]
@@ -455,7 +455,7 @@ dependencies = [
  "facet-reflect",
  "facet-solver",
  "log",
- "miette",
+ "miette 7.6.0",
  "saphyr-parser",
 ]
 
@@ -648,7 +648,7 @@ version = "6.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "81a29e7b50079ff44549f68c0becb1c73d7f6de2a4ea952da77966daf3d4761e"
 dependencies = [
- "miette",
+ "miette 7.6.0",
  "num",
  "winnow 0.6.24",
 ]
@@ -658,6 +658,16 @@ name = "lazy_static"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
+
+[[package]]
+name = "leon"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "52df920dfe9751d43501ff2ee12dd81c457d9e810d3f64b5200ee461fe73800b"
+dependencies = [
+ "miette 5.10.0",
+ "thiserror 1.0.69",
+]
 
 [[package]]
 name = "lexical-parse-float"
@@ -731,6 +741,18 @@ checksum = "18c087666f377f857b49564f8791b481260c67825d6b337e1e38ddf54a985a88"
 
 [[package]]
 name = "miette"
+version = "5.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "59bb584eaeeab6bd0226ccf3509a69d7936d148cf3d036ad350abe35e8c6856e"
+dependencies = [
+ "miette-derive 5.10.0",
+ "once_cell",
+ "thiserror 1.0.69",
+ "unicode-width 0.1.14",
+]
+
+[[package]]
+name = "miette"
 version = "7.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5f98efec8807c63c752b5bd61f862c165c115b0a35685bdcfd9238c7aeb592b7"
@@ -738,7 +760,7 @@ dependencies = [
  "backtrace",
  "backtrace-ext",
  "cfg-if",
- "miette-derive",
+ "miette-derive 7.6.0",
  "owo-colors",
  "supports-color",
  "supports-hyperlinks",
@@ -747,6 +769,17 @@ dependencies = [
  "terminal_size",
  "textwrap",
  "unicode-width 0.1.14",
+]
+
+[[package]]
+name = "miette-derive"
+version = "5.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "49e7bc1560b95a3c4a25d03de42fe76ca718ab92d1a22a55b9b4cf67b3ae635c"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -782,7 +815,7 @@ version = "0.50.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7957b9740744892f114936ab4a57b3f487491bbeafaf8083688b16841a4240e5"
 dependencies = [
- "windows-sys 0.59.0",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -1084,7 +1117,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.59.0",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -1114,7 +1147,7 @@ version = "0.0.6"
 source = "git+https://github.com/facet-rs/saphyr.git?branch=feat%2Fclone-parser-scanner#ee0aa7d802298d180d3fdc95d3a8f3c996b2c774"
 dependencies = [
  "arraydeque",
- "thiserror",
+ "thiserror 2.0.17",
 ]
 
 [[package]]
@@ -1264,7 +1297,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "serde_json",
- "thiserror",
+ "thiserror 2.0.17",
  "walkdir",
  "yaml-rust",
 ]
@@ -1279,7 +1312,7 @@ dependencies = [
  "getrandom",
  "once_cell",
  "rustix",
- "windows-sys 0.59.0",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -1304,11 +1337,31 @@ dependencies = [
 
 [[package]]
 name = "thiserror"
+version = "1.0.69"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b6aaf5339b578ea85b50e080feb250a3e8ae8cfcdff9a461c9ec2904bc923f52"
+dependencies = [
+ "thiserror-impl 1.0.69",
+]
+
+[[package]]
+name = "thiserror"
 version = "2.0.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f63587ca0f12b72a0600bcba1d40081f830876000bb46dd2337a3051618f4fc8"
 dependencies = [
- "thiserror-impl",
+ "thiserror-impl 2.0.17",
+]
+
+[[package]]
+name = "thiserror-impl"
+version = "1.0.69"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4fee6c4efc90059e10f81e6d42c60a18f76588c3d74cb83a0b242a2b6c7504c1"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -1611,7 +1664,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.59.0",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -1866,14 +1919,15 @@ dependencies = [
  "ignore",
  "indexmap",
  "indicatif",
- "miette",
+ "leon",
+ "miette 7.6.0",
  "owo-colors",
  "rayon",
  "regex",
  "rootcause",
  "structstruck",
  "tempfile",
- "thiserror",
+ "thiserror 2.0.17",
  "tiny_http",
  "tracing-subscriber",
  "which",

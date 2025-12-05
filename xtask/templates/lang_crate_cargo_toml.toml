@@ -1,0 +1,23 @@
+[package]
+name = "{crate_name}"
+version = "{workspace_version}"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
+keywords.workspace = true
+categories.workspace = true
+description = "Tree-sitter grammar for {grammar_id}"
+readme = "README.md"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+tree-sitter = "0.24"
+tree-sitter-language = "0.1"
+
+[build-dependencies]
+cc = "1"
+tree-sitter-cli = "0.24"

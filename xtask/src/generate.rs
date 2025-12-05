@@ -14,6 +14,7 @@ use crate::util::find_repo_root;
 use camino::{Utf8Path, Utf8PathBuf};
 use fs_err as fs;
 // Removed indicatif imports since we no longer use spinners for fast operations
+use leon::Template;
 use owo_colors::OwoColorize;
 use rayon::prelude::*;
 use rootcause::Report;
@@ -23,6 +24,8 @@ use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
+
+const VALIDATE_GRAMMAR_TEMPLATE: &str = include_str!("../templates/validate_grammar.js");
 
 /// Context for build operations - contains shared state and configuration
 struct BuildContext<'a> {
@@ -918,11 +921,19 @@ fn validate_grammar_requires(
     let grammar_dir = def_path.join("grammar");
     copy_dir_contents(&grammar_dir, &temp_grammar)?;
 
-    // Copy common/ directories if they exist
+    // Copy common/ to temp/common/ if it exists (some grammars share code via ../common/)
+    // Check both def/common (shared at language level) and def/grammar/common (local to grammar)
     let def_common_dir = def_path.join("common");
+    let grammar_common_dir = def_path.join("grammar/common");
+
     if def_common_dir.exists() {
         let temp_common = temp_root.join("common");
         copy_dir_contents(&def_common_dir, &temp_common)?;
+    }
+
+    if grammar_common_dir.exists() {
+        let temp_common = temp_root.join("common");
+        copy_dir_contents(&grammar_common_dir, &temp_common)?;
     }
 
     // Set up cross-grammar dependencies
@@ -932,37 +943,18 @@ fn validate_grammar_requires(
     let wrapper_path = temp_dir.path().join("validate_grammar.js");
     let temp_grammar_js = temp_grammar.join("grammar.js");
 
-    let wrapper_content = format!(
-        r#"
-// Dummy tree-sitter globals
-global.grammar = () => {{}};
-global.seq = (...args) => args;
-global.choice = (...args) => args;
-global.repeat = (rule) => rule;
-global.repeat1 = (rule) => rule;
-global.optional = (rule) => rule;
-global.prec = (n, rule) => rule;
-global.prec_left = (n, rule) => rule;
-global.prec_right = (n, rule) => rule;
-global.prec_dynamic = (n, rule) => rule;
-global.token = (rule) => rule;
-global.alias = (rule, name) => rule;
-global.field = (name, rule) => rule;
-global.$ = new Proxy({{}}, {{ get: () => "rule" }});
+    let template = Template::parse(VALIDATE_GRAMMAR_TEMPLATE)
+        .map_err(|e| std::io::Error::other(format!("Template parse error: {}", e)))?;
 
-// Pattern constants (optional - grammars may define their own)
-global.NEWLINE = 'newline';
-global.WHITESPACE = 'whitespace';
-global.IDENTIFIER = 'identifier';
-global.NUMBER = 'number';
-global.STRING = 'string';
-global.COMMENT = 'comment';
-
-// Try to require the grammar file
-require('{}');
-"#,
-        temp_grammar_js.as_str().replace('\\', "\\\\")
+    let mut values = std::collections::HashMap::new();
+    values.insert(
+        "grammar_path",
+        temp_grammar_js.as_str().replace('\\', "\\\\"),
     );
+
+    let wrapper_content = template
+        .render(&values)
+        .map_err(|e| std::io::Error::other(format!("Template render error: {}", e)))?;
 
     fs::write(&wrapper_path, wrapper_content)?;
 
