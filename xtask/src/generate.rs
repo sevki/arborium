@@ -18,8 +18,8 @@ use rayon::prelude::*;
 use rootcause::Report;
 use sailfish::TemplateSimple;
 use std::process::Stdio;
-use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Mutex;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 // Sailfish templates - compiled at build time
 #[derive(TemplateSimple)]
@@ -927,8 +927,7 @@ fn generate_all_crates(
         let crate_state = &prepared_temp.crate_state;
         let config = &prepared_temp.config;
 
-        let crate_plan =
-            plan_crate_files_only(crate_state, config, &prepared.workspace_version)?;
+        let crate_plan = plan_crate_files_only(crate_state, config, &prepared.workspace_version)?;
         final_plan.add(crate_plan);
     }
 

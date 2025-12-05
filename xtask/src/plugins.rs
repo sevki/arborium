@@ -11,16 +11,17 @@ use chrono::Utc;
 use miette::{Context, IntoDiagnostic, Result};
 use owo_colors::OwoColorize;
 use rayon::prelude::*;
+use regex::Regex;
 
 use crate::tool::Tool;
-use crate::types::{CompressionConfig, CrateRegistry};
+use crate::types::CrateRegistry;
 
 /// Build options for plugins.
 pub struct BuildOptions {
     /// Specific grammars to build (empty = all)
     pub grammars: Vec<String>,
-    /// Output directory for built plugins
-    pub output_dir: Utf8PathBuf,
+    /// Optional override output directory (per-grammar subdir will be created)
+    pub output_dir: Option<Utf8PathBuf>,
     /// Whether to run jco transpile after building
     pub transpile: bool,
     /// Whether to profile build times and write to plugin-timings.json
@@ -31,7 +32,7 @@ impl Default for BuildOptions {
     fn default() -> Self {
         Self {
             grammars: Vec::new(),
-            output_dir: Utf8PathBuf::from("dist/plugins"),
+            output_dir: None,
             transpile: true,
             profile: false,
         }
@@ -62,6 +63,98 @@ pub struct PluginTimings {
     pub timings: Vec<PluginTiming>,
 }
 
+/// A group of plugins to build together (used by CI generator).
+#[derive(Debug, Clone, facet::Facet)]
+#[facet(rename_all = "snake_case")]
+pub struct PluginGroup {
+    pub index: usize,
+    pub grammars: Vec<String>,
+    pub total_ms: u64,
+}
+
+/// Per-language manifest entry for JS/CDN loaders.
+#[derive(Debug, Clone, facet::Facet)]
+#[facet(rename_all = "snake_case")]
+pub struct PluginManifestEntry {
+    pub language: String,
+    pub package: String,
+    pub version: String,
+    pub cdn_js: String,
+    pub cdn_wasm: String,
+    pub local_js: String,
+    pub local_wasm: String,
+}
+
+/// Manifest of all plugins, emitted after build.
+#[derive(Debug, Clone, facet::Facet)]
+#[facet(rename_all = "snake_case")]
+pub struct PluginManifest {
+    pub generated_at: String,
+    pub entries: Vec<PluginManifestEntry>,
+}
+
+/// Grouping result for CI parallelization.
+#[derive(Debug, Clone, facet::Facet)]
+#[facet(rename_all = "snake_case")]
+pub struct PluginGroups {
+    pub groups: Vec<PluginGroup>,
+    pub max_group_ms: u64,
+    pub ideal_per_group_ms: u64,
+    pub efficiency: f64,
+}
+
+impl PluginGroups {
+    /// Greedy LPT bin-packing to balance groups.
+    pub fn from_timings(timings: &PluginTimings, num_groups: usize) -> Self {
+        let num_groups = num_groups.max(1);
+
+        let mut sorted: Vec<_> = timings.timings.iter().collect();
+        sorted.sort_by(|a, b| b.build_ms.cmp(&a.build_ms));
+
+        let mut groups: Vec<PluginGroup> = (0..num_groups)
+            .map(|i| PluginGroup {
+                index: i,
+                grammars: Vec::new(),
+                total_ms: 0,
+            })
+            .collect();
+
+        for timing in sorted {
+            let g = groups
+                .iter_mut()
+                .min_by_key(|g| g.total_ms)
+                .expect("at least one group");
+            g.grammars.push(timing.grammar.clone());
+            g.total_ms += timing.build_ms;
+        }
+
+        groups.retain(|g| !g.grammars.is_empty());
+        for (i, g) in groups.iter_mut().enumerate() {
+            g.index = i;
+        }
+
+        let max_group_ms = groups.iter().map(|g| g.total_ms).max().unwrap_or(0);
+        let total_ms: u64 = timings.timings.iter().map(|t| t.build_ms).sum();
+        let ideal_per_group_ms = if num_groups > 0 {
+            total_ms / num_groups as u64
+        } else {
+            0
+        };
+        let efficiency = if max_group_ms > 0 {
+            ideal_per_group_ms as f64 / max_group_ms as f64
+        } else {
+            0.0
+        };
+
+        Self {
+            groups,
+            max_group_ms,
+            ideal_per_group_ms,
+            efficiency,
+        }
+    }
+}
+
 impl PluginTimings {
     /// Load timings from a JSON file.
     pub fn load(path: &Utf8Path) -> miette::Result<Self> {
@@ -78,6 +171,28 @@ impl PluginTimings {
             .map_err(|e| miette::miette!("failed to write {}: {}", path, e))?;
         Ok(())
     }
+}
+
+/// Read the canonical workspace version from Cargo.toml.
+///
+/// `xtask gen --version` is responsible for writing this; all other commands
+/// should read from here instead of taking a manual flag to avoid skew.
+fn read_workspace_version(repo_root: &Utf8Path) -> Result<String> {
+    let cargo_toml = repo_root.join("Cargo.toml");
+    let content = std::fs::read_to_string(&cargo_toml)
+        .into_diagnostic()
+        .context("failed to read Cargo.toml")?;
+
+    let re = Regex::new(r#"(?m)^\[workspace\.package\][^\[]*?^version\s*=\s*"([^"]+)""#)
+        .expect("regex is valid");
+
+    let Some(caps) = re.captures(&content) else {
+        miette::bail!(
+            "workspace.package.version is missing in Cargo.toml (run `cargo xtask gen --version <x.y.z>` first)"
+        );
+    };
+
+    Ok(caps[1].to_string())
 }
 
 /// Build WASM component plugins.
@@ -119,16 +234,11 @@ pub fn build_plugins(repo_root: &Utf8Path, options: &BuildOptions) -> Result<()>
         grammars.join(", ")
     );
 
-    // Ensure output directory exists
-    let output_dir = repo_root.join(&options.output_dir);
-    std::fs::create_dir_all(&output_dir)
-        .into_diagnostic()
-        .context("failed to create output directory")?;
-
     let cargo_component = Tool::CargoComponent
         .find()
         .into_diagnostic()
         .context("cargo-component not found")?;
+    let version = read_workspace_version(repo_root)?;
 
     let jco = if options.transpile {
         Some(
@@ -155,8 +265,10 @@ pub fn build_plugins(repo_root: &Utf8Path, options: &BuildOptions) -> Result<()>
         grammars.par_iter().for_each(|grammar| {
             let result = build_single_plugin(
                 repo_root,
+                &registry,
                 grammar,
-                &output_dir,
+                options.output_dir.as_deref(),
+                &version,
                 &cargo_component,
                 jco.as_ref(),
                 options.profile,
@@ -184,19 +296,26 @@ pub fn build_plugins(repo_root: &Utf8Path, options: &BuildOptions) -> Result<()>
 
     let timings = timings.into_inner().unwrap();
 
-    // Run deduplication if we transpiled
-    if options.transpile && grammars.len() > 1 {
-        println!("\n{} Deduplicating shared WASM modules...", "→".blue());
-        deduplicate_wasm_modules(&output_dir)?;
-    }
-
-    // Optimize and compress all wasm files
-    if options.transpile {
-        println!("\n{} Optimizing and compressing WASM files...", "→".blue());
-        let compression_config = CompressionConfig::load(repo_root)
-            .map_err(|e| miette::miette!("failed to load compression.kdl: {}", e))?;
-        optimize_and_compress_wasm(&output_dir, &compression_config)?;
-    }
+    // Emit manifest for loaders (cdn + local) using recorded version
+    let manifest = build_manifest(
+        repo_root,
+        &registry,
+        &grammars,
+        options.output_dir.as_deref(),
+        &version,
+    )?;
+    let manifest_path = repo_root.join("langs").join("plugins.json");
+    fs_err::create_dir_all(manifest_path.parent().unwrap())
+        .into_diagnostic()
+        .context("failed to create manifest dir")?;
+    fs_err::write(&manifest_path, facet_json::to_string_pretty(&manifest))
+        .into_diagnostic()
+        .context("failed to write manifest")?;
+    println!(
+        "{} Wrote plugin manifest {}",
+        "✓".green(),
+        manifest_path.cyan()
+    );
 
     // Save timings if profiling is enabled
     if options.profile {
@@ -228,140 +347,34 @@ pub fn build_plugins(repo_root: &Utf8Path, options: &BuildOptions) -> Result<()>
 }
 
 /// Build a single plugin and return timing info.
-fn build_single_plugin(
-    repo_root: &Utf8Path,
+fn locate_grammar<'a>(
+    registry: &'a CrateRegistry,
     grammar: &str,
-    output_dir: &Utf8Path,
-    cargo_component: &crate::tool::ToolPath,
-    jco: Option<&crate::tool::ToolPath>,
-    profile: bool,
-) -> Result<PluginTiming> {
-    let grammar_start = Instant::now();
-    println!("{} {}", "Building:".cyan(), grammar);
-
-    let plugin_crate = format!("arborium-{}-plugin", grammar);
-    let plugin_dir = repo_root.join("crates").join(&plugin_crate);
-
-    // Check if plugin crate exists
-    if !plugin_dir.exists() {
-        create_plugin_crate(repo_root, grammar)?;
-    }
-
-    // Build with cargo component from the plugin crate directory
-    let cargo_start = Instant::now();
-    let output = cargo_component
-        .command()
-        .args(["build", "--release"])
-        .current_dir(&plugin_dir)
-        .output()
-        .into_diagnostic()
-        .context("failed to run cargo-component")?;
-    let cargo_component_ms = cargo_start.elapsed().as_millis() as u64;
-
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        miette::bail!("cargo-component build failed:\n{}", stderr);
-    }
-
-    // Find the built wasm file
-    let wasm_file = plugin_dir
-        .join("target/wasm32-wasip1/release")
-        .join(format!("{}.wasm", plugin_crate.replace('-', "_")));
-
-    if !wasm_file.exists() {
-        miette::bail!("expected wasm file not found: {}", wasm_file);
-    }
-
-    // Copy to output directory
-    let plugin_output = output_dir.join(grammar);
-    std::fs::create_dir_all(&plugin_output)
-        .into_diagnostic()
-        .context("failed to create plugin output directory")?;
-
-    let dest_wasm = plugin_output.join("grammar.wasm");
-    std::fs::copy(&wasm_file, &dest_wasm)
-        .into_diagnostic()
-        .context("failed to copy wasm file")?;
-
-    // Transpile with jco if enabled
-    let mut transpile_ms = 0u64;
-    if let Some(jco) = jco {
-        let transpile_start = Instant::now();
-        let output = jco
-            .command()
-            .args([
-                "transpile",
-                dest_wasm.as_str(),
-                "--instantiation",
-                "async",
-                "--quiet",
-                "-o",
-                plugin_output.as_str(),
-            ])
-            .output()
-            .into_diagnostic()
-            .context("failed to run jco")?;
-        transpile_ms = transpile_start.elapsed().as_millis() as u64;
-
-        if !output.status.success() {
-            let stderr = String::from_utf8_lossy(&output.stderr);
-            miette::bail!("jco transpile failed:\n{}", stderr);
-        }
-
-        // Calculate total wasm bundle size
-        let total_wasm_size: u64 = std::fs::read_dir(&plugin_output)
-            .into_diagnostic()?
-            .filter_map(|e| e.ok())
-            .filter(|e| e.path().extension().is_some_and(|ext| ext == "wasm"))
-            .filter_map(|e| e.metadata().ok())
-            .map(|m| m.len())
-            .sum();
-
-        println!(
-            "  {} {} ({})",
-            "✓".green(),
-            grammar,
-            format_size(total_wasm_size as usize)
-        );
-    } else {
-        println!("  {} {}", "✓".green(), grammar);
-    }
-
-    let build_ms = grammar_start.elapsed().as_millis() as u64;
-
-    if profile {
-        println!(
-            "    {} {}ms (cargo: {}ms, jco: {}ms)",
-            "⏱".dimmed(),
-            build_ms,
-            cargo_component_ms,
-            transpile_ms
-        );
-    }
-
-    Ok(PluginTiming {
-        grammar: grammar.to_string(),
-        build_ms,
-        cargo_component_ms,
-        transpile_ms,
+) -> Option<(
+    &'a crate::types::CrateState,
+    &'a crate::types::GrammarConfig,
+)> {
+    registry.configured_crates().find_map(|(_, state, cfg)| {
+        cfg.grammars
+            .iter()
+            .find(|g| <String as AsRef<str>>::as_ref(&g.id.value) == grammar)
+            .map(|g| (state, g))
     })
 }
 
-/// Create a new plugin crate for a grammar.
-fn create_plugin_crate(repo_root: &Utf8Path, grammar: &str) -> Result<()> {
-    let grammar_crate = format!("arborium-{}", grammar);
-    let plugin_crate = format!("arborium-{}-plugin", grammar);
-    let plugin_dir = repo_root.join("crates").join(&plugin_crate);
+fn write_plugin_cargo_toml(
+    repo_root: &Utf8Path,
+    grammar: &str,
+    grammar_crate: &str,
+    grammar_crate_path: &Utf8Path,
+    out_dir: &Utf8Path,
+) -> Result<()> {
+    let runtime_path = repo_root.join("crates/arborium-plugin-runtime");
+    let wire_path = repo_root.join("crates/arborium-wire");
 
-    // Create directories
-    std::fs::create_dir_all(plugin_dir.join("src"))
-        .into_diagnostic()
-        .context("failed to create plugin crate directory")?;
-
-    // Create Cargo.toml
     let cargo_toml = format!(
         r#"[package]
-name = "{plugin_crate}"
+name = "arborium-{grammar}-plugin"
 version = "0.1.0"
 edition = "2024"
 description = "{grammar} grammar plugin for arborium"
@@ -372,9 +385,9 @@ repository = "https://github.com/bearcove/arborium"
 crate-type = ["cdylib"]
 
 [dependencies]
-arborium-plugin-runtime = {{ path = "../arborium-plugin-runtime" }}
-arborium-wire = {{ path = "../arborium-wire" }}
-{grammar_crate} = {{ path = "../{grammar_crate}" }}
+arborium-plugin-runtime = {{ path = "{runtime_path}" }}
+arborium-wire = {{ path = "{wire_path}" }}
+"{grammar_crate}" = {{ path = "{grammar_crate_path}" }}
 wit-bindgen = "0.36"
 
 [package.metadata.component]
@@ -382,24 +395,34 @@ package = "arborium:grammar"
 
 [package.metadata.component.target]
 world = "grammar-plugin"
-path = "../../wit/grammar.wit"
-
-# Prevent cargo from walking up to parent workspace
-[workspace]
-"#
+path = "{wit_path}"
+"#,
+        grammar = grammar,
+        runtime_path = runtime_path.as_str(),
+        wire_path = wire_path.as_str(),
+        grammar_crate = grammar_crate,
+        grammar_crate_path = grammar_crate_path.as_str(),
+        wit_path = repo_root.join("wit/grammar.wit").as_str(),
     );
-    std::fs::write(plugin_dir.join("Cargo.toml"), cargo_toml)
-        .into_diagnostic()
-        .context("failed to write Cargo.toml")?;
 
-    // Create lib.rs
+    std::fs::write(out_dir.join("Cargo.toml"), cargo_toml)
+        .into_diagnostic()
+        .context("failed to write temp Cargo.toml")
+}
+
+fn write_plugin_lib_rs(
+    repo_root: &Utf8Path,
+    grammar: &str,
+    grammar_crate: &str,
+    out_dir: &Utf8Path,
+) -> Result<()> {
     let lib_rs = format!(
         r#"//! {grammar} grammar plugin for arborium.
 #![allow(unsafe_op_in_unsafe_fn)]
 
 wit_bindgen::generate!({{
     world: "grammar-plugin",
-    path: "../../wit/grammar.wit",
+    path: "{wit_path}",
 }});
 
 use arborium_plugin_runtime::{{HighlightConfig, PluginRuntime}};
@@ -521,59 +544,246 @@ impl exports::arborium::grammar::plugin::Guest for PluginImpl {{
             }}),
         }}
     }}
-
-    fn cancel(session: u32) {{
-        get_or_init_runtime()
-            .borrow_mut()
-            .as_mut()
-            .expect("runtime not initialized")
-            .cancel(session);
-    }}
 }}
 
 export!(PluginImpl);
 "#,
-        grammar_crate = grammar_crate.replace('-', "_")
+        grammar = grammar,
+        grammar_crate = grammar_crate,
+        wit_path = repo_root.join("wit/grammar.wit").as_str(),
     );
-    std::fs::write(plugin_dir.join("src/lib.rs"), lib_rs)
+
+    std::fs::write(out_dir.join("src/lib.rs"), lib_rs)
         .into_diagnostic()
-        .context("failed to write lib.rs")?;
+        .context("failed to write temp lib.rs")
+}
 
-    // Add to workspace Cargo.toml
-    add_to_workspace(repo_root, &plugin_crate)?;
-
-    println!(
-        "  {} Created plugin crate {}",
-        "✓".green(),
-        plugin_crate.cyan()
-    );
+fn write_package_json(language: &str, version: &str, plugin_dir: &Utf8Path) -> Result<()> {
+    let package_json = generate_package_json(language, version);
+    let package_json_path = plugin_dir.join("package.json");
+    std::fs::write(&package_json_path, package_json)
+        .into_diagnostic()
+        .context(format!("failed to write {}", package_json_path))?;
     Ok(())
 }
 
-/// Add a crate to the workspace members list.
-fn add_to_workspace(repo_root: &Utf8Path, crate_name: &str) -> Result<()> {
-    let cargo_toml_path = repo_root.join("Cargo.toml");
-    let content = std::fs::read_to_string(&cargo_toml_path)
+fn build_manifest(
+    repo_root: &Utf8Path,
+    registry: &CrateRegistry,
+    grammars: &[String],
+    output_override: Option<&Utf8Path>,
+    version: &str,
+) -> Result<PluginManifest> {
+    let mut entries = Vec::new();
+
+    for grammar in grammars {
+        // Locate grammar state
+        let (state, _) = locate_grammar(registry, grammar)
+            .ok_or_else(|| miette::miette!("grammar `{}` not found for manifest", grammar))?;
+
+        // local path (either override or langs/*/*/npm/<lang>)
+        let local_root = if let Some(base) = output_override {
+            if base.is_absolute() {
+                base.to_owned()
+            } else {
+                repo_root.join(base)
+            }
+        } else {
+            state
+                .crate_path
+                .parent()
+                .expect("lang directory")
+                .join("npm")
+        };
+        let local_js = local_root.join("grammar.js");
+        let local_wasm = local_root.join("grammar.core.wasm");
+
+        let package = format!("@arborium/{}", grammar);
+        let cdn_base = format!(
+            "https://cdn.jsdelivr.net/npm/@arborium/{}@{}",
+            grammar, version
+        );
+
+        entries.push(PluginManifestEntry {
+            language: grammar.clone(),
+            package: package.clone(),
+            version: version.to_string(),
+            cdn_js: format!("{}/grammar.js", cdn_base),
+            cdn_wasm: format!("{}/grammar.core.wasm", cdn_base),
+            local_js: format!("/{}", local_js),
+            local_wasm: format!("/{}", local_wasm),
+        });
+    }
+
+    Ok(PluginManifest {
+        generated_at: Utc::now().to_rfc3339(),
+        entries,
+    })
+}
+
+/// Build a single plugin and return timing info.
+fn build_single_plugin(
+    repo_root: &Utf8Path,
+    registry: &CrateRegistry,
+    grammar: &str,
+    output_override: Option<&Utf8Path>,
+    version: &str,
+    cargo_component: &crate::tool::ToolPath,
+    jco: Option<&crate::tool::ToolPath>,
+    profile: bool,
+) -> Result<PluginTiming> {
+    let grammar_start = Instant::now();
+    println!("{} {}", "Building:".cyan(), grammar);
+
+    let (crate_state, _) = locate_grammar(registry, grammar).ok_or_else(|| {
+        miette::miette!(
+            "grammar `{}` not found in registry (generate components must be enabled)",
+            grammar
+        )
+    })?;
+
+    let grammar_crate_path = &crate_state.crate_path;
+    let grammar_crate_name = &crate_state.name;
+
+    // Decide output path: override/<grammar> or langs/.../npm
+    let plugin_output = if let Some(base) = output_override {
+        let base = if base.is_absolute() {
+            base.to_owned()
+        } else {
+            repo_root.join(base)
+        };
+        base.join(grammar)
+    } else {
+        grammar_crate_path
+            .parent()
+            .expect("lang directory")
+            .join("npm")
+    };
+    std::fs::create_dir_all(&plugin_output)
         .into_diagnostic()
-        .context("failed to read workspace Cargo.toml")?;
+        .context("failed to create plugin output directory")?;
 
-    let member_entry = format!("\"crates/{}\"", crate_name);
-    if content.contains(&member_entry) {
-        return Ok(()); // Already in workspace
+    // Create an isolated temp plugin crate to avoid workspace deps
+    let _temp_dir = tempfile::tempdir().into_diagnostic()?;
+    let temp_path =
+        Utf8PathBuf::from_path_buf(_temp_dir.path().to_path_buf()).expect("temp path utf8");
+    std::fs::create_dir_all(temp_path.join("src"))
+        .into_diagnostic()
+        .context("failed to create temp src dir")?;
+
+    write_plugin_cargo_toml(
+        repo_root,
+        grammar,
+        grammar_crate_name,
+        grammar_crate_path,
+        &temp_path,
+    )?;
+    write_plugin_lib_rs(repo_root, grammar, grammar_crate_name, &temp_path)?;
+
+    let plugin_crate = format!("arborium-{}-plugin", grammar);
+
+    // Build with cargo component from the temp directory
+    let cargo_start = Instant::now();
+    let output = cargo_component
+        .command()
+        .args([
+            "build",
+            "--release",
+            "--target",
+            "wasm32-wasip1",
+            "--manifest-path",
+            temp_path.join("Cargo.toml").as_str(),
+        ])
+        .output()
+        .into_diagnostic()
+        .context("failed to run cargo-component")?;
+    let cargo_component_ms = cargo_start.elapsed().as_millis() as u64;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        miette::bail!("cargo-component build failed:\n{}", stderr);
     }
 
-    // Find the end of the members array and insert before it
-    // This is a simple string manipulation - a more robust solution would use toml crate
-    if let Some(pos) = content.find("]\n\n[workspace.package]") {
-        let mut new_content = content[..pos].to_string();
-        new_content.push_str(&format!("    {},\n", member_entry));
-        new_content.push_str(&content[pos..]);
-        std::fs::write(&cargo_toml_path, new_content)
+    // Find the built wasm file
+    let wasm_file = temp_path
+        .join("target/wasm32-wasip1/release")
+        .join(format!("{}.wasm", plugin_crate.replace('-', "_")));
+
+    if !wasm_file.exists() {
+        miette::bail!("expected wasm file not found: {}", wasm_file);
+    }
+
+    // Copy to output directory
+    let dest_wasm = plugin_output.join("grammar.wasm");
+    std::fs::copy(&wasm_file, &dest_wasm)
+        .into_diagnostic()
+        .context("failed to copy wasm file")?;
+
+    // Transpile with jco if enabled
+    let mut transpile_ms = 0u64;
+    if let Some(jco) = jco {
+        let transpile_start = Instant::now();
+        let output = jco
+            .command()
+            .args([
+                "transpile",
+                dest_wasm.as_str(),
+                "--instantiation",
+                "async",
+                "--quiet",
+                "-o",
+                plugin_output.as_str(),
+            ])
+            .output()
             .into_diagnostic()
-            .context("failed to write workspace Cargo.toml")?;
+            .context("failed to run jco")?;
+        transpile_ms = transpile_start.elapsed().as_millis() as u64;
+
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            miette::bail!("jco transpile failed:\n{}", stderr);
+        }
+
+        // Calculate total wasm bundle size
+        let total_wasm_size: u64 = std::fs::read_dir(&plugin_output)
+            .into_diagnostic()?
+            .filter_map(|e| e.ok())
+            .filter(|e| e.path().extension().is_some_and(|ext| ext == "wasm"))
+            .filter_map(|e| e.metadata().ok())
+            .map(|m| m.len())
+            .sum();
+
+        println!(
+            "  {} {} ({})",
+            "✓".green(),
+            grammar,
+            format_size(total_wasm_size as usize)
+        );
+    } else {
+        println!("  {} {}", "✓".green(), grammar);
     }
 
-    Ok(())
+    let build_ms = grammar_start.elapsed().as_millis() as u64;
+
+    if profile {
+        println!(
+            "    {} {}ms (cargo: {}ms, jco: {}ms)",
+            "⏱".dimmed(),
+            build_ms,
+            cargo_component_ms,
+            transpile_ms
+        );
+    }
+
+    // Write npm package.json alongside artifacts
+    write_package_json(grammar, version, &plugin_output)?;
+
+    Ok(PluginTiming {
+        grammar: grammar.to_string(),
+        build_ms,
+        cargo_component_ms,
+        transpile_ms,
+    })
 }
 
 /// Clean plugin build artifacts.
@@ -600,486 +810,9 @@ fn format_size(bytes: usize) -> String {
     }
 }
 
-/// Deduplicate identical WASM shim modules across plugins.
-///
-/// jco generates identical shim modules (core2.wasm, core3.wasm, core4.wasm) for each
-/// plugin. This function moves duplicates to a shared directory and updates the JS
-/// files to reference the shared location.
-fn deduplicate_wasm_modules(plugins_dir: &Utf8Path) -> Result<()> {
-    use std::collections::HashMap;
-
-    let shared_dir = plugins_dir.parent().unwrap().join("shared");
-    std::fs::create_dir_all(&shared_dir)
-        .into_diagnostic()
-        .context("failed to create shared directory")?;
-
-    // Find all .wasm files and group by hash
-    let mut hash_to_files: HashMap<String, Vec<Utf8PathBuf>> = HashMap::new();
-
-    for entry in std::fs::read_dir(plugins_dir).into_diagnostic()? {
-        let entry = entry.into_diagnostic()?;
-        let plugin_path = Utf8PathBuf::from_path_buf(entry.path()).ok();
-        let Some(plugin_path) = plugin_path else {
-            continue;
-        };
-        if !plugin_path.is_dir() {
-            continue;
-        }
-
-        for wasm_entry in std::fs::read_dir(&plugin_path).into_diagnostic()? {
-            let wasm_entry = wasm_entry.into_diagnostic()?;
-            let wasm_path = Utf8PathBuf::from_path_buf(wasm_entry.path()).ok();
-            let Some(wasm_path) = wasm_path else {
-                continue;
-            };
-
-            // Skip non-wasm files and the main grammar.core.wasm (unique per language)
-            let name = wasm_path.file_name().unwrap_or("");
-            if !name.ends_with(".wasm") || name.ends_with(".core.wasm") {
-                continue;
-            }
-
-            // Hash the file
-            let content = std::fs::read(&wasm_path).into_diagnostic()?;
-            let hash = blake3::hash(&content).to_hex()[..16].to_string();
-
-            hash_to_files.entry(hash).or_default().push(wasm_path);
-        }
-    }
-
-    // Process duplicates
-    let mut saved_bytes = 0usize;
-    let mut deduped_count = 0usize;
-
-    for (hash, files) in hash_to_files {
-        // Only dedupe if there are multiple copies
-        if files.len() < 2 {
-            continue;
-        }
-
-        // Get a canonical name (e.g., "shim.core2.wasm" from "grammar.core2.wasm")
-        let original_name = files[0].file_name().unwrap();
-        let shared_name = if let Some(rest) = original_name.strip_prefix("grammar.") {
-            format!("shim.{}", rest)
-        } else {
-            format!("shim.{}.wasm", &hash[..8])
-        };
-
-        let shared_path = shared_dir.join(&shared_name);
-        let file_size = std::fs::metadata(&files[0]).into_diagnostic()?.len() as usize;
-
-        // Copy one to shared location
-        std::fs::copy(&files[0], &shared_path)
-            .into_diagnostic()
-            .context("failed to copy shared wasm")?;
-
-        // Calculate savings
-        saved_bytes += (files.len() - 1) * file_size;
-        deduped_count += files.len() - 1;
-
-        // Update each plugin's JS to reference shared path and remove duplicate
-        for wasm_path in &files {
-            let plugin_dir = wasm_path.parent().unwrap();
-            let js_file = plugin_dir.join("grammar.js");
-            let wasm_basename = wasm_path.file_name().unwrap();
-
-            if js_file.exists() {
-                let content = std::fs::read_to_string(&js_file).into_diagnostic()?;
-                let new_content = content.replace(
-                    &format!("getCoreModule('{}')", wasm_basename),
-                    &format!("getCoreModule('../shared/{}')", shared_name),
-                );
-                std::fs::write(&js_file, new_content).into_diagnostic()?;
-            }
-
-            // Remove the duplicate
-            std::fs::remove_file(wasm_path).into_diagnostic()?;
-        }
-
-        println!(
-            "  {} {} ({} bytes, {} copies)",
-            "→".dimmed(),
-            shared_name,
-            file_size,
-            files.len()
-        );
-    }
-
-    if deduped_count > 0 {
-        println!(
-            "  {} Removed {} duplicates, saved {}",
-            "✓".green(),
-            deduped_count,
-            format_size(saved_bytes)
-        );
-    } else {
-        println!("  {} No duplicates found", "○".dimmed());
-    }
-
-    Ok(())
-}
-
-/// Optimize WASM files with wasm-opt and create compressed versions.
-///
-/// For each .wasm file:
-/// 1. Run wasm-opt -Oz to optimize for size
-/// 2. Create .wasm.br (brotli), .wasm.gz (gzip), and .wasm.zst (zstd) versions
-fn optimize_and_compress_wasm(plugins_dir: &Utf8Path, _config: &CompressionConfig) -> Result<()> {
-    // Find all wasm files (in plugins and shared directories)
-    let mut wasm_files = Vec::new();
-
-    // Check plugins directory
-    for entry in std::fs::read_dir(plugins_dir).into_diagnostic()? {
-        let entry = entry.into_diagnostic()?;
-        let path = Utf8PathBuf::try_from(entry.path()).into_diagnostic()?;
-        if path.is_dir() {
-            for file in std::fs::read_dir(&path).into_diagnostic()? {
-                let file = file.into_diagnostic()?;
-                let file_path = Utf8PathBuf::try_from(file.path()).into_diagnostic()?;
-                // Only optimize .core*.wasm files (core wasm from jco transpile)
-                // Skip grammar.wasm which is the component model wasm
-                let file_name = file_path.file_name().unwrap_or("");
-                if file_path.extension() == Some("wasm") && file_name.contains(".core") {
-                    wasm_files.push(file_path);
-                }
-            }
-        }
-    }
-
-    // Check shared directory
-    let shared_dir = plugins_dir.parent().unwrap().join("shared");
-    if shared_dir.exists() {
-        for entry in std::fs::read_dir(&shared_dir).into_diagnostic()? {
-            let entry = entry.into_diagnostic()?;
-            let path = Utf8PathBuf::try_from(entry.path()).into_diagnostic()?;
-            if path.extension() == Some("wasm") {
-                wasm_files.push(path);
-            }
-        }
-    }
-
-    if wasm_files.is_empty() {
-        println!("  {} No WASM files found", "○".dimmed());
-        return Ok(());
-    }
-
-    use rayon::prelude::*;
-    use std::sync::atomic::{AtomicUsize, Ordering};
-
-    let total_files = wasm_files.len();
-    let processed = AtomicUsize::new(0);
-    let total_original = AtomicUsize::new(0);
-    let total_optimized = AtomicUsize::new(0);
-
-    // Process files in parallel (up to 4 at a time)
-    let pool = rayon::ThreadPoolBuilder::new()
-        .num_threads(4)
-        .build()
-        .into_diagnostic()?;
-
-    let results: Vec<Result<()>> = pool.install(|| {
-        wasm_files
-            .par_iter()
-            .map(|wasm_path| {
-                let original_size = std::fs::metadata(wasm_path)
-                    .map_err(|e| miette::miette!("failed to read {}: {}", wasm_path, e))?
-                    .len() as usize;
-                total_original.fetch_add(original_size, Ordering::Relaxed);
-
-                // Optimize with wasm-opt via shell command
-                let status = std::process::Command::new("wasm-opt")
-                    .arg("-Oz") // optimize for size
-                    .arg("-o")
-                    .arg(wasm_path.as_str())
-                    .arg(wasm_path.as_str())
-                    .status()
-                    .map_err(|e| {
-                        miette::miette!("failed to run wasm-opt for {}: {}", wasm_path, e)
-                    })?;
-
-                if !status.success() {
-                    return Err(miette::miette!("wasm-opt failed for {}", wasm_path));
-                }
-                let optimized_size = std::fs::metadata(wasm_path)
-                    .map_err(|e| miette::miette!("failed to read {}: {}", wasm_path, e))?
-                    .len() as usize;
-                total_optimized.fetch_add(optimized_size, Ordering::Relaxed);
-
-                let done = processed.fetch_add(1, Ordering::Relaxed) + 1;
-                println!(
-                    "  {} [{}/{}] {}",
-                    "→".dimmed(),
-                    done,
-                    total_files,
-                    wasm_path.file_name().unwrap_or("?")
-                );
-
-                Ok(())
-            })
-            .collect()
-    });
-
-    // Check for errors
-    for result in results {
-        result?;
-    }
-
-    let total_original = total_original.load(Ordering::Relaxed);
-    let total_optimized = total_optimized.load(Ordering::Relaxed);
-
-    println!("  {} Processed {} files:", "✓".green(), total_files);
-    println!(
-        "      Original:  {} → Optimized: {} ({:.1}% reduction)",
-        format_size(total_original),
-        format_size(total_optimized),
-        (1.0 - total_optimized as f64 / total_original as f64) * 100.0
-    );
-
-    Ok(())
-}
-
-// =============================================================================
-// Plugin grouping for CI parallelization
-// =============================================================================
-
-/// A group of plugins to build together.
-#[derive(Debug, Clone, facet::Facet)]
-#[facet(rename_all = "snake_case")]
-pub struct PluginGroup {
-    /// Group index (0-based)
-    pub index: usize,
-    /// Grammars in this group
-    pub grammars: Vec<String>,
-    /// Total estimated build time for this group in milliseconds
-    pub total_ms: u64,
-}
-
-/// Result of grouping plugins for parallel builds.
-#[derive(Debug, Clone, facet::Facet)]
-#[facet(rename_all = "snake_case")]
-pub struct PluginGroups {
-    /// The groups
-    pub groups: Vec<PluginGroup>,
-    /// Maximum group time (determines total CI time)
-    pub max_group_ms: u64,
-    /// Theoretical minimum time if perfectly balanced
-    pub ideal_per_group_ms: u64,
-    /// Efficiency: ideal_per_group_ms / max_group_ms (1.0 = perfect)
-    pub efficiency: f64,
-}
-
-impl PluginGroups {
-    /// Compute balanced groups using a greedy bin-packing algorithm.
-    ///
-    /// Uses "Longest Processing Time First" (LPT) algorithm:
-    /// 1. Sort plugins by build time (longest first)
-    /// 2. For each plugin, assign to the group with the smallest total time
-    ///
-    /// This is a simple 4/3-approximation algorithm that works well in practice.
-    pub fn from_timings(timings: &PluginTimings, num_groups: usize) -> Self {
-        let num_groups = num_groups.max(1);
-
-        // Sort by build time, descending
-        let mut sorted_timings: Vec<_> = timings.timings.iter().collect();
-        sorted_timings.sort_by(|a, b| b.build_ms.cmp(&a.build_ms));
-
-        // Initialize groups
-        let mut groups: Vec<PluginGroup> = (0..num_groups)
-            .map(|i| PluginGroup {
-                index: i,
-                grammars: Vec::new(),
-                total_ms: 0,
-            })
-            .collect();
-
-        // Greedy assignment: always add to the group with smallest total time
-        for timing in sorted_timings {
-            // Find group with minimum total time
-            let min_group = groups
-                .iter_mut()
-                .min_by_key(|g| g.total_ms)
-                .expect("at least one group exists");
-
-            min_group.grammars.push(timing.grammar.clone());
-            min_group.total_ms += timing.build_ms;
-        }
-
-        // Remove empty groups (if num_groups > num_plugins)
-        groups.retain(|g| !g.grammars.is_empty());
-
-        // Renumber groups after filtering
-        for (i, group) in groups.iter_mut().enumerate() {
-            group.index = i;
-        }
-
-        // Calculate statistics
-        let total_ms: u64 = timings.timings.iter().map(|t| t.build_ms).sum();
-        let max_group_ms = groups.iter().map(|g| g.total_ms).max().unwrap_or(0);
-        let ideal_per_group_ms = total_ms / groups.len().max(1) as u64;
-        let efficiency = if max_group_ms > 0 {
-            ideal_per_group_ms as f64 / max_group_ms as f64
-        } else {
-            1.0
-        };
-
-        Self {
-            groups,
-            max_group_ms,
-            ideal_per_group_ms,
-            efficiency,
-        }
-    }
-}
-
-/// Show plugin build groups based on timings.
-pub fn show_groups(timings_path: &Utf8Path, num_groups: usize) -> Result<()> {
-    let timings = PluginTimings::load(timings_path)?;
-
-    println!(
-        "{} Loaded timings from {} (recorded: {})",
-        "●".cyan(),
-        timings_path.cyan(),
-        timings.recorded_at.dimmed()
-    );
-
-    let groups = PluginGroups::from_timings(&timings, num_groups);
-
-    println!(
-        "\n{} Plugin groups ({} groups, {:.1}% efficiency):",
-        "●".cyan(),
-        groups.groups.len(),
-        groups.efficiency * 100.0
-    );
-
-    for group in &groups.groups {
-        let time_str = format_duration_ms(group.total_ms);
-        println!(
-            "\n  {} Group {} ({}):",
-            "→".blue(),
-            group.index,
-            time_str.yellow()
-        );
-        for grammar in &group.grammars {
-            // Find the timing for this grammar
-            let timing = timings.timings.iter().find(|t| &t.grammar == grammar);
-            if let Some(t) = timing {
-                println!(
-                    "      {} {} ({})",
-                    "•".dimmed(),
-                    grammar,
-                    format_duration_ms(t.build_ms)
-                );
-            } else {
-                println!("      {} {}", "•".dimmed(), grammar);
-            }
-        }
-    }
-
-    println!("\n{} Summary:", "●".cyan());
-    println!(
-        "  Max group time: {} (determines CI time)",
-        format_duration_ms(groups.max_group_ms).yellow()
-    );
-    println!(
-        "  Ideal per group: {}",
-        format_duration_ms(groups.ideal_per_group_ms)
-    );
-
-    // Output as JSON for machine consumption
-    println!("\n{} JSON output:", "●".cyan());
-    let json = facet_json::to_string_pretty(&groups);
-    println!("{}", json);
-
-    Ok(())
-}
-
-/// Format milliseconds as human-readable duration.
-fn format_duration_ms(ms: u64) -> String {
-    if ms >= 60_000 {
-        let minutes = ms / 60_000;
-        let seconds = (ms % 60_000) / 1000;
-        format!("{}m {}s", minutes, seconds)
-    } else if ms >= 1000 {
-        format!("{:.1}s", ms as f64 / 1000.0)
-    } else {
-        format!("{}ms", ms)
-    }
-}
-
 // =============================================================================
 // npm package generation
 // =============================================================================
-
-/// Generate npm package.json files for all grammar plugins.
-///
-/// This creates a package.json in each plugin directory under output_dir,
-/// making them publishable to npm as `@arborium/<language>` packages.
-pub fn generate_npm_packages(
-    repo_root: &Utf8Path,
-    output_dir: &Utf8Path,
-    version: &str,
-) -> Result<()> {
-    let output_path = if output_dir.is_absolute() {
-        output_dir.to_owned()
-    } else {
-        repo_root.join(output_dir)
-    };
-
-    if !output_path.exists() {
-        miette::bail!(
-            "Output directory does not exist: {}\nRun `arborium-xtask plugins build` first.",
-            output_path
-        );
-    }
-
-    println!(
-        "{} Generating npm packages (version {})...",
-        "→".blue(),
-        version.yellow()
-    );
-
-    let mut count = 0;
-
-    // Iterate over plugin directories
-    for entry in std::fs::read_dir(&output_path).into_diagnostic()? {
-        let entry = entry.into_diagnostic()?;
-        let plugin_path = Utf8PathBuf::from_path_buf(entry.path()).ok();
-        let Some(plugin_path) = plugin_path else {
-            continue;
-        };
-
-        if !plugin_path.is_dir() {
-            continue;
-        }
-
-        let language = plugin_path.file_name().unwrap_or("");
-
-        // Check that grammar.js exists (indicates a transpiled plugin)
-        let grammar_js = plugin_path.join("grammar.js");
-        if !grammar_js.exists() {
-            continue;
-        }
-
-        // Generate package.json
-        let package_json = generate_package_json(language, version);
-        let package_json_path = plugin_path.join("package.json");
-
-        std::fs::write(&package_json_path, package_json)
-            .into_diagnostic()
-            .context(format!("failed to write {}", package_json_path))?;
-
-        println!("  {} @arborium/{}", "✓".green(), language);
-        count += 1;
-    }
-
-    println!(
-        "\n{} Generated {} package.json files",
-        "✓".green(),
-        count.to_string().yellow()
-    );
-
-    Ok(())
-}
 
 /// Generate a package.json for a grammar plugin.
 fn generate_package_json(language: &str, version: &str) -> String {

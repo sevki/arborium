@@ -16,8 +16,6 @@ pub enum Tool {
     TreeSitter,
     /// git for cloning repositories
     Git,
-    /// wasm-pack for building WASM packages
-    WasmPack,
     /// cargo-component for building WASM components
     CargoComponent,
     /// jco for transpiling WASM components to JS
@@ -28,25 +26,14 @@ pub enum Tool {
     Curl,
 }
 
-/// All tools that xtask may need.
-pub const ALL_TOOLS: &[Tool] = &[
-    Tool::TreeSitter,
-    Tool::Git,
-    Tool::WasmPack,
-    Tool::CargoComponent,
-    Tool::Jco,
-    Tool::WasmOpt,
-    Tool::Curl,
-];
-
 /// Tools needed for `cargo xtask gen` (generation).
 pub const GEN_TOOLS: &[Tool] = &[Tool::TreeSitter, Tool::Git];
 
 /// Tools needed for `cargo xtask plugins` (WASM component plugins).
 pub const PLUGIN_TOOLS: &[Tool] = &[Tool::CargoComponent, Tool::Jco, Tool::WasmOpt];
 
-/// Tools needed for `cargo xtask serve` (WASM demo).
-pub const SERVE_TOOLS: &[Tool] = &[Tool::WasmPack, Tool::Curl];
+/// Tools needed for `cargo xtask serve` (demo assets fetch).
+pub const SERVE_TOOLS: &[Tool] = &[Tool::Curl];
 
 impl Tool {
     /// The executable name to search for in PATH.
@@ -54,7 +41,6 @@ impl Tool {
         match self {
             Tool::TreeSitter => "tree-sitter",
             Tool::Git => "git",
-            Tool::WasmPack => "wasm-pack",
             Tool::CargoComponent => "cargo-component",
             Tool::Jco => "jco",
             Tool::WasmOpt => "wasm-opt",
@@ -67,7 +53,6 @@ impl Tool {
         match self {
             Tool::TreeSitter => "tree-sitter",
             Tool::Git => "Git",
-            Tool::WasmPack => "wasm-pack",
             Tool::CargoComponent => "cargo-component",
             Tool::Jco => "jco",
             Tool::WasmOpt => "wasm-opt",
@@ -80,7 +65,6 @@ impl Tool {
         match self {
             Tool::TreeSitter => Some("tree-sitter"),
             Tool::Git => Some("git"),
-            Tool::WasmPack => Some("wasm-pack"),
             Tool::CargoComponent => None,
             Tool::Jco => None,
             Tool::WasmOpt => Some("binaryen"),
@@ -105,13 +89,6 @@ impl Tool {
                     "apt install git"
                 } else {
                     "https://git-scm.com/"
-                }
-            }
-            Tool::WasmPack => {
-                if cfg!(target_os = "macos") {
-                    "brew install wasm-pack"
-                } else {
-                    "cargo binstall -y wasm-pack"
                 }
             }
             Tool::CargoComponent => "cargo binstall -y cargo-component",
@@ -140,7 +117,6 @@ impl Tool {
         match self {
             Tool::TreeSitter => None, // not available via binstall
             Tool::Git => None,
-            Tool::WasmPack => Some("wasm-pack"),
             Tool::CargoComponent => Some("cargo-component"),
             Tool::Jco => None,     // npm package, not cargo
             Tool::WasmOpt => None, // binary release, not cargo
@@ -168,7 +144,6 @@ impl Tool {
         let version_arg = match self {
             Tool::TreeSitter => "--version",
             Tool::Git => "--version",
-            Tool::WasmPack => "--version",
             Tool::CargoComponent => "--version",
             Tool::Jco => "--version",
             Tool::WasmOpt => "--version",
@@ -196,76 +171,6 @@ impl Tool {
         }
 
         Ok(version.to_string())
-    }
-}
-
-/// Print a comprehensive tools report showing installed and missing tools.
-pub fn print_tools_report() {
-    let mut installed = Vec::new();
-    let mut missing = Vec::new();
-
-    for &tool in ALL_TOOLS {
-        match tool.find() {
-            Ok(path) => installed.push((tool, path)),
-            Err(_) => missing.push(tool),
-        }
-    }
-
-    // Build content lines
-    let mut lines = Vec::new();
-
-    if installed.is_empty() && missing.is_empty() {
-        lines.push("(no tools configured)".dimmed().to_string());
-    } else {
-        for (tool, path) in &installed {
-            lines.push(format!(
-                "{} {} {}",
-                "✓".green().bold(),
-                tool.display_name().bold(),
-                format!("({})", path.path().display()).dimmed()
-            ));
-        }
-        for tool in &missing {
-            lines.push(format!(
-                "{} {}",
-                "✗".red().bold(),
-                tool.display_name().bold()
-            ));
-            lines.push(format!("    {}", tool.install_hint().yellow()));
-        }
-    }
-
-    // Add quick install section only if more than one tool is missing
-    if missing.len() > 1 {
-        lines.push(String::new());
-        if cfg!(target_os = "macos") {
-            let brew_packages: Vec<_> = missing.iter().filter_map(|t| t.brew_package()).collect();
-
-            if brew_packages.len() > 1 {
-                lines.push(format!("{}", "Quick install:".green().bold()));
-                lines.push(format!(
-                    "  {}",
-                    format!("brew install {}", brew_packages.join(" ")).yellow()
-                ));
-            }
-        } else {
-            let cargo_packages: Vec<_> = missing.iter().filter_map(|t| t.cargo_package()).collect();
-
-            if cargo_packages.len() > 1 {
-                lines.push(format!("{}", "Quick install:".green().bold()));
-                lines.push(format!(
-                    "  {}",
-                    format!("cargo binstall -y {}", cargo_packages.join(" ")).yellow()
-                ));
-            }
-        }
-    }
-
-    // Print simple text output
-    println!("Tools Status:");
-    println!("=============");
-    for line in lines {
-        println!("{}", line);
     }
 }
 

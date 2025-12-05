@@ -3,9 +3,8 @@
 //! Usage: `cargo xtask <command>`
 //!
 //! Commands:
-//! - `doctor` - Check for required external tools
 //! - `lint` - Validate all grammars
-//! - `gen \[name\]` - Regenerate crate files from arborium.kdl
+//! - `gen \[name\]` - Regenerate crate files from arborium.kdl and build the static demo
 //! - `serve` - Build and serve the WASM demo locally
 
 mod cache;
@@ -39,9 +38,6 @@ struct Args {
 enum Command {
     /// Print version information
     Version,
-
-    /// Check for required external tools
-    Doctor,
 
     /// Validate all grammar configurations
     Lint {
@@ -87,10 +83,22 @@ enum Command {
     },
 
     /// Build WASM component plugins
-    Plugins {
-        #[facet(args::subcommand)]
-        action: PluginsAction,
+    Build {
+        /// Specific grammars to build (build all if omitted)
+        #[facet(args::positional, default)]
+        grammars: Vec<String>,
+
+        /// Skip jco transpile step
+        #[facet(args::named, default)]
+        no_transpile: bool,
+
+        /// Profile build times and write to plugin-timings.json
+        #[facet(args::named, default)]
+        profile: bool,
     },
+
+    /// Clean plugin build artifacts (standard layout)
+    Clean,
 
     /// Generate CI workflow files
     Ci {
@@ -102,60 +110,6 @@ enum Command {
     Publish {
         #[facet(args::subcommand)]
         action: PublishAction,
-    },
-}
-
-/// Plugin subcommands
-#[derive(Debug, Facet)]
-#[repr(u8)]
-#[allow(dead_code)]
-enum PluginsAction {
-    /// Build grammar plugins as WASM components
-    Build {
-        /// Specific grammars to build (build all if omitted)
-        #[facet(args::positional, default)]
-        grammars: Vec<String>,
-
-        /// Output directory for built plugins
-        #[facet(args::named, args::short = 'o', default)]
-        output: Option<String>,
-
-        /// Skip jco transpile step
-        #[facet(args::named, default)]
-        no_transpile: bool,
-
-        /// Profile build times and write to plugin-timings.json
-        #[facet(args::named, default)]
-        profile: bool,
-    },
-
-    /// Clean plugin build artifacts
-    Clean {
-        /// Output directory to clean
-        #[facet(args::named, args::short = 'o', default)]
-        output: Option<String>,
-    },
-
-    /// Show plugin build groups based on recorded timings
-    Groups {
-        /// Number of groups to create
-        #[facet(args::named, args::short = 'n', default)]
-        count: Option<usize>,
-
-        /// Path to timings file (default: plugin-timings.json)
-        #[facet(args::named, default)]
-        timings: Option<String>,
-    },
-
-    /// Generate npm package.json files for grammar packages
-    Npm {
-        /// Output directory containing built plugins (default: dist/plugins)
-        #[facet(args::named, args::short = 'o', default)]
-        output: Option<String>,
-
-        /// Package version to use
-        #[facet(args::named, args::short = 'v', default)]
-        version: Option<String>,
     },
 }
 
@@ -186,10 +140,6 @@ enum PublishAction {
 
     /// Publish all packages to npm
     Npm {
-        /// Directory containing built plugins (default: dist/plugins)
-        #[facet(args::named, args::short = 'o', default)]
-        output: Option<String>,
-
         /// Dry run - don't actually publish
         #[facet(args::named, default)]
         dry_run: bool,
@@ -197,10 +147,6 @@ enum PublishAction {
 
     /// Publish everything (crates.io + npm)
     All {
-        /// Directory containing built plugins (default: dist/plugins)
-        #[facet(args::named, args::short = 'o', default)]
-        output: Option<String>,
-
         /// Dry run - don't actually publish
         #[facet(args::named, default)]
         dry_run: bool,
@@ -235,9 +181,6 @@ fn main() {
 
     match args.command {
         Command::Version => unreachable!(),
-        Command::Doctor => {
-            tool::print_tools_report();
-        }
         Command::Lint { strict } => {
             let options = lint_new::LintOptions { strict };
             if let Err(e) = lint_new::run_lints(&crates_dir, options) {
@@ -314,66 +257,33 @@ fn main() {
             let addr = address.as_deref().unwrap_or("127.0.0.1");
             serve::serve(&crates_dir, addr, port, dev);
         }
-        Command::Plugins { action } => {
-            // Check for required tools before starting
+        Command::Build {
+            grammars,
+            no_transpile,
+            profile,
+        } => {
             if !tool::check_tools_or_report(tool::PLUGIN_TOOLS) {
                 std::process::exit(1);
             }
-
             let repo_root = util::find_repo_root().expect("Could not find repo root");
             let repo_root = camino::Utf8PathBuf::from_path_buf(repo_root).expect("non-UTF8 path");
-
-            match action {
-                PluginsAction::Build {
-                    grammars,
-                    output,
-                    no_transpile,
-                    profile,
-                } => {
-                    let options = plugins::BuildOptions {
-                        grammars,
-                        output_dir: output
-                            .map(camino::Utf8PathBuf::from)
-                            .unwrap_or_else(|| camino::Utf8PathBuf::from("dist/plugins")),
-                        transpile: !no_transpile,
-                        profile,
-                    };
-
-                    if let Err(e) = plugins::build_plugins(&repo_root, &options) {
-                        eprintln!("{:?}", e);
-                        std::process::exit(1);
-                    }
-                }
-                PluginsAction::Clean { output } => {
-                    let output_dir = output.as_deref().unwrap_or("dist/plugins");
-                    if let Err(e) = plugins::clean_plugins(&repo_root, output_dir) {
-                        eprintln!("{:?}", e);
-                        std::process::exit(1);
-                    }
-                }
-                PluginsAction::Groups { count, timings } => {
-                    let timings_path = timings
-                        .map(camino::Utf8PathBuf::from)
-                        .unwrap_or_else(|| repo_root.join("plugin-timings.json"));
-                    let num_groups = count.unwrap_or(2);
-
-                    if let Err(e) = plugins::show_groups(&timings_path, num_groups) {
-                        eprintln!("{:?}", e);
-                        std::process::exit(1);
-                    }
-                }
-                PluginsAction::Npm { output, version } => {
-                    let output_dir = output
-                        .map(camino::Utf8PathBuf::from)
-                        .unwrap_or_else(|| camino::Utf8PathBuf::from("dist/plugins"));
-                    let version = version.as_deref().unwrap_or("0.1.0");
-
-                    if let Err(e) = plugins::generate_npm_packages(&repo_root, &output_dir, version)
-                    {
-                        eprintln!("{:?}", e);
-                        std::process::exit(1);
-                    }
-                }
+            let options = plugins::BuildOptions {
+                grammars,
+                output_dir: None,
+                transpile: !no_transpile,
+                profile,
+            };
+            if let Err(e) = plugins::build_plugins(&repo_root, &options) {
+                eprintln!("{:?}", e);
+                std::process::exit(1);
+            }
+        }
+        Command::Clean => {
+            let repo_root = util::find_repo_root().expect("Could not find repo root");
+            let repo_root = camino::Utf8PathBuf::from_path_buf(repo_root).expect("non-UTF8 path");
+            if let Err(e) = plugins::clean_plugins(&repo_root, "langs") {
+                eprintln!("{:?}", e);
+                std::process::exit(1);
             }
         }
         Command::Ci { action } => {
@@ -401,21 +311,15 @@ fn main() {
                         std::process::exit(1);
                     }
                 }
-                PublishAction::Npm { output, dry_run } => {
-                    let output_dir = output
-                        .map(camino::Utf8PathBuf::from)
-                        .unwrap_or_else(|| camino::Utf8PathBuf::from("dist/plugins"));
-
+                PublishAction::Npm { dry_run } => {
+                    let output_dir = repo_root.join("langs");
                     if let Err(e) = publish::publish_npm(&repo_root, &output_dir, dry_run) {
                         eprintln!("{:?}", e);
                         std::process::exit(1);
                     }
                 }
-                PublishAction::All { output, dry_run } => {
-                    let output_dir = output
-                        .map(camino::Utf8PathBuf::from)
-                        .unwrap_or_else(|| camino::Utf8PathBuf::from("dist/plugins"));
-
+                PublishAction::All { dry_run } => {
+                    let output_dir = repo_root.join("langs");
                     if let Err(e) = publish::publish_all(&repo_root, &output_dir, dry_run) {
                         eprintln!("{:?}", e);
                         std::process::exit(1);

@@ -167,9 +167,6 @@ pub fn serve(crates_dir: &Utf8Path, addr: &str, port: Option<u16>, dev: bool) {
     }
     println!();
 
-    // Step 0: Build WASM
-    step("Building WASM", || build_wasm(&demo_dir, dev));
-
     // Step 1: Generate registry.json and get the registry for later use
     let registry = step_with_result("Generating registry.json", || {
         generate_registry_json(crates_dir, &demo_dir)
@@ -229,6 +226,58 @@ pub fn serve(crates_dir: &Utf8Path, addr: &str, port: Option<u16>, dev: bool) {
 
     // Serve files
     serve_files(server, &demo_dir);
+}
+
+#[allow(dead_code)]
+/// Build the demo assets without starting the server (for static site generation).
+pub fn build_static_site(crates_dir: &Utf8Path, dev: bool) -> Result<(), String> {
+    let repo_root = util::find_repo_root().ok_or("Could not find repo root")?;
+    let demo_dir = repo_root.join("demo");
+
+    println!(
+        "{} {}",
+        "==>".cyan().bold(),
+        "Building arborium demo (static)".bold()
+    );
+    if dev {
+        println!("    {}", "(dev mode - skipping optimizations)".dimmed());
+    }
+    println!();
+
+    let registry = step_with_result("Generating registry.json", || {
+        generate_registry_json(crates_dir, &demo_dir)
+    });
+
+    step("Generating sample files", || {
+        generate_sample_files(crates_dir, &registry, &demo_dir)
+    });
+
+    let icons = step_with_result("Fetching icons", || {
+        fetch_icons_from_registry(&registry, &demo_dir)
+    });
+
+    step("Generating index.html", || {
+        generate_index_html(&demo_dir, &icons)
+    });
+    step("Generating app.generated.js", || {
+        generate_app_js(&demo_dir, &registry, &icons)
+    });
+
+    if dev {
+        step("Pre-compressing files (fast)", || {
+            precompress_files_fast(&demo_dir)
+        });
+    } else {
+        step("Pre-compressing files", || precompress_files(&demo_dir));
+    }
+
+    println!(
+        "  {} Static demo built at {}",
+        "✓".green(),
+        demo_dir.join("pkg").display()
+    );
+
+    Ok(())
 }
 
 fn step<F, E>(name: &str, f: F)
@@ -296,46 +345,6 @@ fn generate_sample_files(
                 let output_path = samples_dir.join(format!("{}.{}", grammar.id, ext));
                 fs::write(&output_path, &content).map_err(|e| e.to_string())?;
             }
-        }
-    }
-
-    Ok(())
-}
-
-fn build_wasm(demo_dir: &Path, dev: bool) -> Result<(), String> {
-    use crate::tool::Tool;
-
-    // Nuke pkg/ to avoid stale cached files
-    let pkg_dir = demo_dir.join("pkg");
-    if pkg_dir.exists() {
-        fs::remove_dir_all(&pkg_dir).map_err(|e| format!("Failed to remove pkg/: {}", e))?;
-    }
-
-    let wasm_pack = Tool::WasmPack.find().map_err(|e| e.to_string())?;
-    let mut cmd = wasm_pack.command();
-    cmd.arg("build").arg(demo_dir).arg("--target").arg("web");
-
-    if dev {
-        cmd.arg("--dev");
-    } else {
-        cmd.arg("--release");
-    }
-
-    let status = cmd
-        .status()
-        .map_err(|e| format!("Failed to run wasm-pack: {}", e))?;
-
-    if !status.success() {
-        return Err("wasm-pack build failed".to_string());
-    }
-
-    // Copy static assets to pkg/
-    let assets = ["styles.css", "Iosevka-Regular.woff2", "Iosevka-Bold.woff2"];
-    for asset in assets {
-        let src = demo_dir.join(asset);
-        let dest = demo_dir.join("pkg").join(asset);
-        if src.exists() {
-            fs::copy(&src, &dest).map_err(|e| format!("Failed to copy {}: {}", asset, e))?;
         }
     }
 

@@ -4,10 +4,6 @@ Development tooling for arborium. Run commands with `cargo xtask <command>`.
 
 ## Commands
 
-### `cargo xtask doctor`
-
-Check that required external tools are installed (tree-sitter CLI, cargo-component, jco, etc.).
-
 ### `cargo xtask lint [--strict]`
 
 Validate all grammar configurations in `crates/*/arborium.kdl`.
@@ -15,9 +11,10 @@ Validate all grammar configurations in `crates/*/arborium.kdl`.
 - Checks required fields, tier ranges, sample files exist
 - `--strict`: Treat missing generated files (parser.c) as errors
 
-### `cargo xtask gen [name] [--dry-run]`
+### `cargo xtask gen [name] [--version <v>] [--dry-run] [--no-fail-fast]`
 
 Regenerate crate files from `arborium.kdl` configurations.
+Also rebuilds the static demo site in `demo/` (release mode) when not in dry-run.
 
 **Generated files:**
 - `Cargo.toml` - package metadata, dependencies
@@ -26,9 +23,9 @@ Regenerate crate files from `arborium.kdl` configurations.
 - `grammar/src/` - parser sources (via tree-sitter generate)
 
 ```bash
-cargo xtask gen              # Regenerate all grammars
-cargo xtask gen rust         # Regenerate only rust
-cargo xtask gen --dry-run    # Preview changes without writing
+cargo xtask gen --version 0.4.0          # Regenerate all grammars + demo
+cargo xtask gen rust --version 0.4.0     # Regenerate only rust + demo
+cargo xtask gen --version 0.4.0 --dry-run# Preview changes without writing
 ```
 
 ### `cargo xtask serve [-a <addr>] [-p <port>] [--dev]`
@@ -41,33 +38,20 @@ cargo xtask serve --dev      # Fast dev build (skip wasm-opt)
 cargo xtask serve -p 3000    # Serve on specific port
 ```
 
-### `cargo xtask plugins <subcommand>`
+### `cargo xtask build [grammars...] [--no-transpile] [--profile]`
 
-Build WASM component plugins for browser usage.
-
-#### `cargo xtask plugins build [grammars...] [-o <dir>] [--no-transpile] [--profile]`
-
-Build grammar plugins as WASM components.
+Build WASM grammar plugins into the standard layout (`langs/*/*/npm`).
 
 ```bash
-cargo xtask plugins build                    # Build all plugins
-cargo xtask plugins build rust javascript    # Build specific plugins
-cargo xtask plugins build --profile          # Record build times to plugin-timings.json
-cargo xtask plugins build --no-transpile     # Skip jco transpile step
+cargo xtask build                    # Build all plugins
+cargo xtask build rust javascript    # Build specific plugins
+cargo xtask build --profile          # Record build times to plugin-timings.json
+cargo xtask build --no-transpile     # Skip jco transpile step
 ```
 
-#### `cargo xtask plugins clean [-o <dir>]`
+### `cargo xtask clean`
 
-Clean plugin build artifacts from the output directory.
-
-#### `cargo xtask plugins groups [-n <count>] [--timings <path>]`
-
-Show how plugins would be grouped for parallel CI builds based on recorded timings.
-
-```bash
-cargo xtask plugins groups           # Show 2 groups (default)
-cargo xtask plugins groups -n 4      # Show 4 groups
-```
+Remove generated plugin artifacts under `langs/*/*/npm`.
 
 ### `cargo xtask ci <subcommand>`
 
