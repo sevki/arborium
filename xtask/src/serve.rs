@@ -411,9 +411,16 @@ fn fetch_icons_from_registry(
 
         // Fetch from Iconify API
         let url = format!("https://api.iconify.design/{}/{}.svg", prefix, name);
-        match ureq::get(&url).call() {
-            Ok(resp) => {
-                if let Ok(svg) = resp.into_string() {
+        // Fetch from Iconify API using curl
+        let output = std::process::Command::new("curl")
+            .arg("-s") // silent
+            .arg("-f") // fail fast on HTTP errors
+            .arg(&url)
+            .output();
+
+        match output {
+            Ok(output) if output.status.success() => {
+                if let Ok(svg) = String::from_utf8(output.stdout) {
                     // Clean up the SVG
                     let cleaned = svg
                         .replace("xmlns=\"http://www.w3.org/2000/svg\"", "")
@@ -423,7 +430,7 @@ fn fetch_icons_from_registry(
                     fetch_count += 1;
                 }
             }
-            Err(_) => {
+            _ => {
                 // Skip failed icons
             }
         }

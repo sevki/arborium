@@ -31,8 +31,7 @@ tempfile = "3"
 regex = "1"
 blake3 = "1"
 
-wasm-opt = "0.116"
-ureq = "2"
+
 ignore = "0.4"
 
 # arborium = { path = "../crates/arborium", features = ["all-languages"] }  # TODO: re-enable for theme CSS generation and highlight linting

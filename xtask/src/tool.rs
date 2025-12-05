@@ -22,6 +22,10 @@ pub enum Tool {
     CargoComponent,
     /// jco for transpiling WASM components to JS
     Jco,
+    /// wasm-opt for optimizing WASM files
+    WasmOpt,
+    /// curl for HTTP requests
+    Curl,
 }
 
 /// All tools that xtask may need.
@@ -31,16 +35,18 @@ pub const ALL_TOOLS: &[Tool] = &[
     Tool::WasmPack,
     Tool::CargoComponent,
     Tool::Jco,
+    Tool::WasmOpt,
+    Tool::Curl,
 ];
 
 /// Tools needed for `cargo xtask gen` (generation).
 pub const GEN_TOOLS: &[Tool] = &[Tool::TreeSitter, Tool::Git];
 
-/// Tools needed for `cargo xtask serve` (WASM demo).
-pub const SERVE_TOOLS: &[Tool] = &[Tool::WasmPack];
-
 /// Tools needed for `cargo xtask plugins` (WASM component plugins).
-pub const PLUGIN_TOOLS: &[Tool] = &[Tool::CargoComponent, Tool::Jco];
+pub const PLUGIN_TOOLS: &[Tool] = &[Tool::CargoComponent, Tool::Jco, Tool::WasmOpt];
+
+/// Tools needed for `cargo xtask serve` (WASM demo).
+pub const SERVE_TOOLS: &[Tool] = &[Tool::WasmPack, Tool::Curl];
 
 impl Tool {
     /// The executable name to search for in PATH.
@@ -51,6 +57,8 @@ impl Tool {
             Tool::WasmPack => "wasm-pack",
             Tool::CargoComponent => "cargo-component",
             Tool::Jco => "jco",
+            Tool::WasmOpt => "wasm-opt",
+            Tool::Curl => "curl",
         }
     }
 
@@ -62,6 +70,8 @@ impl Tool {
             Tool::WasmPack => "wasm-pack",
             Tool::CargoComponent => "cargo-component",
             Tool::Jco => "jco",
+            Tool::WasmOpt => "wasm-opt",
+            Tool::Curl => "curl",
         }
     }
 
@@ -73,6 +83,8 @@ impl Tool {
             Tool::WasmPack => Some("wasm-pack"),
             Tool::CargoComponent => None,
             Tool::Jco => None,
+            Tool::WasmOpt => Some("binaryen"),
+            Tool::Curl => Some("curl"),
         }
     }
 
@@ -104,6 +116,22 @@ impl Tool {
             }
             Tool::CargoComponent => "cargo binstall -y cargo-component",
             Tool::Jco => "pnpm add -g @bytecodealliance/jco",
+            Tool::WasmOpt => {
+                if cfg!(target_os = "macos") {
+                    "brew install binaryen"
+                } else {
+                    "Download from https://github.com/WebAssembly/binaryen/releases"
+                }
+            }
+            Tool::Curl => {
+                if cfg!(target_os = "macos") {
+                    "curl is pre-installed on macOS"
+                } else if cfg!(target_os = "linux") {
+                    "apt install curl"
+                } else {
+                    "https://curl.se/download.html"
+                }
+            }
         }
     }
 
@@ -114,7 +142,9 @@ impl Tool {
             Tool::Git => None,
             Tool::WasmPack => Some("wasm-pack"),
             Tool::CargoComponent => Some("cargo-component"),
-            Tool::Jco => None, // npm package, not cargo
+            Tool::Jco => None,     // npm package, not cargo
+            Tool::WasmOpt => None, // binary release, not cargo
+            Tool::Curl => None,    // system tool, not cargo
         }
     }
 

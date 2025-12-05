@@ -786,15 +786,20 @@ fn optimize_and_compress_wasm(plugins_dir: &Utf8Path, _config: &CompressionConfi
                     .len() as usize;
                 total_original.fetch_add(original_size, Ordering::Relaxed);
 
-                // Optimize with wasm-opt
-                let optimized_path = wasm_path.with_extension("wasm.opt");
-                wasm_opt::OptimizationOptions::new_optimize_for_size()
-                    .run(wasm_path.as_std_path(), optimized_path.as_std_path())
-                    .map_err(|e| miette::miette!("wasm-opt failed for {}: {}", wasm_path, e))?;
+                // Optimize with wasm-opt via shell command
+                let status = std::process::Command::new("wasm-opt")
+                    .arg("-Oz") // optimize for size
+                    .arg("-o")
+                    .arg(wasm_path.as_str())
+                    .arg(wasm_path.as_str())
+                    .status()
+                    .map_err(|e| {
+                        miette::miette!("failed to run wasm-opt for {}: {}", wasm_path, e)
+                    })?;
 
-                // Replace original with optimized
-                std::fs::rename(&optimized_path, wasm_path)
-                    .map_err(|e| miette::miette!("failed to rename {}: {}", wasm_path, e))?;
+                if !status.success() {
+                    return Err(miette::miette!("wasm-opt failed for {}", wasm_path));
+                }
                 let optimized_size = std::fs::metadata(wasm_path)
                     .map_err(|e| miette::miette!("failed to read {}: {}", wasm_path, e))?
                     .len() as usize;
