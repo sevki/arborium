@@ -4,17 +4,14 @@ use std::env;
 use std::fs;
 use std::path::PathBuf;
 
-/// Find the repository root by looking for Cargo.toml with `[workspace]`
+/// Find repository root by looking for .git directory
 pub fn find_repo_root() -> Option<PathBuf> {
     let cwd = env::current_dir().ok()?;
     let mut current = cwd.clone();
 
     loop {
-        let cargo_toml = current.join("Cargo.toml");
-        if cargo_toml.exists()
-            && let Ok(contents) = fs::read_to_string(&cargo_toml)
-            && contents.contains("[workspace]")
-        {
+        let git_dir = current.join(".git");
+        if git_dir.exists() {
             return Some(current);
         }
         if !current.pop() {
