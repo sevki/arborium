@@ -79,9 +79,9 @@ impl Registry {
         let mut grammars: Vec<RegistryGrammar> = registry
             .all_grammars()
             .filter(|(_, _, grammar)| !grammar.is_internal())
-            .map(|(crate_name, _config, grammar)| {
-                let crate_path = crates_dir.join(crate_name);
-                RegistryGrammar::from_grammar_config(crate_name, grammar, &crate_path)
+            .map(|(state, _config, grammar)| {
+                let crate_path = crates_dir.join(&state.name);
+                RegistryGrammar::from_grammar_config(&state.name, grammar, &crate_path)
             })
             .collect();
 

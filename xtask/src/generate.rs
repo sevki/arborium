@@ -23,13 +23,13 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 
 // Sailfish templates - compiled at build time
 #[derive(TemplateSimple)]
-#[template(path = "validate_grammar.js.stpl")]
+#[template(path = "validate_grammar.stpl.js")]
 struct ValidateGrammarTemplate<'a> {
     grammar_path: &'a str,
 }
 
 #[derive(TemplateSimple)]
-#[template(path = "cargo_toml.stpl")]
+#[template(path = "cargo.stpl.toml")]
 struct CargoTomlTemplate<'a> {
     crate_name: &'a str,
     workspace_version: &'a str,
@@ -37,17 +37,19 @@ struct CargoTomlTemplate<'a> {
     grammar_name: &'a str,
     license: &'a str,
     tag: &'a str,
+    shared_rel: &'a str,
+    repo_rel: &'a str,
 }
 
 #[derive(TemplateSimple)]
-#[template(path = "build_rs.stpl")]
+#[template(path = "build.stpl.rs")]
 struct BuildRsTemplate<'a> {
     has_scanner: bool,
     c_symbol: &'a str,
 }
 
 #[derive(TemplateSimple)]
-#[template(path = "lib_rs.stpl")]
+#[template(path = "lib.stpl.rs")]
 struct LibRsTemplate<'a> {
     grammar_id: &'a str,
     c_symbol: &'a str,
@@ -58,7 +60,7 @@ struct LibRsTemplate<'a> {
 }
 
 #[derive(TemplateSimple)]
-#[template(path = "readme.stpl")]
+#[template(path = "readme.stpl.md")]
 struct ReadmeTemplate<'a> {
     crate_name: &'a str,
     crate_name_snake: &'a str,
@@ -76,7 +78,7 @@ struct ReadmeTemplate<'a> {
 
 // Plugin crate templates
 #[derive(TemplateSimple)]
-#[template(path = "plugin_cargo_toml.stpl")]
+#[template(path = "plugin_cargo.stpl.toml")]
 struct PluginCargoTomlTemplate<'a> {
     grammar_id: &'a str,
     grammar_crate_name: &'a str,
@@ -86,7 +88,7 @@ struct PluginCargoTomlTemplate<'a> {
 }
 
 #[derive(TemplateSimple)]
-#[template(path = "plugin_lib_rs.stpl")]
+#[template(path = "plugin_lib.stpl.rs")]
 struct PluginLibRsTemplate<'a> {
     grammar_id: &'a str,
     grammar_crate_name_snake: &'a str,
@@ -94,7 +96,7 @@ struct PluginLibRsTemplate<'a> {
 }
 
 #[derive(TemplateSimple)]
-#[template(path = "plugin_package_json.stpl")]
+#[template(path = "plugin_package.stpl.json")]
 struct PluginPackageJsonTemplate<'a> {
     grammar_id: &'a str,
     version: &'a str,
@@ -147,14 +149,14 @@ fn generate_workspace_dependencies(
     let cargo_toml_path = repo_root.join("Cargo.toml");
     let content = fs::read_to_string(&cargo_toml_path)?;
 
-    // Collect all grammar crate names (sorted for deterministic output)
-    let mut crate_names: Vec<&str> = registry
+    // Collect all grammar crates with their paths (sorted for deterministic output)
+    let mut crate_entries: Vec<(&str, &Utf8Path)> = registry
         .crates
-        .keys()
-        .map(|s| s.as_str())
-        .filter(|name| name.starts_with("arborium-"))
+        .values()
+        .filter(|state| state.name.starts_with("arborium-"))
+        .map(|state| (state.name.as_str(), state.crate_path.as_path()))
         .collect();
-    crate_names.sort();
+    crate_entries.sort_by_key(|(name, _)| *name);
 
     // Build the [workspace.dependencies] section
     let mut deps_section = String::from("\n[workspace.dependencies]\n");
@@ -163,10 +165,14 @@ fn generate_workspace_dependencies(
         "arborium = {{ path = \"crates/arborium\", version = \"{}\" }}\n",
         version
     ));
-    for crate_name in &crate_names {
+    for (crate_name, crate_path) in &crate_entries {
+        // Make path relative to repo root
+        let rel_path = crate_path
+            .strip_prefix(repo_root)
+            .unwrap_or(crate_path);
         deps_section.push_str(&format!(
-            "{} = {{ path = \"crates/{}\", version = \"{}\" }}\n",
-            crate_name, crate_name, version
+            "{} = {{ path = \"{}\", version = \"{}\" }}\n",
+            crate_name, rel_path, version
         ));
     }
 
@@ -467,6 +473,8 @@ fn generate_cargo_toml(
     crate_name: &str,
     config: &crate::types::CrateConfig,
     workspace_version: &str,
+    shared_rel: &str,
+    repo_rel: &str,
 ) -> String {
     let grammar = config.grammars.first();
 
@@ -493,6 +501,8 @@ fn generate_cargo_toml(
         grammar_name,
         license,
         tag,
+        shared_rel,
+        repo_rel,
     };
     template
         .render_once()
@@ -629,10 +639,12 @@ fn generate_plugin_cargo_toml(
     wit_path: &str,
 ) -> String {
     // Paths relative to npm/:
-    // crate = ../crate
-    // shared crates = ../../../crates/<name>
+    // npm/ is at langs/group-*/lang/npm/
+    // crate/ is at langs/group-*/lang/crate/ (sibling)
+    // shared crates are at crates/ (repo root)
+    // So: npm -> lang -> group-* -> langs -> repo-root -> crates
     let crate_rel = "../crate";
-    let shared_rel = "../../../crates";
+    let shared_rel = "../../../../crates";
 
     let template = PluginCargoTomlTemplate {
         grammar_id,
@@ -1045,6 +1057,13 @@ fn plan_crate_files_only(
     let def_path = &crate_state.def_path;
     let crate_path = &crate_state.crate_path;
 
+    // crate/ is at langs/group-*/lang/crate/
+    // shared crates are at crates/ (repo root)
+    // So: crate -> lang -> group-* -> langs -> repo-root -> crates
+    let shared_rel = "../../../../crates";
+    // repo root is 4 levels up from crate/
+    let repo_rel = "../../../..";
+
     // Ensure crate directory exists
     if !crate_path.exists() {
         plan.add(Operation::CreateDir {
@@ -1055,7 +1074,7 @@ fn plan_crate_files_only(
 
     // Generate Cargo.toml
     let cargo_toml_path = crate_path.join("Cargo.toml");
-    let new_cargo_toml = generate_cargo_toml(&crate_state.name, config, workspace_version);
+    let new_cargo_toml = generate_cargo_toml(&crate_state.name, config, workspace_version, shared_rel, repo_rel);
 
     if cargo_toml_path.exists() {
         let old_content = fs::read_to_string(&cargo_toml_path)?;

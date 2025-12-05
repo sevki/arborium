@@ -967,13 +967,15 @@ impl CrateRegistry {
     }
 
     /// Iterate over all grammars across all configured crates.
-    pub fn all_grammars(&self) -> impl Iterator<Item = (&str, &CrateConfig, &GrammarConfig)> {
+    pub fn all_grammars(
+        &self,
+    ) -> impl Iterator<Item = (&CrateState, &CrateConfig, &GrammarConfig)> {
         self.configured_crates()
-            .flat_map(|(crate_name, _, config)| {
+            .flat_map(|(_, state, config)| {
                 config
                     .grammars
                     .iter()
-                    .map(move |g| (crate_name.as_str(), config, g))
+                    .map(move |g| (state, config, g))
             })
     }
 }

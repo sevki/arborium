@@ -1,3 +1,4 @@
+use std::io::Write;
 use std::sync::Mutex;
 use std::time::Instant;
 
@@ -11,20 +12,70 @@ use crate::tool::Tool;
 use crate::types::CrateRegistry;
 use crate::version_store;
 
+/// Prefixes each line of output with a grammar tag.
+fn prefix_output(grammar: &str, output: &[u8], is_stderr: bool) -> String {
+    let text = String::from_utf8_lossy(output);
+    if text.is_empty() {
+        return String::new();
+    }
+    let prefix = format!("[{}]", grammar);
+    let colored_prefix = if is_stderr {
+        prefix.red().to_string()
+    } else {
+        prefix.cyan().to_string()
+    };
+    text.lines()
+        .map(|line| format!("{} {}", colored_prefix, line))
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+/// Thread-safe output printer for parallel builds.
+struct OutputPrinter {
+    mutex: Mutex<()>,
+}
+
+impl OutputPrinter {
+    fn new() -> Self {
+        Self {
+            mutex: Mutex::new(()),
+        }
+    }
+
+    fn print_output(&self, grammar: &str, stdout: &[u8], stderr: &[u8]) {
+        let _lock = self.mutex.lock().unwrap();
+        let stdout_prefixed = prefix_output(grammar, stdout, false);
+        let stderr_prefixed = prefix_output(grammar, stderr, true);
+        if !stdout_prefixed.is_empty() {
+            println!("{}", stdout_prefixed);
+        }
+        if !stderr_prefixed.is_empty() {
+            eprintln!("{}", stderr_prefixed);
+        }
+        // Flush to ensure output is visible immediately
+        let _ = std::io::stdout().flush();
+        let _ = std::io::stderr().flush();
+    }
+}
+
 pub struct BuildOptions {
     pub grammars: Vec<String>,
+    pub group: Option<String>,
     pub output_dir: Option<Utf8PathBuf>,
     pub transpile: bool,
     pub profile: bool,
+    pub jobs: usize,
 }
 
 impl Default for BuildOptions {
     fn default() -> Self {
         Self {
             grammars: Vec::new(),
+            group: None,
             output_dir: None,
             transpile: true,
             profile: false,
+            jobs: 16,
         }
     }
 }
@@ -146,14 +197,25 @@ pub fn build_plugins(repo_root: &Utf8Path, options: &BuildOptions) -> Result<()>
     let registry = CrateRegistry::load(&crates_dir)
         .map_err(|e| miette::miette!("failed to load crate registry: {}", e))?;
 
-    let grammars: Vec<String> = if options.grammars.is_empty() {
+    let grammars: Vec<String> = if !options.grammars.is_empty() {
+        options.grammars.clone()
+    } else if let Some(ref group) = options.group {
+        // Filter by group name (e.g., "birch" matches "group-birch")
+        let group_prefix = format!("group-{}", group);
+        registry
+            .all_grammars()
+            .filter(|(state, _, grammar)| {
+                grammar.generate_component()
+                    && state.crate_path.as_str().contains(&group_prefix)
+            })
+            .map(|(_, _, grammar)| grammar.id().to_string())
+            .collect()
+    } else {
         registry
             .all_grammars()
             .filter(|(_, _, grammar)| grammar.generate_component())
             .map(|(_, _, grammar)| grammar.id().to_string())
             .collect()
-    } else {
-        options.grammars.clone()
     };
 
     if grammars.is_empty() {
@@ -165,10 +227,10 @@ pub fn build_plugins(repo_root: &Utf8Path, options: &BuildOptions) -> Result<()>
     }
 
     println!(
-        "{} Building {} plugin(s): {}",
+        "{} Building {} plugin(s) with {} job(s)",
         "●".cyan(),
         grammars.len(),
-        grammars.join(", ")
+        options.jobs
     );
 
     let cargo_component = Tool::CargoComponent
@@ -187,10 +249,11 @@ pub fn build_plugins(repo_root: &Utf8Path, options: &BuildOptions) -> Result<()>
     };
 
     let timings: Mutex<Vec<PluginTiming>> = Mutex::new(Vec::new());
-    let errors: Mutex<Vec<String>> = Mutex::new(Vec::new());
+    let errors: Mutex<Vec<(String, String)>> = Mutex::new(Vec::new());
+    let printer = OutputPrinter::new();
 
     let pool = rayon::ThreadPoolBuilder::new()
-        .num_threads(16)
+        .num_threads(options.jobs)
         .build()
         .expect("failed to create thread pool");
 
@@ -205,14 +268,17 @@ pub fn build_plugins(repo_root: &Utf8Path, options: &BuildOptions) -> Result<()>
                 &cargo_component,
                 jco.as_ref(),
                 options.profile,
+                &printer,
             );
 
             match result {
                 Ok(timing) => {
+                    println!("{} {}", format!("[{}]", grammar).green(), "done".green());
                     timings.lock().unwrap().push(timing);
                 }
                 Err(e) => {
-                    errors.lock().unwrap().push(format!("{}: {}", grammar, e));
+                    eprintln!("{} {}", format!("[{}]", grammar).red(), format!("{}", e).red());
+                    errors.lock().unwrap().push((grammar.clone(), format!("{}", e)));
                 }
             }
         })
@@ -220,8 +286,9 @@ pub fn build_plugins(repo_root: &Utf8Path, options: &BuildOptions) -> Result<()>
 
     let errors = errors.into_inner().unwrap();
     if !errors.is_empty() {
-        for err in &errors {
-            eprintln!("{} {}", "✗".red(), err);
+        eprintln!("\n{} {} plugin(s) failed:", "✗".red(), errors.len());
+        for (grammar, err) in &errors {
+            eprintln!("  {} {}", format!("[{}]", grammar).red(), err);
         }
         miette::bail!("{} plugin(s) failed to build", errors.len());
     }
@@ -283,9 +350,10 @@ fn build_single_plugin(
     cargo_component: &crate::tool::ToolPath,
     jco: Option<&crate::tool::ToolPath>,
     profile: bool,
+    printer: &OutputPrinter,
 ) -> Result<PluginTiming> {
     let grammar_start = Instant::now();
-    println!("{} {}", "Building:".cyan(), grammar);
+    printer.print_output(grammar, b"Building...\n", b"");
 
     let (crate_state, _) = locate_grammar(registry, grammar).ok_or_else(|| {
         miette::miette!(
@@ -331,9 +399,11 @@ fn build_single_plugin(
         .context("failed to run cargo-component")?;
     let cargo_component_ms = cargo_start.elapsed().as_millis() as u64;
 
+    // Print captured output with grammar prefix
+    printer.print_output(grammar, &output.stdout, &output.stderr);
+
     if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        miette::bail!("cargo-component build failed:\n{}", stderr);
+        miette::bail!("cargo-component build failed (see output above)");
     }
 
     let wasm_file = plugin_output
@@ -371,9 +441,11 @@ fn build_single_plugin(
             .context("failed to run jco")?;
         transpile_ms = transpile_start.elapsed().as_millis() as u64;
 
+        // Print captured output with grammar prefix
+        printer.print_output(grammar, &output.stdout, &output.stderr);
+
         if !output.status.success() {
-            let stderr = String::from_utf8_lossy(&output.stderr);
-            miette::bail!("jco transpile failed:\n{}", stderr);
+            miette::bail!("jco transpile failed (see output above)");
         }
     }
 

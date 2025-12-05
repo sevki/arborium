@@ -89,6 +89,14 @@ enum Command {
         #[facet(args::positional, default)]
         grammars: Vec<String>,
 
+        /// Build only grammars in a specific group (e.g., "birch", "acorn")
+        #[facet(args::named, default)]
+        group: Option<String>,
+
+        /// Number of parallel jobs (default: 16)
+        #[facet(args::named, args::short = 'j', default)]
+        jobs: Option<usize>,
+
         /// Skip jco transpile step
         #[facet(args::named, default)]
         no_transpile: bool,
@@ -260,6 +268,8 @@ fn main() {
         }
         Command::Build {
             grammars,
+            group,
+            jobs,
             no_transpile,
             profile,
         } => {
@@ -270,9 +280,11 @@ fn main() {
             let repo_root = camino::Utf8PathBuf::from_path_buf(repo_root).expect("non-UTF8 path");
             let options = build::BuildOptions {
                 grammars,
+                group,
                 output_dir: None,
                 transpile: !no_transpile,
                 profile,
+                jobs: jobs.unwrap_or(16),
             };
             if let Err(e) = build::build_plugins(&repo_root, &options) {
                 eprintln!("{:?}", e);
