@@ -380,13 +380,42 @@ pub fn build_plugins(repo_root: &Utf8Path, options: &BuildOptions) -> Result<()>
     Ok(())
 }
 
-pub fn clean_plugins(repo_root: &Utf8Path, output_dir: &str) -> Result<()> {
-    let output_path = repo_root.join(output_dir);
-    if output_path.exists() {
-        std::fs::remove_dir_all(&output_path)
-            .into_diagnostic()
-            .context("failed to remove output directory")?;
-        println!("{} Removed {}", "✓".green(), output_path);
+pub fn clean_plugins(repo_root: &Utf8Path, _output_dir: &str) -> Result<()> {
+    // Clean all target/ directories inside langs/group-*/*/npm/
+    // This removes stale build artifacts without deleting source files
+    let langs_dir = repo_root.join("langs");
+    let mut cleaned = 0;
+
+    for group_entry in std::fs::read_dir(&langs_dir).into_diagnostic()? {
+        let group_entry = group_entry.into_diagnostic()?;
+        let group_path = group_entry.path();
+        if !group_path.is_dir() {
+            continue;
+        }
+        let group_name = group_path.file_name().unwrap_or_default().to_string_lossy();
+        if !group_name.starts_with("group-") {
+            continue;
+        }
+
+        for lang_entry in std::fs::read_dir(&group_path).into_diagnostic()? {
+            let lang_entry = lang_entry.into_diagnostic()?;
+            let lang_path = lang_entry.path();
+            if !lang_path.is_dir() {
+                continue;
+            }
+
+            let npm_target = lang_path.join("npm/target");
+            if npm_target.exists() {
+                std::fs::remove_dir_all(&npm_target)
+                    .into_diagnostic()
+                    .context(format!("failed to remove {}", npm_target.display()))?;
+                cleaned += 1;
+            }
+        }
+    }
+
+    if cleaned > 0 {
+        println!("{} Cleaned {} plugin target directories", "✓".green(), cleaned);
     } else {
         println!("{} Nothing to clean", "○".dimmed());
     }
