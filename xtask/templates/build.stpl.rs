@@ -17,7 +17,7 @@ fn main() {
         .include(&src_dir)
         .include(&grammar_dir) // for common/ includes like "../common/scanner.h"
         .include(src_dir.join("tree_sitter"))
-        .opt_level_str("s") // optimize for size, not speed
+        .opt_level_str("z") // optimize aggressively for size
         .warnings(false)
         .flag_if_supported("-Wno-unused-parameter")
         .flag_if_supported("-Wno-unused-but-set-variable")

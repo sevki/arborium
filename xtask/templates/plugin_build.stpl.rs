@@ -20,7 +20,7 @@ fn main() {
         .include(src_dir.join("tree_sitter"))
         // Include def/grammar/ for common/ scanner includes (e.g. "common/scanner.h")
         .include(def_dir.join("grammar"))
-        .opt_level_str("s")
+        .opt_level_str("z") // optimize aggressively for size
         .warnings(false)
         .flag_if_supported("-Wno-unused-parameter")
         .flag_if_supported("-Wno-unused-but-set-variable")
