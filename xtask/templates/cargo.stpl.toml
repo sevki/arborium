@@ -2,10 +2,14 @@
 name = "<%= crate_name %>"
 version = "<%= workspace_version %>"
 edition = "2024"
+rust-version = "1.85"
 description = "<%= grammar_name %> grammar for arborium (tree-sitter bindings)"
+authors = ["Amos Wenger <amos@bearcove.eu>"]
 license = "<%= license %>"
 readme = "README.md"
 repository = "https://github.com/bearcove/arborium"
+homepage = "https://github.com/bearcove/arborium"
+documentation = "https://docs.rs/<%= crate_name %>"
 keywords = ["tree-sitter", "<%= grammar_id %>", "syntax-highlighting", "<%= tag %>"]
 categories = ["parsing", "text-processing"]
 

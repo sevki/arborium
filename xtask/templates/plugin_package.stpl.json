@@ -23,14 +23,16 @@
     "grammar.core4.wasm",
     "interfaces"
   ],
+  "sideEffects": false,
   "keywords": [
     "arborium",
     "syntax-highlighting",
     "tree-sitter",
     "<%= grammar_id %>",
+    "<%= grammar_name %>",
     "wasm"
   ],
-  "author": "Amos Wenger <amos@bearcove.net>",
+  "author": "Amos Wenger <amos@bearcove.eu>",
   "license": "MIT OR Apache-2.0",
   "repository": {
     "type": "git",
@@ -39,6 +41,13 @@
   "homepage": "https://github.com/bearcove/arborium",
   "bugs": {
     "url": "https://github.com/bearcove/arborium/issues"
+  },
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/fasterthanlime"
+  },
+  "engines": {
+    "node": ">=18"
   },
   "publishConfig": {
     "access": "public"

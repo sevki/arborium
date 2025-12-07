@@ -1,6 +1,6 @@
 /**
  * @file Starlark grammar for tree-sitter
- * @author Amos Wenger <amos@bearcove.net>
+ * @author Amos Wenger <amos@bearcove.eu>
  * @license MIT
  * @see {@link https://github.com/bazelbuild/starlark/blob/master/spec.md|Starlark spec}
  */
