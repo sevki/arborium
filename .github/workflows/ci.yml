@@ -76,19 +76,20 @@ jobs:
         uses: actions/download-artifact@v4
         with: 
           name: grammar-sources
+          path: .
 
       - 
-        name: Extract grammar sources
-        run: tar -xvf grammar-sources.tar
+        name: Rust cache
+        uses: Swatinem/rust-cache@v2
       - 
         name: Build
-        run: cargo build --locked --verbose
+        run: cargo build --verbose
       - 
         name: Run tests
-        run: cargo nextest run --locked --verbose
+        run: cargo nextest run --verbose
       - 
         name: Build with all features
-        run: cargo build --locked --all-features --verbose
+        run: cargo build --all-features --verbose
 
   test-macos: 
     name: Test (macOS)
@@ -105,10 +106,8 @@ jobs:
         uses: actions/download-artifact@v4
         with: 
           name: grammar-sources
+          path: .
 
-      - 
-        name: Extract grammar sources
-        run: tar -xvf grammar-sources.tar
       - 
         name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -123,10 +122,10 @@ jobs:
 
       - 
         name: Build
-        run: cargo build --locked --verbose
+        run: cargo build --verbose
       - 
         name: Run tests
-        run: cargo nextest run --locked --verbose
+        run: cargo nextest run --verbose
 
   wasm: 
     name: WASM Compatibility
@@ -144,13 +143,11 @@ jobs:
         uses: actions/download-artifact@v4
         with: 
           name: grammar-sources
+          path: .
 
       - 
-        name: Extract grammar sources
-        run: tar -xvf grammar-sources.tar
-      - 
         name: Build arborium for WASM
-        run: cargo build --locked -p arborium --target wasm32-unknown-unknown
+        run: cargo build -p arborium --target wasm32-unknown-unknown
       - 
         name: Check for env imports in WASM
         run: "found_env_imports=false\nfor wasm_file in $(find target/wasm32-unknown-unknown -name \"*.wasm\" -type f); do\n  if wasm-objdump -j Import -x \"$wasm_file\" 2>/dev/null | grep -q '<- env\\.'; then\n    echo \"ERROR: Found env imports in $wasm_file:\"\n    wasm-objdump -j Import -x \"$wasm_file\" | grep '<- env\\.'\n    found_env_imports=true\n  fi\ndone\nif [ \"$found_env_imports\" = true ]; then\n  echo \"WASM modules should not have env imports - these won't work in the browser\"\n  exit 1\nfi\necho \"No env imports found - WASM modules are browser-compatible\""
@@ -171,13 +168,11 @@ jobs:
         uses: actions/download-artifact@v4
         with: 
           name: grammar-sources
+          path: .
 
       - 
-        name: Extract grammar sources
-        run: tar -xvf grammar-sources.tar
-      - 
         name: Run Clippy
-        run: cargo clippy --locked --all-targets -- -D warnings
+        run: cargo clippy --all-targets -- -D warnings
 
   fmt: 
     name: Format
@@ -195,10 +190,8 @@ jobs:
         uses: actions/download-artifact@v4
         with: 
           name: grammar-sources
+          path: .
 
-      - 
-        name: Extract grammar sources
-        run: tar -xvf grammar-sources.tar
       - 
         name: Check formatting
         run: cargo fmt --all -- --check
@@ -222,13 +215,11 @@ jobs:
         uses: actions/download-artifact@v4
         with: 
           name: grammar-sources
+          path: .
 
       - 
-        name: Extract grammar sources
-        run: tar -xvf grammar-sources.tar
-      - 
         name: Build docs
-        run: cargo doc --locked --no-deps
+        run: cargo doc --no-deps
         env: 
           RUSTDOCFLAGS: "-D warnings"
 
@@ -249,10 +240,8 @@ jobs:
         uses: actions/download-artifact@v4
         with: 
           name: grammar-sources
+          path: .
 
-      - 
-        name: Extract grammar sources
-        run: tar -xvf grammar-sources.tar
       - 
         name: Build rust
         run: arborium-xtask plugins build rust
@@ -284,10 +273,8 @@ jobs:
         uses: actions/download-artifact@v4
         with: 
           name: grammar-sources
+          path: .
 
-      - 
-        name: Extract grammar sources
-        run: tar -xvf grammar-sources.tar
       - 
         name: Build javascript, html
         run: arborium-xtask plugins build javascript html
@@ -323,10 +310,8 @@ jobs:
         uses: actions/download-artifact@v4
         with: 
           name: grammar-sources
+          path: .
 
-      - 
-        name: Extract grammar sources
-        run: tar -xvf grammar-sources.tar
       - 
         name: Publish to crates.io
         run: arborium-xtask publish crates

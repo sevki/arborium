@@ -426,11 +426,11 @@ echo "Version: $VERSION (release: $IS_RELEASE)""#,
                 checkout(),
                 download_grammar_sources(),
                 rust_cache(),
-                Step::run("Build", "cargo build --locked --verbose"),
-                Step::run("Run tests", "cargo nextest run --locked --verbose"),
+                Step::run("Build", "cargo build --verbose"),
+                Step::run("Run tests", "cargo nextest run --verbose"),
                 Step::run(
                     "Build with all features",
-                    "cargo build --locked --all-features --verbose",
+                    "cargo build --all-features --verbose",
                 ),
             ]),
     );
@@ -447,8 +447,8 @@ echo "Version: $VERSION (release: $IS_RELEASE)""#,
                 install_rust(),
                 rust_cache(),
                 install_nextest(),
-                Step::run("Build", "cargo build --locked --verbose"),
-                Step::run("Run tests", "cargo nextest run --locked --verbose"),
+                Step::run("Build", "cargo build --verbose"),
+                Step::run("Run tests", "cargo nextest run --verbose"),
             ]),
     );
 
@@ -464,7 +464,7 @@ echo "Version: $VERSION (release: $IS_RELEASE)""#,
                 download_grammar_sources(),
                 Step::run(
                     "Build arborium for WASM",
-                    "cargo build --locked -p arborium --target wasm32-unknown-unknown",
+                    "cargo build -p arborium --target wasm32-unknown-unknown",
                 ),
                 Step::run(
                     "Check for env imports in WASM",
@@ -497,7 +497,7 @@ echo "No env imports found - WASM modules are browser-compatible""#,
                 download_grammar_sources(),
                 Step::run(
                     "Run Clippy",
-                    "cargo clippy --locked --all-targets -- -D warnings",
+                    "cargo clippy --all-targets -- -D warnings",
                 ),
             ]),
     );
@@ -530,7 +530,7 @@ echo "No env imports found - WASM modules are browser-compatible""#,
             .steps([
                 checkout(),
                 download_grammar_sources(),
-                Step::run("Build docs", "cargo doc --locked --no-deps")
+                Step::run("Build docs", "cargo doc --no-deps")
                     .with_env([("RUSTDOCFLAGS", "-D warnings")]),
             ]),
     );
