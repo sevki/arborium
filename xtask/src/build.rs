@@ -2,7 +2,6 @@ use std::io::{BufRead, BufReader, Write};
 use std::process::{Command, ExitStatus, Stdio};
 use std::sync::{Arc, Mutex};
 use std::thread;
-use std::time::Instant;
 
 use rand::seq::SliceRandom;
 
@@ -94,7 +93,6 @@ pub struct BuildOptions {
     pub group: Option<String>,
     pub output_dir: Option<Utf8PathBuf>,
     pub transpile: bool,
-    pub profile: bool,
     pub jobs: usize,
 }
 
@@ -105,100 +103,79 @@ impl Default for BuildOptions {
             group: None,
             output_dir: None,
             transpile: true,
-            profile: false,
             jobs: 16,
         }
     }
 }
 
-#[derive(Debug, Clone, facet::Facet)]
-#[facet(rename_all = "snake_case")]
-pub struct PluginTiming {
-    pub grammar: String,
-    pub build_ms: u64,
-    pub cargo_component_ms: u64,
-    pub transpile_ms: u64,
-}
-
-#[derive(Debug, Clone, facet::Facet)]
-#[facet(rename_all = "snake_case")]
-pub struct PluginTimings {
-    pub recorded_at: String,
-    pub timings: Vec<PluginTiming>,
-}
-
-impl PluginTimings {
-    pub fn load(path: &Utf8Path) -> miette::Result<Self> {
-        let content = fs_err::read_to_string(path)
-            .map_err(|e| miette::miette!("failed to read {}: {}", path, e))?;
-        facet_json::from_str(&content)
-            .map_err(|e| miette::miette!("failed to parse {}: {}", path, e))
-    }
-
-    pub fn save(&self, path: &Utf8Path) -> miette::Result<()> {
-        let content = facet_json::to_string_pretty(self);
-        fs_err::write(path, content)
-            .map_err(|e| miette::miette!("failed to write {}: {}", path, e))?;
-        Ok(())
-    }
-}
-
-#[derive(Debug, Clone, facet::Facet)]
-#[facet(rename_all = "snake_case")]
+/// A group of plugins to build together (maps to langs/group-* folders).
+#[derive(Debug, Clone)]
 pub struct PluginGroup {
-    pub index: usize,
+    /// The group name (e.g., "acorn", "birch")
+    pub name: String,
+    /// Grammars in this group
     pub grammars: Vec<String>,
-    pub total_ms: u64,
 }
 
-#[derive(Debug, Clone, facet::Facet)]
-#[facet(rename_all = "snake_case")]
+/// All plugin groups discovered from the filesystem.
+#[derive(Debug, Clone)]
 pub struct PluginGroups {
     pub groups: Vec<PluginGroup>,
-    pub max_group_ms: u64,
-    pub ideal_per_group_ms: u64,
-    pub efficiency: f64,
 }
 
 impl PluginGroups {
-    pub fn from_timings(timings: &PluginTimings, num_groups: usize) -> Self {
-        let num_groups = num_groups.max(1);
-        let mut sorted: Vec<_> = timings.timings.iter().collect();
-        sorted.sort_by(|a, b| b.build_ms.cmp(&a.build_ms));
-        let mut groups: Vec<PluginGroup> = (0..num_groups)
-            .map(|i| PluginGroup {
-                index: i,
-                grammars: Vec::new(),
-                total_ms: 0,
+    /// Discover plugin groups from langs/group-* directories.
+    pub fn discover(langs_dir: &Utf8Path) -> miette::Result<Self> {
+        let mut groups = Vec::new();
+
+        // Read all group-* directories
+        let mut group_dirs: Vec<_> = std::fs::read_dir(langs_dir)
+            .map_err(|e| miette::miette!("failed to read {}: {}", langs_dir, e))?
+            .filter_map(|entry| entry.ok())
+            .filter(|entry| {
+                let name = entry.file_name();
+                let name = name.to_string_lossy();
+                name.starts_with("group-") && entry.path().is_dir()
             })
             .collect();
-        for timing in sorted {
-            let g = groups.iter_mut().min_by_key(|g| g.total_ms).expect("group");
-            g.grammars.push(timing.grammar.clone());
-            g.total_ms += timing.build_ms;
+
+        // Sort by name for consistent ordering
+        group_dirs.sort_by_key(|e| e.file_name());
+
+        for group_entry in group_dirs {
+            let group_name = group_entry
+                .file_name()
+                .to_string_lossy()
+                .strip_prefix("group-")
+                .unwrap_or_default()
+                .to_string();
+
+            let group_path = group_entry.path();
+            let mut grammars = Vec::new();
+
+            // Read all grammar directories within this group
+            for lang_entry in std::fs::read_dir(&group_path)
+                .map_err(|e| miette::miette!("failed to read {:?}: {}", group_path, e))?
+            {
+                let lang_entry =
+                    lang_entry.map_err(|e| miette::miette!("failed to read entry: {}", e))?;
+                if lang_entry.path().is_dir() {
+                    grammars.push(lang_entry.file_name().to_string_lossy().to_string());
+                }
+            }
+
+            // Sort grammars for consistent ordering
+            grammars.sort();
+
+            if !grammars.is_empty() {
+                groups.push(PluginGroup {
+                    name: group_name,
+                    grammars,
+                });
+            }
         }
-        groups.retain(|g| !g.grammars.is_empty());
-        for (i, g) in groups.iter_mut().enumerate() {
-            g.index = i;
-        }
-        let max_group_ms = groups.iter().map(|g| g.total_ms).max().unwrap_or(0);
-        let total_ms: u64 = timings.timings.iter().map(|t| t.build_ms).sum();
-        let ideal_per_group_ms = if num_groups > 0 {
-            total_ms / num_groups as u64
-        } else {
-            0
-        };
-        let efficiency = if max_group_ms > 0 {
-            ideal_per_group_ms as f64 / max_group_ms as f64
-        } else {
-            0.0
-        };
-        Self {
-            groups,
-            max_group_ms,
-            ideal_per_group_ms,
-            efficiency,
-        }
+
+        Ok(Self { groups })
     }
 }
 
@@ -281,7 +258,6 @@ pub fn build_plugins(repo_root: &Utf8Path, options: &BuildOptions) -> Result<()>
         None
     };
 
-    let timings: Mutex<Vec<PluginTiming>> = Mutex::new(Vec::new());
     let errors: Mutex<Vec<(String, String)>> = Mutex::new(Vec::new());
     let printer = OutputPrinter::new();
 
@@ -300,14 +276,12 @@ pub fn build_plugins(repo_root: &Utf8Path, options: &BuildOptions) -> Result<()>
                 &version,
                 &cargo_component,
                 jco.as_ref(),
-                options.profile,
                 &printer,
             );
 
             match result {
-                Ok(timing) => {
+                Ok(()) => {
                     println!("{} {}", format!("[{}]", grammar).green(), "done".green());
-                    timings.lock().unwrap().push(timing);
                 }
                 Err(e) => {
                     eprintln!(
@@ -333,8 +307,6 @@ pub fn build_plugins(repo_root: &Utf8Path, options: &BuildOptions) -> Result<()>
         miette::bail!("{} plugin(s) failed to build", errors.len());
     }
 
-    let timings = timings.into_inner().unwrap();
-
     let manifest = build_manifest(
         repo_root,
         &registry,
@@ -354,16 +326,6 @@ pub fn build_plugins(repo_root: &Utf8Path, options: &BuildOptions) -> Result<()>
         "✓".green(),
         manifest_path.cyan()
     );
-
-    if options.profile {
-        let timings_path = repo_root.join("plugin-timings.json");
-        let plugin_timings = PluginTimings {
-            recorded_at: Utc::now().to_rfc3339(),
-            timings,
-        };
-        plugin_timings.save(&timings_path)?;
-        println!("\n{} Saved timings to {}", "✓".green(), timings_path.cyan());
-    }
 
     // Print next steps hint
     println!();
@@ -463,6 +425,7 @@ pub fn build_demo(repo_root: &Utf8Path, crates_dir: &Utf8Path, dev: bool) -> Res
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
 fn build_single_plugin(
     repo_root: &Utf8Path,
     registry: &CrateRegistry,
@@ -471,10 +434,8 @@ fn build_single_plugin(
     _version: &str,
     cargo_component: &crate::tool::ToolPath,
     jco: Option<&crate::tool::ToolPath>,
-    profile: bool,
     printer: &OutputPrinter,
-) -> Result<PluginTiming> {
-    let grammar_start = Instant::now();
+) -> Result<()> {
     printer.print_line(grammar, "Building...", false);
 
     let (crate_state, _) = locate_grammar(registry, grammar).ok_or_else(|| {
@@ -511,14 +472,12 @@ fn build_single_plugin(
         );
     }
 
-    let cargo_start = Instant::now();
     let mut cmd = cargo_component.command();
     cmd.args(["build", "--release", "--target", "wasm32-wasip1"])
         .current_dir(&plugin_output);
     let status = run_streaming(cmd, grammar, printer)
         .into_diagnostic()
         .context("failed to run cargo-component")?;
-    let cargo_component_ms = cargo_start.elapsed().as_millis() as u64;
 
     if !status.success() {
         miette::bail!("cargo-component build failed (see output above)");
@@ -540,9 +499,7 @@ fn build_single_plugin(
         .into_diagnostic()
         .context("failed to copy wasm file")?;
 
-    let mut transpile_ms = 0u64;
     if let Some(jco) = jco {
-        let transpile_start = Instant::now();
         let mut cmd = jco.command();
         cmd.args([
             "transpile",
@@ -556,31 +513,13 @@ fn build_single_plugin(
         let status = run_streaming(cmd, grammar, printer)
             .into_diagnostic()
             .context("failed to run jco")?;
-        transpile_ms = transpile_start.elapsed().as_millis() as u64;
 
         if !status.success() {
             miette::bail!("jco transpile failed (see output above)");
         }
     }
 
-    let build_ms = grammar_start.elapsed().as_millis() as u64;
-
-    if profile {
-        println!(
-            "    {} {}ms (cargo: {}ms, jco: {}ms)",
-            "⏱".dimmed(),
-            build_ms,
-            cargo_component_ms,
-            transpile_ms
-        );
-    }
-
-    Ok(PluginTiming {
-        grammar: grammar.to_string(),
-        build_ms,
-        cargo_component_ms,
-        transpile_ms,
-    })
+    Ok(())
 }
 
 fn locate_grammar<'a>(

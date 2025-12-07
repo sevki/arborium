@@ -4,12 +4,12 @@
 #
 # NOTE: Rebuild this image when xtask changes!
 
-FROM rust:1.91.1-bookworm
+FROM rust:1.91.1-trixie
 
-# Install build dependencies, wabt (wasm-objdump), and Node.js 20.x
+# Install build dependencies, wabt (wasm-objdump), binaryen (wasm-opt), and Node.js 22.x LTS
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends clang wabt \
-    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y --no-install-recommends clang wabt binaryen \
+    && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/*
 

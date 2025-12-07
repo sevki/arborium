@@ -462,18 +462,18 @@ fn copy_plugins_json(crates_dir: &Utf8Path, demo_dir: &Path, dev: bool) -> Resul
     // Read and parse the plugins.json
     let content = fs::read_to_string(&plugins_path).map_err(|e| e.to_string())?;
 
-    // Parse as serde_json Value so we can modify it
-    // (facet_json can't round-trip facet_value::Value - see https://github.com/facet-rs/facet/issues/1125)
-    let mut json: serde_json::Value = serde_json::from_str(&content).map_err(|e| e.to_string())?;
+    // Parse as facet_value::Value so we can modify it
+    let mut json: facet_value::Value =
+        facet_json::from_str(&content).map_err(|e| e.to_string())?;
 
     // Add dev_mode field
     if let Some(obj) = json.as_object_mut() {
-        obj.insert("dev_mode".to_string(), serde_json::Value::Bool(dev));
+        obj.insert("dev_mode", dev);
     }
 
     // Write to demo directory
     let output_path = demo_dir.join("plugins.json");
-    let output = serde_json::to_string_pretty(&json).map_err(|e| e.to_string())?;
+    let output = facet_json::to_string_pretty(&json);
     fs::write(&output_path, output).map_err(|e| e.to_string())?;
 
     Ok(())

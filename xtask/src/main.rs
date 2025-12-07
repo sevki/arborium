@@ -105,10 +105,6 @@ enum Command {
         #[facet(args::named, default)]
         no_transpile: bool,
 
-        /// Profile build times and write to plugin-timings.json
-        #[facet(args::named, default)]
-        profile: bool,
-
         /// Dev mode: use local plugin paths in demo instead of CDN
         #[facet(args::named, default)]
         dev: bool,
@@ -316,7 +312,6 @@ fn main() {
             group,
             jobs,
             no_transpile,
-            profile,
             dev,
         } => {
             let repo_root = util::find_repo_root().expect("Could not find repo root");
@@ -333,7 +328,6 @@ fn main() {
                 group,
                 output_dir: None,
                 transpile: !no_transpile,
-                profile,
                 jobs: jobs.unwrap_or(16),
             };
             if let Err(e) = build::build_plugins(&repo_root, &options) {

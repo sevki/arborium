@@ -224,8 +224,8 @@ jobs:
           RUSTDOCFLAGS: "-D warnings"
 
 
-  build-plugins-0: 
-    name: "Plugins (1/2): rust"
+  build-plugins-acorn: 
+    name: "Plugins (acorn): css, html, javascript, json, scss, tsx, typescript, xml"
     runs-on: depot-ubuntu-24.04-32
     container: "ghcr.io/bearcove/arborium-plugin-builder:latest"
     needs: 
@@ -243,19 +243,19 @@ jobs:
           path: .
 
       - 
-        name: Build rust
-        run: arborium-xtask build rust
+        name: Build css, html, javascript, json, scss, tsx, typescript, xml
+        run: arborium-xtask build css html javascript json scss tsx typescript xml
       - 
         name: Upload plugins artifact
         uses: actions/upload-artifact@v4
         with: 
-          name: plugins-group-0
+          name: plugins-group-acorn
           path: dist/plugins
           retention-days: "7"
 
 
-  build-plugins-1: 
-    name: "Plugins (2/2): javascript, html"
+  build-plugins-birch: 
+    name: "Plugins (birch): asm, c, cpp, d, go, objc, rust, x86asm, zig"
     runs-on: depot-ubuntu-24.04-32
     container: "ghcr.io/bearcove/arborium-plugin-builder:latest"
     needs: 
@@ -273,13 +273,253 @@ jobs:
           path: .
 
       - 
-        name: Build javascript, html
-        run: arborium-xtask build javascript html
+        name: Build asm, c, cpp, d, go, objc, rust, x86asm, zig
+        run: arborium-xtask build asm c cpp d go objc rust x86asm zig
       - 
         name: Upload plugins artifact
         uses: actions/upload-artifact@v4
         with: 
-          name: plugins-group-1
+          name: plugins-group-birch
+          path: dist/plugins
+          retention-days: "7"
+
+
+  build-plugins-cedar: 
+    name: "Plugins (cedar): clojure, java, kotlin, scala"
+    runs-on: depot-ubuntu-24.04-32
+    container: "ghcr.io/bearcove/arborium-plugin-builder:latest"
+    needs: 
+      - generate
+
+    steps: 
+      - 
+        name: Checkout
+        uses: actions/checkout@v4
+      - 
+        name: Download grammar sources
+        uses: actions/download-artifact@v4
+        with: 
+          name: grammar-sources
+          path: .
+
+      - 
+        name: Build clojure, java, kotlin, scala
+        run: arborium-xtask build clojure java kotlin scala
+      - 
+        name: Upload plugins artifact
+        uses: actions/upload-artifact@v4
+        with: 
+          name: plugins-group-cedar
+          path: dist/plugins
+          retention-days: "7"
+
+
+  build-plugins-fern: 
+    name: "Plugins (fern): agda, commonlisp, elixir, elm, erlang, gleam, haskell, idris, lean, ocaml, scheme"
+    runs-on: depot-ubuntu-24.04-32
+    container: "ghcr.io/bearcove/arborium-plugin-builder:latest"
+    needs: 
+      - generate
+
+    steps: 
+      - 
+        name: Checkout
+        uses: actions/checkout@v4
+      - 
+        name: Download grammar sources
+        uses: actions/download-artifact@v4
+        with: 
+          name: grammar-sources
+          path: .
+
+      - 
+        name: Build agda, commonlisp, elixir, elm, erlang, gleam, haskell, idris, lean, ocaml, scheme
+        run: arborium-xtask build agda commonlisp elixir elm erlang gleam haskell idris lean ocaml scheme
+      - 
+        name: Upload plugins artifact
+        uses: actions/upload-artifact@v4
+        with: 
+          name: plugins-group-fern
+          path: dist/plugins
+          retention-days: "7"
+
+
+  build-plugins-hazel: 
+    name: "Plugins (hazel): awk, bash, batch, fish, lua, perl, php, powershell, python, ruby, zsh"
+    runs-on: depot-ubuntu-24.04-32
+    container: "ghcr.io/bearcove/arborium-plugin-builder:latest"
+    needs: 
+      - generate
+
+    steps: 
+      - 
+        name: Checkout
+        uses: actions/checkout@v4
+      - 
+        name: Download grammar sources
+        uses: actions/download-artifact@v4
+        with: 
+          name: grammar-sources
+          path: .
+
+      - 
+        name: Build awk, bash, batch, fish, lua, perl, php, powershell, python, ruby, zsh
+        run: arborium-xtask build awk bash batch fish lua perl php powershell python ruby zsh
+      - 
+        name: Upload plugins artifact
+        uses: actions/upload-artifact@v4
+        with: 
+          name: plugins-group-hazel
+          path: dist/plugins
+          retention-days: "7"
+
+
+  build-plugins-maple: 
+    name: "Plugins (maple): caddy, cmake, dockerfile, dot, graphql, hcl, ini, jq, kdl, meson, nginx, ninja, nix, query, ron, sql, ssh-config, toml, yaml"
+    runs-on: depot-ubuntu-24.04-32
+    container: "ghcr.io/bearcove/arborium-plugin-builder:latest"
+    needs: 
+      - generate
+
+    steps: 
+      - 
+        name: Checkout
+        uses: actions/checkout@v4
+      - 
+        name: Download grammar sources
+        uses: actions/download-artifact@v4
+        with: 
+          name: grammar-sources
+          path: .
+
+      - 
+        name: Build caddy, cmake, dockerfile, dot, graphql, hcl, ini, jq, kdl, meson, nginx, ninja, nix, query, ron, sql, ssh-config, toml, yaml
+        run: arborium-xtask build caddy cmake dockerfile dot graphql hcl ini jq kdl meson nginx ninja nix query ron sql ssh-config toml yaml
+      - 
+        name: Upload plugins artifact
+        uses: actions/upload-artifact@v4
+        with: 
+          name: plugins-group-maple
+          path: dist/plugins
+          retention-days: "7"
+
+
+  build-plugins-moss: 
+    name: "Plugins (moss): ada, glsl, hlsl, julia, matlab, prolog, r, sparql, tlaplus, verilog, vhdl"
+    runs-on: depot-ubuntu-24.04-32
+    container: "ghcr.io/bearcove/arborium-plugin-builder:latest"
+    needs: 
+      - generate
+
+    steps: 
+      - 
+        name: Checkout
+        uses: actions/checkout@v4
+      - 
+        name: Download grammar sources
+        uses: actions/download-artifact@v4
+        with: 
+          name: grammar-sources
+          path: .
+
+      - 
+        name: Build ada, glsl, hlsl, julia, matlab, prolog, r, sparql, tlaplus, verilog, vhdl
+        run: arborium-xtask build ada glsl hlsl julia matlab prolog r sparql tlaplus verilog vhdl
+      - 
+        name: Upload plugins artifact
+        uses: actions/upload-artifact@v4
+        with: 
+          name: plugins-group-moss
+          path: dist/plugins
+          retention-days: "7"
+
+
+  build-plugins-pine: 
+    name: "Plugins (pine): capnp, dart, devicetree, rescript, starlark, swift, textproto, thrift, uiua, yuri"
+    runs-on: depot-ubuntu-24.04-32
+    container: "ghcr.io/bearcove/arborium-plugin-builder:latest"
+    needs: 
+      - generate
+
+    steps: 
+      - 
+        name: Checkout
+        uses: actions/checkout@v4
+      - 
+        name: Download grammar sources
+        uses: actions/download-artifact@v4
+        with: 
+          name: grammar-sources
+          path: .
+
+      - 
+        name: Build capnp, dart, devicetree, rescript, starlark, swift, textproto, thrift, uiua, yuri
+        run: arborium-xtask build capnp dart devicetree rescript starlark swift textproto thrift uiua yuri
+      - 
+        name: Upload plugins artifact
+        uses: actions/upload-artifact@v4
+        with: 
+          name: plugins-group-pine
+          path: dist/plugins
+          retention-days: "7"
+
+
+  build-plugins-sage: 
+    name: "Plugins (sage): c-sharp, elisp, fsharp, postscript, vb, vim"
+    runs-on: depot-ubuntu-24.04-32
+    container: "ghcr.io/bearcove/arborium-plugin-builder:latest"
+    needs: 
+      - generate
+
+    steps: 
+      - 
+        name: Checkout
+        uses: actions/checkout@v4
+      - 
+        name: Download grammar sources
+        uses: actions/download-artifact@v4
+        with: 
+          name: grammar-sources
+          path: .
+
+      - 
+        name: Build c-sharp, elisp, fsharp, postscript, vb, vim
+        run: arborium-xtask build c-sharp elisp fsharp postscript vb vim
+      - 
+        name: Upload plugins artifact
+        uses: actions/upload-artifact@v4
+        with: 
+          name: plugins-group-sage
+          path: dist/plugins
+          retention-days: "7"
+
+
+  build-plugins-willow: 
+    name: "Plugins (willow): asciidoc, asciidoc_inline, diff, jinja2, markdown, markdown-inline, svelte, typst, vue"
+    runs-on: depot-ubuntu-24.04-32
+    container: "ghcr.io/bearcove/arborium-plugin-builder:latest"
+    needs: 
+      - generate
+
+    steps: 
+      - 
+        name: Checkout
+        uses: actions/checkout@v4
+      - 
+        name: Download grammar sources
+        uses: actions/download-artifact@v4
+        with: 
+          name: grammar-sources
+          path: .
+
+      - 
+        name: Build asciidoc, asciidoc_inline, diff, jinja2, markdown, markdown-inline, svelte, typst, vue
+        run: arborium-xtask build asciidoc asciidoc_inline diff jinja2 markdown markdown-inline svelte typst vue
+      - 
+        name: Upload plugins artifact
+        uses: actions/upload-artifact@v4
+        with: 
+          name: plugins-group-willow
           path: dist/plugins
           retention-days: "7"
 
@@ -319,8 +559,16 @@ jobs:
     container: "ghcr.io/bearcove/arborium-plugin-builder:latest"
     needs: 
       - generate
-      - build-plugins-0
-      - build-plugins-1
+      - build-plugins-acorn
+      - build-plugins-birch
+      - build-plugins-cedar
+      - build-plugins-fern
+      - build-plugins-hazel
+      - build-plugins-maple
+      - build-plugins-moss
+      - build-plugins-pine
+      - build-plugins-sage
+      - build-plugins-willow
 
     if: "startsWith(github.ref, 'refs/tags/v')"
     steps: 
@@ -335,17 +583,73 @@ jobs:
           registry-url: "https://registry.npmjs.org"
 
       - 
-        name: Download plugins group 0
+        name: Download plugins group acorn
         uses: actions/download-artifact@v4
         with: 
-          name: plugins-group-0
+          name: plugins-group-acorn
           path: dist/plugins
 
       - 
-        name: Download plugins group 1
+        name: Download plugins group birch
         uses: actions/download-artifact@v4
         with: 
-          name: plugins-group-1
+          name: plugins-group-birch
+          path: dist/plugins
+
+      - 
+        name: Download plugins group cedar
+        uses: actions/download-artifact@v4
+        with: 
+          name: plugins-group-cedar
+          path: dist/plugins
+
+      - 
+        name: Download plugins group fern
+        uses: actions/download-artifact@v4
+        with: 
+          name: plugins-group-fern
+          path: dist/plugins
+
+      - 
+        name: Download plugins group hazel
+        uses: actions/download-artifact@v4
+        with: 
+          name: plugins-group-hazel
+          path: dist/plugins
+
+      - 
+        name: Download plugins group maple
+        uses: actions/download-artifact@v4
+        with: 
+          name: plugins-group-maple
+          path: dist/plugins
+
+      - 
+        name: Download plugins group moss
+        uses: actions/download-artifact@v4
+        with: 
+          name: plugins-group-moss
+          path: dist/plugins
+
+      - 
+        name: Download plugins group pine
+        uses: actions/download-artifact@v4
+        with: 
+          name: plugins-group-pine
+          path: dist/plugins
+
+      - 
+        name: Download plugins group sage
+        uses: actions/download-artifact@v4
+        with: 
+          name: plugins-group-sage
+          path: dist/plugins
+
+      - 
+        name: Download plugins group willow
+        uses: actions/download-artifact@v4
+        with: 
+          name: plugins-group-willow
           path: dist/plugins
 
       - 
