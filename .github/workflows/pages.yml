@@ -40,7 +40,7 @@ jobs:
         run: arborium-xtask gen --version 0.2.0
 
       - name: Build WASM plugins
-        run: arborium-xtask plugins
+        run: arborium-xtask build
 
       - name: Prepare pages directory
         run: ./scripts/prepare-website.sh _site
