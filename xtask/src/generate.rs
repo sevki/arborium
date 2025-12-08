@@ -214,7 +214,7 @@ pub fn plan_generate(
         generate_all_grammars(&prepared, options.mode, options.no_fail_fast, options.jobs)?;
 
     // 5. Generate all crates using templates
-    let plan_set = generate_all_crates(&prepared, &generation_results)?;
+    let plan_set = generate_all_crates(&prepared, &generation_results, options.mode)?;
 
     let total_elapsed = total_start.elapsed();
     println!("Total time: {:.2}s", total_elapsed.as_secs_f64());
@@ -1139,6 +1139,7 @@ fn extract_highlights_prepend(
 fn generate_all_crates(
     prepared: &PreparedStructures,
     generation_results: &GenerationResults,
+    mode: PlanMode,
 ) -> Result<PlanSet, Report> {
     let mut final_plan = generation_results.plans.clone();
 
@@ -1147,8 +1148,13 @@ fn generate_all_crates(
         let crate_state = &prepared_temp.crate_state;
         let config = &prepared_temp.config;
 
-        let crate_plan =
-            plan_crate_files_only(crate_state, config, &prepared.workspace_version, prepared)?;
+        let crate_plan = plan_crate_files_only(
+            crate_state,
+            config,
+            &prepared.workspace_version,
+            prepared,
+            mode,
+        )?;
         final_plan.add(crate_plan);
 
         // Generate plugin crate files for grammars that have generate-component enabled
@@ -1175,6 +1181,7 @@ fn plan_crate_files_only(
     config: &crate::types::CrateConfig,
     workspace_version: &str,
     registry: &PreparedStructures,
+    mode: PlanMode,
 ) -> Result<Plan, Report> {
     let mut plan = Plan::for_crate(&crate_state.name);
     let def_path = &crate_state.def_path;
@@ -1300,6 +1307,134 @@ fn plan_crate_files_only(
             content: new_lib_rs,
             description: "Create src/lib.rs".to_string(),
         });
+    }
+
+    // Mirror grammar sources into the crate so that the published package
+    // is self-contained for crates.io verification builds.
+    //
+    // Layout we want inside crate root:
+    //   grammar/
+    //     scanner.c      (optional, hand-written)
+    //     src/
+    //       parser.c
+    //       grammar.json
+    //       node-types.json
+    //       tree_sitter/*
+    let def_grammar_dir = def_path.join("grammar");
+    let def_grammar_src_dir = def_grammar_dir.join("src");
+    let crate_grammar_dir = crate_path.join("grammar");
+    let crate_grammar_src_dir = crate_grammar_dir.join("src");
+
+    // Copy scanner.c if present in def/grammar/ into crate/grammar/
+    let def_scanner = def_grammar_dir.join("scanner.c");
+    if def_scanner.exists() {
+        let scanner_content = fs::read_to_string(&def_scanner)?;
+        if !crate_grammar_dir.exists() {
+            plan.add(Operation::CreateDir {
+                path: crate_grammar_dir.clone(),
+                description: "Create crate grammar directory".to_string(),
+            });
+        }
+        let crate_scanner = crate_grammar_dir.join("scanner.c");
+        plan_file_update(
+            &mut plan,
+            &crate_scanner,
+            scanner_content,
+            "crate grammar/scanner.c",
+            mode,
+        )?;
+    }
+
+    // Copy any common/ headers used by scanner.c into crate/grammar/common/.
+    // We look in both def/common (language-level) and def/grammar/common (grammar-level),
+    // mirroring the layout used during generation.
+    let crate_common_dir = crate_grammar_dir.join("common");
+    let def_common_dirs = [def_path.join("common"), def_grammar_dir.join("common")];
+    let mut created_common_dir = false;
+    for def_common_dir in &def_common_dirs {
+        if !def_common_dir.exists() {
+            continue;
+        }
+
+        if !created_common_dir {
+            if !crate_common_dir.exists() {
+                plan.add(Operation::CreateDir {
+                    path: crate_common_dir.clone(),
+                    description: "Create crate grammar/common directory".to_string(),
+                });
+            }
+            created_common_dir = true;
+        }
+
+        for entry in fs::read_dir(def_common_dir)? {
+            let entry = entry?;
+            let src_path = Utf8PathBuf::from_path_buf(entry.path())
+                .map_err(|_| std::io::Error::other("Non-UTF8 path"))?;
+            if !src_path.is_file() {
+                continue;
+            }
+
+            let file_name = entry.file_name().to_string_lossy().to_string();
+            let new_content = fs::read_to_string(&src_path)?;
+            let dest_path = crate_common_dir.join(&file_name);
+            let desc = format!("crate grammar/common/{}", file_name);
+
+            plan_file_update(&mut plan, &dest_path, new_content, &desc, mode)?;
+        }
+    }
+
+    // Copy all files from def/grammar/src/ into crate/grammar/src/
+    if def_grammar_src_dir.exists() {
+        if !crate_grammar_src_dir.exists() {
+            plan.add(Operation::CreateDir {
+                path: crate_grammar_src_dir.clone(),
+                description: "Create crate grammar/src directory".to_string(),
+            });
+        }
+
+        for entry in fs::read_dir(&def_grammar_src_dir)? {
+            let entry = entry?;
+            let src_path = Utf8PathBuf::from_path_buf(entry.path())
+                .map_err(|_| std::io::Error::other("Non-UTF8 path"))?;
+            if !src_path.is_file() {
+                continue;
+            }
+
+            let file_name = entry.file_name().to_string_lossy().to_string();
+            let new_content = fs::read_to_string(&src_path)?;
+            let dest_path = crate_grammar_src_dir.join(&file_name);
+            let desc = format!("crate grammar/src/{}", file_name);
+
+            plan_file_update(&mut plan, &dest_path, new_content, &desc, mode)?;
+        }
+
+        // Also copy tree_sitter/ headers if present (generated by tree-sitter)
+        let def_tree_sitter_dir = def_grammar_src_dir.join("tree_sitter");
+        let crate_tree_sitter_dir = crate_grammar_src_dir.join("tree_sitter");
+        if def_tree_sitter_dir.exists() {
+            if !crate_tree_sitter_dir.exists() {
+                plan.add(Operation::CreateDir {
+                    path: crate_tree_sitter_dir.clone(),
+                    description: "Create crate grammar/src/tree_sitter directory".to_string(),
+                });
+            }
+
+            for entry in fs::read_dir(&def_tree_sitter_dir)? {
+                let entry = entry?;
+                let src_path = Utf8PathBuf::from_path_buf(entry.path())
+                    .map_err(|_| std::io::Error::other("Non-UTF8 path"))?;
+                if !src_path.is_file() {
+                    continue;
+                }
+
+                let file_name = entry.file_name().to_string_lossy().to_string();
+                let new_content = fs::read_to_string(&src_path)?;
+                let dest_path = crate_tree_sitter_dir.join(&file_name);
+                let desc = format!("crate grammar/src/tree_sitter/{}", file_name);
+
+                plan_file_update(&mut plan, &dest_path, new_content, &desc, mode)?;
+            }
+        }
     }
 
     Ok(plan)

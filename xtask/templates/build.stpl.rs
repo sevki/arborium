@@ -1,10 +1,18 @@
 fn main() {
-    // crate/ is at langs/group-*/lang/crate/
-    // grammar sources are at langs/group-*/lang/def/grammar/src/
+    // All build-time grammar sources live inside the crate so that
+    // crates.io package verification can rebuild the crate in isolation.
+    //
+    // Layout inside the published crate:
+    //   grammar/
+    //     scanner.c      (optional, hand-written)
+    //     src/
+    //       parser.c
+    //       grammar.json
+    //       node-types.json
+    //       tree_sitter/* (generated headers)
     let manifest_dir = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let def_dir = manifest_dir.join("../def");
-    let src_dir = def_dir.join("grammar/src");
-    let grammar_dir = def_dir.join("grammar");
+    let src_dir = manifest_dir.join("grammar/src");
+    let grammar_dir = manifest_dir.join("grammar");
 
     println!("cargo:rerun-if-changed={}", src_dir.join("parser.c").display());
 <% if has_scanner { %>

@@ -15,6 +15,8 @@ use miette::{Context, IntoDiagnostic, Result};
 use owo_colors::OwoColorize;
 use std::process::{Command, Stdio};
 
+use crate::version_store;
+
 /// Crates in the "pre" group - must be published before grammar crates.
 /// These are shared dependencies that grammar crates rely on.
 const PRE_CRATES: &[&str] = &[
@@ -184,6 +186,36 @@ pub fn publish_npm(
         println!("{}", "  (dry run)".yellow());
     }
 
+    // Read expected version from version.json (written by `xtask gen --version`).
+    // This keeps npm package versions in lockstep with the release version.
+    let expected_version = match version_store::read_version(repo_root) {
+        Ok(v) => v,
+        Err(e) => {
+            // For dry runs, just warn; for real publishes, bail out so we don't
+            // accidentally push 0.0.0-dev or mismatched versions.
+            if dry_run {
+                eprintln!(
+                    "{} Could not read version.json ({}); continuing in dry run",
+                    "!".yellow(),
+                    e
+                );
+                String::new()
+            } else {
+                return Err(e.wrap_err(
+                    "version.json is missing or invalid. Run `cargo xtask gen --version <x.y.z>` first.",
+                ));
+            }
+        }
+    };
+
+    if !dry_run && (expected_version == "0.0.0-dev" || expected_version.ends_with("-dev")) {
+        return Err(miette::miette!(
+            "Refusing to publish npm packages with dev version '{}'. \
+             Run `cargo xtask gen --version <x.y.z>` first.",
+            expected_version
+        ));
+    }
+
     let packages = match group {
         Some(group_name) => {
             println!("  Publishing {} group", group_name.cyan());
@@ -198,6 +230,41 @@ pub fn publish_npm(
             .unwrap_or_else(|| langs_dir.to_string());
         println!("{} No npm packages found in {}", "!".yellow(), location);
         return Ok(());
+    }
+
+    // Guard rail: ensure every npm package we are about to publish has the same
+    // version as version.json. This prevents accidentally publishing 0.0.0-dev
+    // or mismatched versions when the repo hasn't been regenerated.
+    if !dry_run && !expected_version.is_empty() {
+        let mut mismatches = Vec::new();
+        for package_dir in &packages {
+            let (name, version) = read_package_info(package_dir)?;
+            if version != expected_version {
+                mismatches.push((name, version));
+            }
+        }
+
+        if !mismatches.is_empty() {
+            println!();
+            println!(
+                "{} Version mismatch between npm packages and version.json:",
+                "!".yellow()
+            );
+            println!("  expected version: {}", expected_version.cyan());
+            for (name, version) in &mismatches {
+                println!(
+                    "  - {} has {}, expected {}",
+                    name.cyan(),
+                    version.red(),
+                    expected_version.cyan()
+                );
+            }
+            return Err(miette::miette!(
+                "npm package versions do not match version.json. \
+                 Run `cargo xtask gen --version {}` and rebuild plugins before publishing.",
+                expected_version
+            ));
+        }
     }
 
     println!("  Found {} packages to publish", packages.len());

@@ -354,7 +354,6 @@ pub mod common {
 
 /// Depot runner sizes.
 pub mod runners {
-    pub const UBUNTU_4: &str = "depot-ubuntu-24.04-4";
     pub const UBUNTU_32: &str = "depot-ubuntu-24.04-32";
     pub const MACOS: &str = "depot-macos-latest";
 }
@@ -412,7 +411,7 @@ echo "Version: $VERSION (release: $IS_RELEASE)""#,
                         ("path", ".cache/arborium"),
                         (
                             "key",
-                            "grammar-cache-v29-${{ hashFiles('langs/group-*/*/def/grammar/grammar.js', 'langs/group-*/*/def/grammar/package.json') }}",
+                            "grammar-cache-v33-${{ hashFiles('langs/group-*/*/def/grammar/grammar.js', 'langs/group-*/*/def/grammar/package.json') }}",
                         ),
                         ("restore-keys", "grammar-cache-v10-"),
                     ]),
@@ -423,9 +422,11 @@ echo "Version: $VERSION (release: $IS_RELEASE)""#,
                 ),
                 // Create tarball for CI jobs (fast tar)
                 // Note: no root Cargo.toml/lock - each crate is standalone
+                // Include version.json so all downstream jobs see the same
+                // release version that was used for generation.
                 Step::run(
                     "Create grammar sources tarball",
-                    "tar -cvf grammar-sources.tar crates/ langs/",
+                    "tar -cvf grammar-sources.tar crates/ langs/ version.json",
                 ),
                 Step::uses("Upload grammar sources", "actions/upload-artifact@v4")
                     .with_inputs([

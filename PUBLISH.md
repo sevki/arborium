@@ -13,11 +13,11 @@ crates/
 - These are always in the repo (not generated) and are published every release.
 - The tree-sitter forks track upstream but include fixes so CI builds reliably across targets.
 
-## Release Flow
+## Release Flow (current CI)
 
-Everything is generated **once**, then we push tags **one by one** so jobs stay fast and easy to retry.
+Everything is generated **once**, then a single tag publishes all crates + npm packages.
 
-### 1. Prepare a release locally
+### 1. Prepare a release locally (optional but recommended)
 
 ```bash
 # Pick a version and generate everything (core + all groups)
@@ -27,37 +27,26 @@ Everything is generated **once**, then we push tags **one by one** so jobs stay 
 cargo xtask gen --version 0.3.0
 ```
 
-`xtask gen` also records the current release version in a small metadata file
-(so later commands like `xtask tag --group squirrel` don't need you to
-re-type `0.3.0`).
+`xtask gen` also records the current release version in a small metadata file.
+CI will regenerate from source of truth as well, but running this locally lets
+you review changes before tagging.
 
-### 2. Tag and push, one job at a time
+### 2. Tag and push (single tag)
 
 ```bash
-# Core release tag (publishes core crates)
-cargo xtask tag --core      # creates + pushes v0.3.0
-
-# Group tags (about 10 animal groups, hand-crafted)
-cargo xtask tag --group squirrel   # creates + pushes v0.3.0-squirrel
-cargo xtask tag --group deer       # creates + pushes v0.3.0-deer
-# ... fox, bear, wolf, otter, etc. (up to ~10 groups)
+git commit -am "Release v0.3.0"
+git tag v0.3.0
+git push origin main --tags
 ```
 
-Each pushed tag triggers a CI workflow that **only publishes** based on the
-already-generated, committed files. CI never runs `xtask gen --version`.
+The `v0.3.0` tag triggers the CI workflow in `.github/workflows/ci.yml` which:
 
-- Core tag (`v0.3.0`) → publishes `arborium`, forks of `tree-sitter` and
-  `tree-sitter-highlight`, `miette-arborium`, etc.
-- Group tag (`v0.3.0-squirrel`, `v0.3.0-deer`, …) → publishes that group's
-  crates.io crates **and** its npm artifacts in a single job.
-
-You can stagger tags over time to keep jobs short and make retries cheap.
-
-### 3. Publish collection crate
-
-After all groups are out, a final tag (or the core tag job) publishes
-`arborium-collection`, which depends on the per-language crates and exposes
-feature flags.
+- Regenerates all grammars and crates with `arborium-xtask gen --version 0.3.0`
+- Builds and tests the `arborium` crate
+- Builds all WASM plugins into `dist/plugins`
+- Publishes:
+  - All grammar crates and core crates to crates.io via `cargo xtask publish crates`
+  - All npm packages (per-language + `@arborium/arborium`) via `cargo xtask publish npm -o dist/plugins`
 
 ## Two Outputs, Two Registries
 
@@ -84,28 +73,20 @@ feature flags.
 
 ## Publishing Strategy
 
-- We publish per-group, and each group job handles **both** crates.io and npm together.
-- Tags are pushed **manually**, one after another, so jobs stay fast and easy to
-  retry.
-- Core crates (`arborium`, `arborium-collection`, `tree-sitter-*`, `miette-arborium`) publish once per release before groups.
+- A single tag (`vX.Y.Z`) publishes **all** crates.io + npm artifacts together.
+- Core crates (`arborium`, `tree-sitter-*`, `miette-arborium`, etc.) and all
+  `arborium-{lang}` crates publish once per release.
 
-### Trusted Publishing (Cargo + npm)
-
-- For **crates.io**, we use Cargo's Trusted Publishing (GitHub OIDC) so CI
-  doesn't need long-lived API tokens.
-- For **npm**, we likewise use GitHub's trusted publishing integration so
-  publishing is tied to tags and workflows, not shared secrets.
-
-### crates.io (per group)
+### crates.io (all crates)
 
 Cargo handles already-published versions gracefully - it warns and continues:
 ```
 warning: crate arborium-rust@0.3.0 already exists on crates.io
 ```
 
-So retrying a group is safe; already-published crates are skipped.
+So retrying a publish job is safe; already-published crates are skipped.
 
-### npm (per group, via xtask)
+### npm (all packages, via xtask)
 
 npm is **not graceful** - it hard-fails with `EPUBLISHCONFLICT`:
 ```
@@ -118,8 +99,19 @@ npm ERR! Cannot publish over existing version
 - Distinguish `EPUBLISHCONFLICT` (skip, continue) from real errors (fail)
 - Handle retries without re-publishing successes
 
-Each group job builds plugins from its own crates and publishes npm artifacts
-immediately to keep versions in lockstep.
+The CI workflow builds all plugins into `dist/plugins` first, then one job
+calls `xtask publish npm -o dist/plugins` to publish every npm package in one
+go.
+
+`xtask publish npm` reads the canonical version from `version.json` (written by
+`xtask gen --version`) and enforces:
+
+- Refuses to publish if the version is a dev one like `0.0.0-dev`
+- Refuses to publish if any npm package version does not match `version.json`
+
+This means you *must* run `cargo xtask gen --version X.Y.Z` before publishing
+to npm, otherwise the command will fail instead of silently pushing the wrong
+version (e.g., `0.0.0-dev`) to the registry.
 
 ## What's in Git vs Generated
 
