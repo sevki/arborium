@@ -2,7 +2,7 @@
 //!
 //! This crate provides:
 //! - Re-exports of individual grammar crates via feature flags
-//! - HTML rendering with CSS classes for syntax highlighting
+//! - HTML rendering for syntax highlighting
 //! - WASM support with custom allocator (automatically enabled on WASM targets)
 //!
 //! # Usage
@@ -24,31 +24,15 @@
 //! # Example
 //!
 //! ```rust,ignore
-//! use arborium::{html, lang_rust, HIGHLIGHT_NAMES};
-//! use arborium::tree_sitter_highlight::{Highlighter, HighlightConfiguration};
+//! use arborium::Highlighter;
 //!
-//! // Create a highlight configuration for Rust
-//! let mut config = HighlightConfiguration::new(
-//!     lang_rust::language().into(),
-//!     "rust",
-//!     lang_rust::HIGHLIGHTS_QUERY,
-//!     lang_rust::INJECTIONS_QUERY,
-//!     lang_rust::LOCALS_QUERY,
-//! ).unwrap();
-//! config.configure(&HIGHLIGHT_NAMES.iter().map(|s| s.to_string()).collect::<Vec<_>>());
-//!
-//! // Render to HTML
 //! let mut highlighter = Highlighter::new();
-//! let mut output = Vec::new();
-//! html::render(&mut output, &mut highlighter, &config, "fn main() {}", |_| None).unwrap();
+//! let html = highlighter.highlight_to_html("rust", "fn main() {}")?;
 //! ```
 
-pub use tree_sitter_highlight_patched_arborium as tree_sitter_highlight;
 pub use tree_sitter_patched_arborium as tree_sitter;
 
-pub mod ansi;
 pub mod highlighter;
-pub mod html;
 pub mod provider;
 
 // Re-export from arborium-theme
@@ -61,7 +45,7 @@ pub use provider::StaticProvider;
 // Re-export from arborium-highlight
 pub use arborium_highlight::{
     Grammar, GrammarProvider, HighlightConfig, HighlightError as HighlightErrorV2, Injection,
-    ParseResult, Span, SyncHighlighter,
+    ParseResult, Span, SyncHighlighter, html_escape, spans_to_html, write_spans_as_html,
 };
 
 #[cfg(target_family = "wasm")]

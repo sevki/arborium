@@ -18,11 +18,11 @@ use std::process::{Command, Stdio};
 /// Crates in the "pre" group - must be published before grammar crates.
 /// These are shared dependencies that grammar crates rely on.
 const PRE_CRATES: &[&str] = &[
-    "tree-sitter",           // tree-sitter-patched-arborium
-    "tree-sitter-highlight", // tree-sitter-highlight-patched-arborium
+    "tree-sitter", // tree-sitter-patched-arborium
     "crates/arborium-sysroot",
     "crates/arborium-test-harness",
-    "crates/arborium-theme", // Theme and highlight definitions
+    "crates/arborium-theme",     // Theme and highlight definitions
+    "crates/arborium-highlight", // Unified highlighting engine
 ];
 
 /// Crates in the "post" group - must be published after grammar crates.

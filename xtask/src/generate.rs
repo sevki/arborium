@@ -1473,8 +1473,8 @@ all-languages = [
         r#"
 [dependencies]
 tree-sitter-patched-arborium = { path = "../../tree-sitter" }
-tree-sitter-highlight-patched-arborium = { path = "../../tree-sitter-highlight" }
 arborium-theme = { path = "../arborium-theme" }
+arborium-highlight = { path = "../arborium-highlight", features = ["tree-sitter"] }
 
 # Optional grammar dependencies
 "#,
