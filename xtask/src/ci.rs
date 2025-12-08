@@ -667,8 +667,8 @@ echo "No env imports found - WASM modules are browser-compatible""#,
         name: "CI".into(),
         on: On {
             push: Some(PushTrigger {
-                branches: Some(vec!["main".into()]),
-                tags: Some(vec!["v*".into()]),
+                branches: None, // Trigger on all branches including tag pushes
+                tags: None,
             }),
             pull_request: Some(PullRequestTrigger {
                 branches: Some(vec!["main".into()]),

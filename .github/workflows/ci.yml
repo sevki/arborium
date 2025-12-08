@@ -4,12 +4,6 @@
 name: CI
 "on": 
   push: 
-    branches: 
-      - main
-
-    tags: 
-      - v*
-
   pull_request: 
     branches: 
       - main
@@ -42,7 +36,7 @@ jobs:
         uses: actions/cache@v4
         with: 
           path: .cache/arborium
-          key: "grammar-cache-v13-${{ hashFiles('langs/group-*/*/def/grammar/grammar.js', 'langs/group-*/*/def/grammar/package.json') }}"
+          key: "grammar-cache-v22-${{ hashFiles('langs/group-*/*/def/grammar/grammar.js', 'langs/group-*/*/def/grammar/package.json') }}"
           restore-keys: grammar-cache-v10-
 
       - 
