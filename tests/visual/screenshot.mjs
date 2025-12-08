@@ -19,7 +19,8 @@ const VIEWPORT = { width: 800, height: 600 };
 const DEVICE_SCALE_FACTOR = 2; // HiDPI for crisp text rendering
 const BASE_URL = process.env.DEMO_URL || 'http://127.0.0.1:8000';
 const THRESHOLD = 0.1; // 0.1% pixel difference allowed
-const PARALLEL_BROWSERS = parseInt(process.env.PARALLEL_BROWSERS || '4', 10);
+// Note: Keep parallel browsers low to avoid Chromium WASM OOM crashes
+const PARALLEL_BROWSERS = parseInt(process.env.PARALLEL_BROWSERS || '2', 10);
 
 // CSS to isolate code output for screenshots
 const FONT_CSS = `
@@ -93,6 +94,11 @@ async function getLanguages(baseUrl) {
 async function captureScreenshot(page, language) {
     // Navigate to language
     await page.goto(`${BASE_URL}/#${language}`);
+
+    // Set dark theme (Catppuccin Mocha)
+    await page.evaluate(() => {
+        document.documentElement.setAttribute('data-theme', 'catppuccin-mocha');
+    });
 
     // Inject consistent styling
     await page.addStyleTag({ content: FONT_CSS });
