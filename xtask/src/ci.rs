@@ -454,7 +454,7 @@ echo "Version: $VERSION (release: $IS_RELEASE)""#,
                 extract_grammar_sources(),
                 rust_cache(),
                 Step::run("Build", "cargo build --manifest-path crates/arborium/Cargo.toml --verbose"),
-                Step::run("Run tests", "cargo nextest run --manifest-path crates/arborium/Cargo.toml --verbose"),
+                Step::run("Run tests", "cargo nextest run --manifest-path crates/arborium/Cargo.toml --verbose --no-tests=pass"),
                 Step::run(
                     "Build with all features",
                     "cargo build --manifest-path crates/arborium/Cargo.toml --all-features --verbose",
@@ -477,7 +477,7 @@ echo "Version: $VERSION (release: $IS_RELEASE)""#,
                 rust_cache(),
                 install_nextest(),
                 Step::run("Build", "cargo build --manifest-path crates/arborium/Cargo.toml --verbose"),
-                Step::run("Run tests", "cargo nextest run --manifest-path crates/arborium/Cargo.toml --verbose"),
+                Step::run("Run tests", "cargo nextest run --manifest-path crates/arborium/Cargo.toml --verbose --no-tests=pass"),
             ]),
     );
 

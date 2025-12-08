@@ -7,7 +7,7 @@ use std::collections::HashMap;
 
 use arborium_highlight::{
     tree_sitter::{TreeSitterGrammar, TreeSitterGrammarConfig},
-    Grammar, GrammarProvider, ParseResult,
+    GrammarProvider,
 };
 
 /// A provider that creates tree-sitter grammars for enabled languages.
@@ -88,10 +88,10 @@ impl StaticProvider {
             // Return original if it matches a known language
             "ada" | "agda" | "asm" | "awk" | "bash" | "batch" | "c" | "c-sharp" | "caddy"
             | "capnp" | "clojure" | "cmake" | "commonlisp" | "cpp" | "css" | "d" | "dart"
-            | "devicetree" | "diff" | "dockerfile" | "dot" | "elisp" | "elixir" | "elm"
+            | "devicetree" | "diff" | "dot" | "elisp" | "elixir" | "elm"
             | "erlang" | "fish" | "fsharp" | "gleam" | "glsl" | "go" | "graphql" | "haskell"
             | "hcl" | "hlsl" | "html" | "idris" | "ini" | "java" | "javascript" | "jinja2"
-            | "jq" | "json" | "julia" | "kdl" | "kotlin" | "lean" | "lua" | "matlab" | "meson"
+            | "jq" | "julia" | "kdl" | "kotlin" | "lean" | "lua" | "matlab" | "meson"
             | "nginx" | "ninja" | "nix" | "objc" | "ocaml" | "perl" | "php" | "powershell"
             | "prolog" | "python" | "query" | "r" | "rescript" | "ron" | "ruby" | "rust"
             | "scala" | "scheme" | "scss" | "sparql" | "sql" | "ssh-config" | "starlark"
@@ -230,10 +230,10 @@ impl GrammarProvider for StaticProvider {
         let normalized = Self::normalize_language(language);
 
         // Create grammar if not cached
-        if !self.grammars.contains_key(normalized) {
-            if let Some(grammar) = Self::create_grammar(normalized) {
-                self.grammars.insert(normalized, grammar);
-            }
+        if !self.grammars.contains_key(normalized)
+            && let Some(grammar) = Self::create_grammar(normalized)
+        {
+            self.grammars.insert(normalized, grammar);
         }
 
         self.grammars.get_mut(normalized)
@@ -244,10 +244,10 @@ impl GrammarProvider for StaticProvider {
         let normalized = Self::normalize_language(language);
 
         // Create grammar if not cached
-        if !self.grammars.contains_key(normalized) {
-            if let Some(grammar) = Self::create_grammar(normalized) {
-                self.grammars.insert(normalized, grammar);
-            }
+        if !self.grammars.contains_key(normalized)
+            && let Some(grammar) = Self::create_grammar(normalized)
+        {
+            self.grammars.insert(normalized, grammar);
         }
 
         self.grammars.get_mut(normalized)
