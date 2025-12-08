@@ -5,10 +5,10 @@
 
 use std::collections::HashMap;
 
-use arborium_highlight::{
-    tree_sitter::{TreeSitterGrammar, TreeSitterGrammarConfig},
-    GrammarProvider,
-};
+use arborium_highlight::{tree_sitter::TreeSitterGrammar, GrammarProvider};
+
+#[allow(unused_imports)]
+use arborium_highlight::tree_sitter::TreeSitterGrammarConfig;
 
 /// A provider that creates tree-sitter grammars for enabled languages.
 ///
