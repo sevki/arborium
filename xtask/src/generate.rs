@@ -1375,16 +1375,17 @@ all-languages = [
     }
 
     // Dependencies section
-    content.push_str(&format!(
+    // Note: path-only dependencies (no version) since there's no workspace
+    content.push_str(
         r#"
 [dependencies]
-tree-sitter-patched-arborium = {{ version = "0.25.10", path = "../../tree-sitter" }}
-tree-sitter-highlight-patched-arborium = {{ version = "0.25.10", path = "../../tree-sitter-highlight" }}
-arborium-theme = {{ version = "{version}", path = "../arborium-theme" }}
+tree-sitter-patched-arborium = { path = "../../tree-sitter" }
+tree-sitter-highlight-patched-arborium = { path = "../../tree-sitter-highlight" }
+arborium-theme = { path = "../arborium-theme" }
 
 # Optional grammar dependencies
-"#
-    ));
+"#,
+    );
 
     for (name, _, crate_path) in &grammar_crates {
         // Calculate relative path from crates/arborium to the grammar crate
@@ -1392,8 +1393,8 @@ arborium-theme = {{ version = "{version}", path = "../arborium-theme" }}
             .strip_prefix(&prepared.repo_root)
             .unwrap_or(crate_path);
         content.push_str(&format!(
-            "{} = {{ version = \"{}\", path = \"../../{}\", optional = true }}\n",
-            name, version, rel_path
+            "{} = {{ path = \"../../{}\", optional = true }}\n",
+            name, rel_path
         ));
     }
 

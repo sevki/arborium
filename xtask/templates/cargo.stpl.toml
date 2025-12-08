@@ -17,11 +17,11 @@ categories = ["parsing", "text-processing"]
 path = "src/lib.rs"
 
 [dependencies]
-tree-sitter-patched-arborium = { version = "0.25.10", path = "<%= repo_rel %>/tree-sitter" }
-arborium-sysroot = { version = "<%= workspace_version %>", path = "<%= shared_rel %>/arborium-sysroot" }
+tree-sitter-patched-arborium = { path = "<%= repo_rel %>/tree-sitter" }
+arborium-sysroot = { path = "<%= shared_rel %>/arborium-sysroot" }
 
 [dev-dependencies]
-arborium-test-harness = { version = "<%= workspace_version %>", path = "<%= shared_rel %>/arborium-test-harness" }
+arborium-test-harness = { path = "<%= shared_rel %>/arborium-test-harness" }
 
 [build-dependencies]
 cc = "1"
