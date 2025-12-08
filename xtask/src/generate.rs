@@ -120,7 +120,6 @@ struct PluginLibRsTemplate<'a> {
 struct PluginPackageJsonTemplate<'a> {
     grammar_id: &'a str,
     grammar_name: &'a str,
-    description: &'a str,
     version: &'a str,
 }
 
@@ -611,16 +610,10 @@ fn generate_plugin_lib_rs(grammar_id: &str, grammar_crate_name: &str, wit_path: 
 }
 
 /// Generate plugin package.json content.
-fn generate_plugin_package_json(
-    grammar_id: &str,
-    grammar_name: &str,
-    description: &str,
-    version: &str,
-) -> String {
+fn generate_plugin_package_json(grammar_id: &str, grammar_name: &str, version: &str) -> String {
     let template = PluginPackageJsonTemplate {
         grammar_id,
         grammar_name,
-        description,
         version,
     };
     template
@@ -1356,7 +1349,7 @@ fn plan_plugin_crate_files(
     // Generate npm/package.json
     let package_json_path = npm_path.join("package.json");
     let new_package_json =
-        generate_plugin_package_json(grammar_id, grammar_name, grammar_description, workspace_version);
+        generate_plugin_package_json(grammar_id, grammar_name, workspace_version);
 
     if package_json_path.exists() {
         let old_content = fs::read_to_string(&package_json_path)?;
