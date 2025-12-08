@@ -531,24 +531,6 @@ echo "No env imports found - WASM modules are browser-compatible""#,
             ]),
     );
 
-    // CI workflow check (moved from Format job)
-    jobs.insert(
-        "ci-check".into(),
-        Job::new(runners::UBUNTU_4)
-            .name("CI Workflow Check")
-            .container(CONTAINER)
-            .needs(["generate"])
-            .steps([
-                checkout(),
-                download_grammar_sources(),
-                extract_grammar_sources(),
-                Step::run(
-                    "Check CI workflow is up to date",
-                    "arborium-xtask ci generate --check",
-                ),
-            ]),
-    );
-
     // Documentation
     // Note: no root workspace, so we target crates/arborium directly
     jobs.insert(

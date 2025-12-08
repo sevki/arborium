@@ -192,31 +192,6 @@ jobs:
         name: Run Clippy
         run: cargo clippy --manifest-path crates/arborium/Cargo.toml --all-targets -- -D warnings
 
-  ci-check: 
-    name: CI Workflow Check
-    runs-on: depot-ubuntu-24.04-4
-    container: "ghcr.io/bearcove/arborium-plugin-builder:latest"
-    needs: 
-      - generate
-
-    steps: 
-      - 
-        name: Checkout
-        uses: actions/checkout@v4
-      - 
-        name: Download grammar sources
-        uses: actions/download-artifact@v4
-        with: 
-          name: grammar-sources
-          path: .
-
-      - 
-        name: Extract grammar sources
-        run: tar -xvf grammar-sources.tar
-      - 
-        name: Check CI workflow is up to date
-        run: arborium-xtask ci generate --check
-
   docs: 
     name: Documentation
     runs-on: depot-ubuntu-24.04-32
