@@ -1501,15 +1501,15 @@ function createPluginProvider() {
     return {
         'arborium:host/plugin-provider': {
             // Load a plugin for the given language (must be pre-loaded)
+            // Note: jco wraps option returns - return value directly for Some, undefined for None
             loadPlugin(language) {
                 const plugin = grammarCache[language];
                 if (!plugin) {
-                    return { tag: 'none' };
+                    return undefined;  // jco wraps as { tag: 'none' }
                 }
-                // Assign a handle
                 const handle = nextPluginHandle++;
                 pluginHandles.set(handle, { plugin, language });
-                return { tag: 'some', val: handle };
+                return handle;  // jco wraps as { tag: 'some', val: handle }
             },
 
             // Get injection languages for a plugin
@@ -1559,26 +1559,28 @@ function createPluginProvider() {
             },
 
             // Parse on a plugin session
+            // Note: jco wraps our return in { tag: 'ok', val: ... } automatically,
+            // and converts thrown errors to { tag: 'err', val: ... }
             pluginParse(pluginHandle, sessionHandle) {
                 const entry = sessionHandles.get(sessionHandle);
                 if (!entry) {
-                    return { tag: 'err', val: { message: 'Invalid session' } };
+                    throw new Error('Invalid session');
                 }
-                try {
-                    const result = entry.plugin.parse(entry.session);
-                    // Handle both tagged union and direct formats
-                    if (result.tag === 'err') {
-                        return result;
-                    } else if (result.tag === 'ok') {
-                        return result;
-                    } else if (result.spans) {
-                        return { tag: 'ok', val: result };
-                    } else {
-                        return { tag: 'err', val: { message: 'Unexpected parse result format' } };
-                    }
-                } catch (e) {
-                    return { tag: 'err', val: { message: e.message || 'Parse failed' } };
+
+                const result = entry.plugin.parse(entry.session);
+
+                // The plugin returns result<parse-result, parse-error>
+                // We need to unwrap it and return parse-result directly
+                if (result.tag === 'err') {
+                    throw new Error(result.val.message || 'Parse failed');
                 }
+
+                // Handle both { tag: 'ok', val: {...} } and direct {...} formats
+                const val = result.tag === 'ok' ? result.val : result;
+                return {
+                    spans: val.spans || [],
+                    injections: val.injections || [],
+                };
             },
 
             // Cancel a plugin session's parse
