@@ -415,7 +415,7 @@ echo "Version: $VERSION (release: $IS_RELEASE)""#,
                         ),
                         ("restore-keys", "grammar-cache-v10-"),
                     ]),
-                // Generate with version
+                // Generate with version (from tag or 0.0.0-dev for non-release)
                 Step::run(
                     "Generate grammar sources",
                     "arborium-xtask gen --version ${{ steps.version.outputs.version }}",
@@ -641,10 +641,7 @@ echo "No env imports found - WASM modules are browser-compatible""#,
                 "List plugins",
                 "find dist/plugins -name 'package.json' | head -20",
             ),
-            Step::run(
-                "Publish to npm",
-                "arborium-xtask publish npm -o dist/plugins",
-            )
+            Step::run("Publish to npm", "arborium-xtask publish npm -o dist/plugins")
             .with_env([("NODE_AUTH_TOKEN", "${{ secrets.NPM_TOKEN }}")]),
         ]);
 
