@@ -8,6 +8,7 @@
  * 4. Host exports highlight(language, source) -> Promise<string>
  */
 
+import { createWasiImports, grammarTypesImport } from './wasi-shims.js';
 import type { ParseResult, ArboriumConfig, Grammar, Span, Injection } from './types.js';
 
 // Default config
@@ -42,6 +43,16 @@ let nextGrammarHandle = 1;
 
 // Map from handle to plugin
 const handleToPlugin = new Map<number, GrammarPlugin>();
+
+/** Plugin interface as exported by jco-generated WIT components */
+interface JcoPlugin {
+  languageId(): string;
+  injectionLanguages(): string[];
+  createSession(): number;
+  freeSession(session: number): void;
+  setText(session: number, text: string): void;
+  parse(session: number): ParseResult;
+}
 
 /** A loaded grammar plugin (WIT component) */
 interface GrammarPlugin {
@@ -95,32 +106,39 @@ async function loadGrammarPlugin(language: string): Promise<GrammarPlugin | null
     // Dynamically import the JS module
     const module = await import(/* @vite-ignore */ jsUrl);
 
-    // Fetch the WASM
-    const wasmResponse = await fetch(wasmUrl);
-    const wasmBytes = await wasmResponse.arrayBuffer();
+    // Create a getCoreModule function that fetches the WASM
+    const getCoreModule = async (_path: string): Promise<WebAssembly.Module> => {
+      const response = await fetch(wasmUrl);
+      const bytes = await response.arrayBuffer();
+      return WebAssembly.compile(bytes);
+    };
 
-    // Instantiate
-    const instance = await module.instantiate(wasmBytes);
+    // Create WASI imports
+    const wasiImports = createWasiImports();
+    const imports = {
+      ...wasiImports,
+      ...grammarTypesImport,
+    };
 
-    // Wrap as GrammarPlugin
+    // Instantiate the jco-generated component
+    const instance = await module.instantiate(getCoreModule, imports);
+
+    // Get the plugin interface
+    const jcoPlugin = instance.plugin as JcoPlugin;
+
+    // Wrap as GrammarPlugin with session-based parsing
     const plugin: GrammarPlugin = {
       languageId: language,
-      injectionLanguages: instance.plugin.injectionLanguages?.() ?? [],
+      injectionLanguages: jcoPlugin.injectionLanguages?.() ?? [],
       parse: (text: string) => {
-        const result = instance.plugin.parse(text);
-        return {
-          spans: result.spans.map((s: any) => ({
-            start: s.start,
-            end: s.end,
-            capture: s.capture,
-          })),
-          injections: result.injections.map((i: any) => ({
-            start: i.start,
-            end: i.end,
-            language: i.language,
-            includeChildren: i.includeChildren,
-          })),
-        };
+        // Create a session, set text, parse, then free
+        const session = jcoPlugin.createSession();
+        try {
+          jcoPlugin.setText(session, text);
+          return jcoPlugin.parse(session);
+        } finally {
+          jcoPlugin.freeSession(session);
+        }
       },
     };
 
