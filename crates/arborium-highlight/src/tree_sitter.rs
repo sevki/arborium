@@ -22,7 +22,7 @@
 use crate::types::{Injection, ParseResult, Span};
 use crate::Grammar;
 use streaming_iterator::StreamingIterator;
-use arborium_tree_sitter::{Language, Parser, Query, QueryCursor, Tree};
+use arborium_tree_sitter::{Language, Parser, Query, QueryCursor};
 
 /// Configuration for creating a TreeSitterGrammar.
 pub struct TreeSitterGrammarConfig<'a> {
@@ -65,8 +65,6 @@ pub struct TreeSitterGrammar {
     highlights_query: Query,
     injections_query: Option<Query>,
     query_cursor: QueryCursor,
-    /// Cached tree from last parse (for incremental parsing in the future)
-    last_tree: Option<Tree>,
 }
 
 impl TreeSitterGrammar {
@@ -94,7 +92,6 @@ impl TreeSitterGrammar {
             highlights_query,
             injections_query,
             query_cursor: QueryCursor::new(),
-            last_tree: None,
         })
     }
 
@@ -119,7 +116,12 @@ impl TreeSitterGrammar {
 impl Grammar for TreeSitterGrammar {
     fn parse(&mut self, text: &str) -> ParseResult {
         // Parse the text
-        let tree = match self.parser.parse(text, self.last_tree.as_ref()) {
+        // NOTE: We intentionally pass None here instead of self.last_tree.as_ref()
+        // because incremental parsing only works when editing the *same* text.
+        // When highlighting different code blocks, the old tree is from different
+        // source text, causing byte offset mismatches and panics.
+        // For incremental parsing support, we'd need the caller to provide edit info.
+        let tree = match self.parser.parse(text, None) {
             Some(tree) => tree,
             None => return ParseResult::default(),
         };
@@ -210,8 +212,10 @@ impl Grammar for TreeSitterGrammar {
             }
         }
 
-        // Cache the tree for potential future incremental parsing
-        self.last_tree = Some(tree);
+        // Note: We don't cache the tree because incremental parsing requires
+        // the caller to provide edit information. Without that, caching the tree
+        // just wastes memory. If incremental parsing is added in the future,
+        // we'd need a different API that accepts edit deltas.
 
         ParseResult { spans, injections }
     }

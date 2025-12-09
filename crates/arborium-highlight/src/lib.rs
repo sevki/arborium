@@ -476,6 +476,37 @@ mod tests {
     }
 
     #[test]
+    fn test_reuse_with_shorter_text() {
+        // Regression test: reusing a highlighter with a shorter string
+        // after a longer string should not panic with slice bounds errors.
+        // This tests that we don't incorrectly use cached tree state.
+        let provider = MockProvider {
+            grammars: [(
+                "test",
+                MockGrammar {
+                    result: ParseResult {
+                        spans: vec![Span {
+                            start: 0,
+                            end: 2,
+                            capture: "keyword".into(),
+                        }],
+                        injections: vec![],
+                    },
+                },
+            )]
+            .into(),
+        };
+
+        let mut highlighter = SyncHighlighter::new(provider);
+
+        // First: longer string
+        let _ = highlighter.highlight("test", "longer string here");
+
+        // Second: shorter string - should not panic
+        let _ = highlighter.highlight("test", "short");
+    }
+
+    #[test]
     fn test_span_coalescing() {
         let spans = vec![
             Span {
