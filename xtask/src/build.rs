@@ -640,6 +640,98 @@ struct PluginsManifestTsTemplate<'a> {
     entries: &'a [PluginManifestEntry],
 }
 
+/// Generate the plugins-manifest.ts file for the npm package.
+/// This uses ALL grammars with generate_component enabled, not just locally built ones.
+pub fn generate_plugins_manifest(
+    repo_root: &Utf8Path,
+    crates_dir: &Utf8Path,
+    version: &str,
+) -> Result<()> {
+    let registry = CrateRegistry::load(crates_dir)
+        .map_err(|e| miette::miette!("failed to load crate registry: {}", e))?;
+
+    // Get ALL grammars that have generate_component enabled
+    let grammars: Vec<String> = registry
+        .all_grammars()
+        .filter(|(_, _, grammar)| grammar.generate_component())
+        .map(|(_, _, grammar)| grammar.id().to_string())
+        .collect();
+
+    if grammars.is_empty() {
+        miette::bail!("No grammars have generate-component enabled");
+    }
+
+    println!(
+        "{} Generating manifest for {} grammar(s)",
+        "●".cyan(),
+        grammars.len()
+    );
+
+    // Build manifest entries for all grammars
+    let mut entries = Vec::new();
+    for grammar in &grammars {
+        let package = format!("@arborium/{}", grammar);
+        let cdn_base = format!(
+            "https://cdn.jsdelivr.net/npm/@arborium/{}@{}",
+            grammar, version
+        );
+
+        // For the manifest, we only need CDN URLs (local URLs are for dev server)
+        // The local URLs will be relative to repo root
+        let (state, _) = locate_grammar(&registry, grammar)
+            .ok_or_else(|| miette::miette!("grammar `{}` not found", grammar))?;
+
+        let local_root = state
+            .crate_path
+            .parent()
+            .expect("lang directory")
+            .join("npm");
+        let local_js = local_root.join("grammar.js");
+        let local_wasm = local_root.join("grammar.core.wasm");
+        let rel_js = local_js.strip_prefix(repo_root).unwrap_or(&local_js);
+        let rel_wasm = local_wasm.strip_prefix(repo_root).unwrap_or(&local_wasm);
+
+        entries.push(PluginManifestEntry {
+            language: grammar.clone(),
+            package,
+            version: version.to_string(),
+            cdn_js: format!("{}/grammar.js", cdn_base),
+            cdn_wasm: format!("{}/grammar.core.wasm", cdn_base),
+            local_js: format!("/{}", rel_js),
+            local_wasm: format!("/{}", rel_wasm),
+        });
+    }
+
+    let manifest = PluginManifest {
+        generated_at: Utc::now().to_rfc3339(),
+        entries,
+    };
+
+    // Write TypeScript manifest
+    let ts_manifest_path = repo_root
+        .join("packages/arborium/src")
+        .join("plugins-manifest.ts");
+    let ts_template = PluginsManifestTsTemplate {
+        generated_at: &manifest.generated_at,
+        entries: &manifest.entries,
+    };
+    let ts_content = ts_template
+        .render_once()
+        .expect("PluginsManifestTsTemplate render failed");
+    fs_err::write(&ts_manifest_path, ts_content)
+        .into_diagnostic()
+        .context("failed to write TypeScript manifest")?;
+
+    println!(
+        "{} Wrote {} with {} grammars",
+        "✓".green(),
+        ts_manifest_path.cyan(),
+        manifest.entries.len()
+    );
+
+    Ok(())
+}
+
 fn build_manifest(
     repo_root: &Utf8Path,
     registry: &CrateRegistry,

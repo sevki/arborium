@@ -44,6 +44,13 @@ enum Command {
     /// Generate theme CSS files for the npm package from TOML sources
     GenThemes,
 
+    /// Generate plugins-manifest.ts for the npm package (used by prepublishOnly)
+    GenManifest {
+        /// Version to use for CDN URLs
+        #[facet(args::named)]
+        version: String,
+    },
+
     /// Validate all grammar configurations
     Lint {
         /// Strict mode: missing generated files (parser.c) are errors.
@@ -259,6 +266,15 @@ fn main() {
         Command::Version => unreachable!(),
         Command::GenThemes => {
             if let Err(e) = serve::generate_npm_theme_css(&crates_dir) {
+                eprintln!("{:?}", e);
+                std::process::exit(1);
+            }
+        }
+        Command::GenManifest { version } => {
+            let repo_root = util::find_repo_root().expect("Could not find repo root");
+            let repo_root = camino::Utf8PathBuf::from_path_buf(repo_root).expect("non-UTF8 path");
+
+            if let Err(e) = build::generate_plugins_manifest(&repo_root, &crates_dir, &version) {
                 eprintln!("{:?}", e);
                 std::process::exit(1);
             }
