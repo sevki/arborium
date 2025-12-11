@@ -252,23 +252,21 @@
                             </p>
                             <pre
                                 class="code-block"
-                            ><code><a-tg>&lt;script</a-tg> <a-at>src</a-at><a-p>=</a-p><a-s>"https://cdn.jsdelivr.net/npm/@arborium/arborium@1/dist/arborium.iife.js"</a-s><a-tg>&gt;&lt;/script&gt;</a-tg></code></pre>
+                            ><code class="language-html">&lt;script src="https://cdn.jsdelivr.net/npm/@arborium/arborium@1/dist/arborium.iife.js"&gt;&lt;/script&gt;</code></pre>
                             <p>Your code blocks should look like this:</p>
                             <pre
                                 class="code-block"
-                            ><code><a-tg>&lt;pre&gt;&lt;code</a-tg> <a-at>class</a-at><a-p>=</a-p><a-s>"language-rust"</a-s><a-tg>&gt;</a-tg>fn main() {}<a-tg>&lt;/code&gt;&lt;/pre&gt;</a-tg>
-<a-c>&lt;!-- or --&gt;</a-c>
-<a-tg>&lt;pre&gt;&lt;code</a-tg> <a-at>data-lang</a-at><a-p>=</a-p><a-s>"rust"</a-s><a-tg>&gt;</a-tg>fn main() {}<a-tg>&lt;/code&gt;&lt;/pre&gt;</a-tg>
-<a-c>&lt;!-- or just let it auto-detect --&gt;</a-c>
-<a-tg>&lt;pre&gt;&lt;code&gt;</a-tg>fn main() {}<a-tg>&lt;/code&gt;&lt;/pre&gt;</a-tg></code></pre>
+                            ><code class="language-html">&lt;pre&gt;&lt;code class="language-rust"&gt;fn main() {}&lt;/code&gt;&lt;/pre&gt;
+&lt;!-- or --&gt;
+&lt;pre&gt;&lt;code data-lang="rust"&gt;fn main() {}&lt;/code&gt;&lt;/pre&gt;
+&lt;!-- or just let it auto-detect --&gt;
+&lt;pre&gt;&lt;code&gt;fn main() {}&lt;/code&gt;&lt;/pre&gt;</code></pre>
                             <p>Configure via data attributes:</p>
-                            <pre
-                                class="code-block"
-                            ><code><a-tg>&lt;script</a-tg> <a-at>src</a-at><a-p>=</a-p><a-s>"..."</a-s>
-  <a-at>data-theme</a-at><a-p>=</a-p><a-s>"github-light"</a-s>      <a-c>&lt;!-- theme name --&gt;</a-c>
-  <a-at>data-selector</a-at><a-p>=</a-p><a-s>"pre code"</a-s>        <a-c>&lt;!-- CSS selector --&gt;</a-c>
-  <a-at>data-manual</a-at>                     <a-c>&lt;!-- disable auto-highlight --&gt;</a-c>
-  <a-at>data-cdn</a-at><a-p>=</a-p><a-s>"unpkg"</a-s><a-tg>&gt;&lt;/script&gt;</a-tg>       <a-c>&lt;!-- jsdelivr | unpkg | custom URL --&gt;</a-c></code></pre>
+                            <pre class="code-block"><code class="language-html">&lt;script src="..."
+  data-theme="github-light"      &lt;!-- theme name --&gt;
+  data-selector="pre code"        &lt;!-- CSS selector --&gt;
+  data-manual                     &lt;!-- disable auto-highlight --&gt;
+  data-cdn="unpkg"&gt;&lt;/script&gt;       &lt;!-- jsdelivr | unpkg | custom URL --&gt;</code></pre>
                             <p>
                                 With <code>data-manual</code>, call
                                 <code>window.arborium.highlightAll()</code> when ready.
@@ -280,20 +278,20 @@
                             <p>Add to your <code>Cargo.toml</code>:</p>
                             <pre
                                 class="code-block"
-                            ><code>arborium = { version = "<%- version %>", features = ["lang-rust"] }</code></pre>
+                            ><code class="language-toml">arborium = { version = "<%- version %>", features = ["lang-rust"] }</code></pre>
                             <p>Then highlight code:</p>
                             <pre
                                 class="code-block"
-                            ><code><a-k>let</a-k> html <a-o>=</a-o> arborium<a-p>::</a-p>highlight(<a-s>"rust"</a-s>, source, <a-o>&amp;</a-o>theme)<a-p>;</a-p></code></pre>
+                            ><code class="language-rust">let html = arborium::highlight("rust", source, &amp;theme);</code></pre>
                         </div>
                         <div class="get-started-option">
                             <h4>npm (ESM)</h4>
                             <p>For bundlers or manual control:</p>
                             <pre
                                 class="code-block"
-                            ><code><a-k>import</a-k> { loadGrammar, highlight } <a-k>from</a-k> <a-s>'@arborium/arborium'</a-s><a-p>;</a-p>
+                            ><code class="language-javascript">import { loadGrammar, highlight } from '@arborium/arborium';
 
-<a-k>const</a-k> html <a-o>=</a-o> <a-k>await</a-k> highlight(<a-s>'rust'</a-s>, sourceCode)<a-p>;</a-p></code></pre>
+const html = await highlight('rust', sourceCode);</code></pre>
                             <p>Grammars are loaded on-demand from jsdelivr (configurable).</p>
                         </div>
                     </div>
@@ -310,12 +308,12 @@
                             </p>
                             <pre
                                 class="code-block"
-                            ><code><a-tg>&lt;script</a-tg> <a-at>defer</a-at> <a-at>src</a-at><a-p>=</a-p><a-s>"https://cdn.jsdelivr.net/npm/@arborium/arborium@1/dist/arborium.iife.js"</a-s><a-tg>&gt;&lt;/script&gt;</a-tg></code></pre>
+                            ><code class="language-html">&lt;script defer src="https://cdn.jsdelivr.net/npm/@arborium/arborium@1/dist/arborium.iife.js"&gt;&lt;/script&gt;</code></pre>
                             <p>Then in <code>Cargo.toml</code>:</p>
                             <pre
                                 class="code-block"
-                            ><code><a-p>[</a-p><a-v>package.metadata.docs.rs</a-v><a-p>]</a-p>
-<a-v>rustdoc-args</a-v> <a-o>=</a-o> <a-p>[</a-p><a-s>"--html-in-header"</a-s><a-p>,</a-p> <a-s>"arborium-header.html"</a-s><a-p>]</a-p></code></pre>
+                            ><code class="language-toml">[package.metadata.docs.rs]
+rustdoc-args = ["--html-in-header", "arborium-header.html"]</code></pre>
                             <p class="integration-links">
                                 <a href="https://docs.rs/arborium-docsrs-demo/">See it in action</a>
                             </p>
@@ -330,11 +328,11 @@
                             </p>
                             <pre
                                 class="code-block"
-                            ><code><a-k>use</a-k> miette<a-p>::</a-p>GraphicalReportHandler<a-p>;</a-p>
-<a-k>use</a-k> miette_arborium<a-p>::</a-p>ArboriumHighlighter<a-p>;</a-p>
+                            ><code class="language-rust">use miette::GraphicalReportHandler;
+use miette_arborium::ArboriumHighlighter;
 
-<a-k>let</a-k> handler <a-o>=</a-o> GraphicalReportHandler<a-p>::</a-p>new()
-    <a-p>.</a-p>with_syntax_highlighting(ArboriumHighlighter<a-p>::</a-p>new())<a-p>;</a-p></code></pre>
+let handler = GraphicalReportHandler::new()
+    .with_syntax_highlighting(ArboriumHighlighter::new());</code></pre>
                             <p class="integration-links">
                                 <a href="https://crates.io/crates/miette-arborium">crates.io</a> ·
                                 <a href="https://docs.rs/miette-arborium">docs.rs</a>
@@ -613,6 +611,41 @@
                     block.appendChild(btn);
                 });
             })();
+        </script>
+        <script type="module">
+            // Highlight code blocks in the cards using arborium
+            async function highlightCodeBlocks() {
+                // Wait for the host to be available
+                const maxWait = 10000;
+                const start = Date.now();
+                while (!window.arboriumHost && Date.now() - start < maxWait) {
+                    await new Promise((r) => setTimeout(r, 100));
+                }
+                if (!window.arboriumHost) {
+                    console.warn("arboriumHost not available, code blocks not highlighted");
+                    return;
+                }
+
+                // Import the highlight function from the host module
+                const hostModule = await import("/pkg/arborium_host.js");
+                await hostModule.default("/pkg/arborium_host_bg.wasm");
+
+                // Highlight each code block
+                for (const block of document.querySelectorAll(".code-block code")) {
+                    const lang = block.className.replace("language-", "") || null;
+                    if (!lang) continue;
+
+                    const source = block.textContent;
+                    try {
+                        const html = await hostModule.highlight(lang, source);
+                        block.innerHTML = html;
+                        block.dataset.highlighted = "true";
+                    } catch (e) {
+                        console.warn(`Failed to highlight ${lang}:`, e);
+                    }
+                }
+            }
+            highlightCodeBlocks();
         </script>
     </body>
 </html>
