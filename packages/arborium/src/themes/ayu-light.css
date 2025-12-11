@@ -1,65 +1,70 @@
-/* Ayu Light theme - generated from TOML */
-/* This file contains ONLY syntax highlighting colors. */
-/* Background, font, and layout are YOUR responsibility. */
+/* Ayu Light theme (light) - generated from TOML */
+/* Defines --arb-*-light variables */
 
-a-co { color: #a37acc; }
-a-cb { color: #a37acc; }
-a-fb { color: #f2ae49; }
-a-f { color: #f2ae49; }
-a-fm { color: #f2ae49; }
-a-k { color: #fa8d3e; }
-a-kc { color: #fa8d3e; }
-a-ko { color: #fa8d3e; }
-a-kd { color: #fa8d3e; }
-a-ke { color: #fa8d3e; }
-a-kf { color: #fa8d3e; }
-a-ki { color: #fa8d3e; }
-a-kp { color: #fa8d3e; }
-a-kr { color: #fa8d3e; }
-a-kt { color: #fa8d3e; }
-a-ky { color: #fa8d3e; }
-a-o { color: #ed9366; }
-a-pr { color: #399ee6; }
-a-ps { color: #e6ba7e; }
-a-s { color: #86b300; }
-a-ss { color: #4cbf99; }
-a-tg { color: #55b4d4; }
-a-td { color: #55b4d4; }
-a-te { color: #55b4d4; }
-a-t { color: #399ee6; }
-a-tb { color: #399ee6; }
-a-tq { color: #399ee6; }
-a-v { color: #5c6166; }
-a-vb { color: #fa8d3e; }
-a-vp { color: #5c6166; }
-a-c { color: #8a9199; font-style: italic; }
-a-cd { color: #8a9199; font-style: italic; }
-a-m { color: #f2ae49; }
-a-l { color: #55b4d4; }
-a-da { color: #86b300; }
-a-dd { color: #f51818; }
-a-n { color: #a37acc; }
-a-tl { color: #5c6166; }
-a-em { font-style: italic; }
-a-st { font-weight: bold; }
-a-tu { color: #55b4d4; text-decoration: underline; }
-a-tr { color: #399ee6; }
-a-se { color: #4cbf99; }
-a-tt { color: #399ee6; font-weight: bold; }
-a-tx { text-decoration: line-through; }
-a-sp { color: #5c6166; }
-a-in { color: #fa8d3e; }
-a-sc { color: #fa8d3e; }
-a-rp { color: #fa8d3e; }
-a-cn { color: #fa8d3e; }
-a-ex { color: #fa8d3e; }
-a-pp { color: #fa8d3e; }
-a-ch { color: #86b300; }
-a-cs { color: #86b300; }
-a-vm { color: #5c6166; }
-a-fd { color: #f2ae49; }
-a-tf { color: #399ee6; }
-a-fc { color: #f2ae49; }
-a-km { color: #fa8d3e; }
-a-dr { color: #fa8d3e; }
-a-rx { color: #86b300; }
+:root {
+  --arb-co-light: #a37acc;
+  --arb-cb-light: #a37acc;
+  --arb-fb-light: #f2ae49;
+  --arb-f-light: #f2ae49;
+  --arb-fm-light: #f2ae49;
+  --arb-k-light: #fa8d3e;
+  --arb-kc-light: #fa8d3e;
+  --arb-ko-light: #fa8d3e;
+  --arb-kd-light: #fa8d3e;
+  --arb-ke-light: #fa8d3e;
+  --arb-kf-light: #fa8d3e;
+  --arb-ki-light: #fa8d3e;
+  --arb-kp-light: #fa8d3e;
+  --arb-kr-light: #fa8d3e;
+  --arb-kt-light: #fa8d3e;
+  --arb-ky-light: #fa8d3e;
+  --arb-o-light: #ed9366;
+  --arb-pr-light: #399ee6;
+  --arb-ps-light: #e6ba7e;
+  --arb-s-light: #86b300;
+  --arb-ss-light: #4cbf99;
+  --arb-tg-light: #55b4d4;
+  --arb-td-light: #55b4d4;
+  --arb-te-light: #55b4d4;
+  --arb-t-light: #399ee6;
+  --arb-tb-light: #399ee6;
+  --arb-tq-light: #399ee6;
+  --arb-v-light: #5c6166;
+  --arb-vb-light: #fa8d3e;
+  --arb-vp-light: #5c6166;
+  --arb-c-light: #8a9199;
+  --arb-c-light-style: italic;
+  --arb-cd-light: #8a9199;
+  --arb-cd-light-style: italic;
+  --arb-m-light: #f2ae49;
+  --arb-l-light: #55b4d4;
+  --arb-da-light: #86b300;
+  --arb-dd-light: #f51818;
+  --arb-n-light: #a37acc;
+  --arb-tl-light: #5c6166;
+  --arb-em-light-style: italic;
+  --arb-st-light-weight: bold;
+  --arb-tu-light: #55b4d4;
+  --arb-tu-light-decoration: underline;
+  --arb-tr-light: #399ee6;
+  --arb-se-light: #4cbf99;
+  --arb-tt-light: #399ee6;
+  --arb-tt-light-weight: bold;
+  --arb-tx-light-decoration: line-through;
+  --arb-sp-light: #5c6166;
+  --arb-in-light: #fa8d3e;
+  --arb-sc-light: #fa8d3e;
+  --arb-rp-light: #fa8d3e;
+  --arb-cn-light: #fa8d3e;
+  --arb-ex-light: #fa8d3e;
+  --arb-pp-light: #fa8d3e;
+  --arb-ch-light: #86b300;
+  --arb-cs-light: #86b300;
+  --arb-vm-light: #5c6166;
+  --arb-fd-light: #f2ae49;
+  --arb-tf-light: #399ee6;
+  --arb-fc-light: #f2ae49;
+  --arb-km-light: #fa8d3e;
+  --arb-dr-light: #fa8d3e;
+  --arb-rx-light: #86b300;
+}

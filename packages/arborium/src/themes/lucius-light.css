@@ -1,69 +1,74 @@
-/* Lucius Light theme - generated from TOML */
-/* This file contains ONLY syntax highlighting colors. */
-/* Background, font, and layout are YOUR responsibility. */
+/* Lucius Light theme (light) - generated from TOML */
+/* Defines --arb-*-light variables */
 
-a-at { color: #008787; }
-a-co { color: #af5f00; }
-a-cb { color: #af5f00; }
-a-fb { color: #008700; }
-a-f { color: #008700; }
-a-fm { color: #008700; }
-a-k { color: #005faf; }
-a-kc { color: #005faf; }
-a-ko { color: #005faf; }
-a-kd { color: #005faf; }
-a-ke { color: #005faf; }
-a-kf { color: #005faf; }
-a-ki { color: #005faf; }
-a-kp { color: #005faf; }
-a-kr { color: #005faf; }
-a-kt { color: #005faf; }
-a-ky { color: #005faf; }
-a-o { color: #005faf; }
-a-pr { color: #008700; }
-a-p { color: #444444; }
-a-pb { color: #444444; }
-a-pd { color: #444444; }
-a-ps { color: #870087; }
-a-s { color: #af5f00; }
-a-ss { color: #870087; }
-a-tg { color: #005faf; }
-a-td { color: #005faf; }
-a-te { color: #005faf; }
-a-t { color: #005f87; }
-a-tb { color: #005f87; }
-a-tq { color: #005f87; }
-a-v { color: #444444; }
-a-vb { color: #870087; }
-a-vp { color: #444444; }
-a-c { color: #808080; font-style: italic; }
-a-cd { color: #808080; font-style: italic; }
-a-m { color: #008787; }
-a-l { color: #008787; }
-a-da { color: #008700; }
-a-dd { color: #af0000; }
-a-n { color: #af5f00; }
-a-tl { color: #444444; }
-a-em { font-style: italic; }
-a-st { font-weight: bold; }
-a-tu { color: #005faf; text-decoration: underline; }
-a-tr { color: #005faf; }
-a-se { color: #008787; }
-a-tt { color: #005faf; font-weight: bold; }
-a-tx { text-decoration: line-through; }
-a-sp { color: #444444; }
-a-in { color: #005faf; }
-a-sc { color: #005faf; }
-a-rp { color: #005faf; }
-a-cn { color: #005faf; }
-a-ex { color: #005faf; }
-a-pp { color: #005faf; }
-a-ch { color: #af5f00; }
-a-cs { color: #af5f00; }
-a-vm { color: #444444; }
-a-fd { color: #008700; }
-a-tf { color: #005f87; }
-a-fc { color: #008700; }
-a-km { color: #005faf; }
-a-dr { color: #005faf; }
-a-rx { color: #af5f00; }
+:root {
+  --arb-at-light: #008787;
+  --arb-co-light: #af5f00;
+  --arb-cb-light: #af5f00;
+  --arb-fb-light: #008700;
+  --arb-f-light: #008700;
+  --arb-fm-light: #008700;
+  --arb-k-light: #005faf;
+  --arb-kc-light: #005faf;
+  --arb-ko-light: #005faf;
+  --arb-kd-light: #005faf;
+  --arb-ke-light: #005faf;
+  --arb-kf-light: #005faf;
+  --arb-ki-light: #005faf;
+  --arb-kp-light: #005faf;
+  --arb-kr-light: #005faf;
+  --arb-kt-light: #005faf;
+  --arb-ky-light: #005faf;
+  --arb-o-light: #005faf;
+  --arb-pr-light: #008700;
+  --arb-p-light: #444444;
+  --arb-pb-light: #444444;
+  --arb-pd-light: #444444;
+  --arb-ps-light: #870087;
+  --arb-s-light: #af5f00;
+  --arb-ss-light: #870087;
+  --arb-tg-light: #005faf;
+  --arb-td-light: #005faf;
+  --arb-te-light: #005faf;
+  --arb-t-light: #005f87;
+  --arb-tb-light: #005f87;
+  --arb-tq-light: #005f87;
+  --arb-v-light: #444444;
+  --arb-vb-light: #870087;
+  --arb-vp-light: #444444;
+  --arb-c-light: #808080;
+  --arb-c-light-style: italic;
+  --arb-cd-light: #808080;
+  --arb-cd-light-style: italic;
+  --arb-m-light: #008787;
+  --arb-l-light: #008787;
+  --arb-da-light: #008700;
+  --arb-dd-light: #af0000;
+  --arb-n-light: #af5f00;
+  --arb-tl-light: #444444;
+  --arb-em-light-style: italic;
+  --arb-st-light-weight: bold;
+  --arb-tu-light: #005faf;
+  --arb-tu-light-decoration: underline;
+  --arb-tr-light: #005faf;
+  --arb-se-light: #008787;
+  --arb-tt-light: #005faf;
+  --arb-tt-light-weight: bold;
+  --arb-tx-light-decoration: line-through;
+  --arb-sp-light: #444444;
+  --arb-in-light: #005faf;
+  --arb-sc-light: #005faf;
+  --arb-rp-light: #005faf;
+  --arb-cn-light: #005faf;
+  --arb-ex-light: #005faf;
+  --arb-pp-light: #005faf;
+  --arb-ch-light: #af5f00;
+  --arb-cs-light: #af5f00;
+  --arb-vm-light: #444444;
+  --arb-fd-light: #008700;
+  --arb-tf-light: #005f87;
+  --arb-fc-light: #008700;
+  --arb-km-light: #005faf;
+  --arb-dr-light: #005faf;
+  --arb-rx-light: #af5f00;
+}

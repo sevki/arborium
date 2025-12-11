@@ -1128,12 +1128,14 @@ fn guess_content_type(path: &Path) -> &'static str {
 
 /// Generate theme CSS files for the npm package from TOML theme definitions.
 ///
-/// This generates individual CSS files for each theme in packages/arborium/src/themes/
-/// using the Rust theme library's `to_css()` method. The generated CSS contains
-/// ONLY color rules for the `a-*` syntax elements - no background, font-family,
-/// padding, or other styling that should be controlled by the user's site.
+/// This generates:
+/// 1. Individual theme files that declare CSS variables with -light or -dark suffix
+/// 2. base.css - uses media queries and [data-theme] selectors for switching
+/// 3. base-docsrs.css - uses variable fallback for JS-based switching
 pub fn generate_npm_theme_css(crates_dir: &Utf8Path) -> Result<(), String> {
     use arborium_theme::builtin;
+    use arborium_theme::highlights::HIGHLIGHTS;
+    use std::fmt::Write;
 
     let repo_root = crates_dir.parent().ok_or("crates_dir has no parent")?;
     let themes_dir = repo_root.join("packages/arborium/src/themes");
@@ -1147,32 +1149,37 @@ pub fn generate_npm_theme_css(crates_dir: &Utf8Path) -> Result<(), String> {
         themes_dir.cyan()
     );
 
+    // Collect all tags that have styles across any theme
+    let mut all_tags: Vec<&str> = Vec::new();
+    for def in HIGHLIGHTS.iter() {
+        if !def.tag.is_empty() && !all_tags.contains(&def.tag) {
+            all_tags.push(def.tag);
+        }
+    }
+
+    // Generate individual theme files
     let mut generated = 0;
     for theme in builtin::all() {
         let id = theme_name_to_id(&theme.name);
+        let variant = if theme.is_dark { "dark" } else { "light" };
         let output_path = themes_dir.join(format!("{}.css", id));
 
-        // Generate CSS for this theme - only color rules for a-* elements
-        // We do NOT include background/foreground at the top level since
-        // that styling is the user's responsibility
         let mut css = String::new();
 
         // Header comment
-        css.push_str(&format!(
-            "/* {} theme - generated from TOML */\n",
-            theme.name
-        ));
-        css.push_str("/* This file contains ONLY syntax highlighting colors. */\n");
-        css.push_str("/* Background, font, and layout are YOUR responsibility. */\n\n");
+        writeln!(
+            css,
+            "/* {} theme ({}) - generated from TOML */",
+            theme.name, variant
+        )
+        .unwrap();
+        writeln!(css, "/* Defines --arb-*-{} variables */\n", variant).unwrap();
 
-        // Generate the rules - we reuse the theme's to_css but with a simpler selector
-        // that doesn't set background/foreground at the container level
-        use arborium_theme::highlights::HIGHLIGHTS;
-        use std::collections::HashMap;
-        use std::fmt::Write;
+        writeln!(css, ":root {{").unwrap();
 
         // Build a map from tag -> style for parent lookups
-        let mut tag_to_style: HashMap<&str, &arborium_theme::Style> = HashMap::new();
+        let mut tag_to_style: std::collections::HashMap<&str, &arborium_theme::Style> =
+            std::collections::HashMap::new();
         for (i, def) in HIGHLIGHTS.iter().enumerate() {
             if let Some(style) = theme.style(i) {
                 if !def.tag.is_empty() && !style.is_empty() {
@@ -1181,7 +1188,7 @@ pub fn generate_npm_theme_css(crates_dir: &Utf8Path) -> Result<(), String> {
             }
         }
 
-        // Generate rules for each highlight category
+        // Generate CSS variables for each highlight category
         for (i, def) in HIGHLIGHTS.iter().enumerate() {
             if def.tag.is_empty() {
                 continue;
@@ -1203,56 +1210,148 @@ pub fn generate_npm_theme_css(crates_dir: &Utf8Path) -> Result<(), String> {
                 continue;
             };
 
-            write!(css, "a-{} {{", def.tag).unwrap();
-
             if let Some(fg) = &style.fg {
-                write!(css, " color: {};", fg.to_hex()).unwrap();
-            }
-            // Note: we intentionally skip background colors for individual tokens
-            // as that's rarely needed and can cause visual issues
-
-            let mut decorations = Vec::new();
-            if style.modifiers.underline {
-                decorations.push("underline");
-            }
-            if style.modifiers.strikethrough {
-                decorations.push("line-through");
-            }
-            if !decorations.is_empty() {
-                write!(css, " text-decoration: {};", decorations.join(" ")).unwrap();
+                writeln!(css, "  --arb-{}-{}: {};", def.tag, variant, fg.to_hex()).unwrap();
             }
 
+            // Handle modifiers as separate variables
             if style.modifiers.bold {
-                write!(css, " font-weight: bold;").unwrap();
+                writeln!(css, "  --arb-{}-{}-weight: bold;", def.tag, variant).unwrap();
             }
             if style.modifiers.italic {
-                write!(css, " font-style: italic;").unwrap();
+                writeln!(css, "  --arb-{}-{}-style: italic;", def.tag, variant).unwrap();
             }
-
-            writeln!(css, " }}").unwrap();
+            if style.modifiers.underline || style.modifiers.strikethrough {
+                let mut decorations = Vec::new();
+                if style.modifiers.underline {
+                    decorations.push("underline");
+                }
+                if style.modifiers.strikethrough {
+                    decorations.push("line-through");
+                }
+                writeln!(
+                    css,
+                    "  --arb-{}-{}-decoration: {};",
+                    def.tag,
+                    variant,
+                    decorations.join(" ")
+                )
+                .unwrap();
+            }
         }
+
+        writeln!(css, "}}").unwrap();
 
         fs::write(&output_path, &css).map_err(|e| e.to_string())?;
         generated += 1;
     }
 
+    // Generate base.css - standard switching with media queries and [data-theme]
+    let base_path = themes_dir.join("base.css");
+    let mut base_css = String::new();
+
+    writeln!(
+        base_css,
+        "/* Arborium base CSS - handles light/dark switching */"
+    )
+    .unwrap();
+    writeln!(
+        base_css,
+        "/* Include this + one light theme + one dark theme */\n"
+    )
+    .unwrap();
+
+    // Default: use light variables
+    writeln!(base_css, "/* Default: light mode */").unwrap();
+    for def in HIGHLIGHTS.iter() {
+        if def.tag.is_empty() {
+            continue;
+        }
+        writeln!(
+            base_css,
+            "a-{} {{ color: var(--arb-{}-light); font-weight: var(--arb-{}-light-weight, normal); font-style: var(--arb-{}-light-style, normal); text-decoration: var(--arb-{}-light-decoration, none); }}",
+            def.tag, def.tag, def.tag, def.tag, def.tag
+        ).unwrap();
+    }
+
+    // Media query for dark preference
+    writeln!(base_css, "\n/* System preference: dark */").unwrap();
+    writeln!(base_css, "@media (prefers-color-scheme: dark) {{").unwrap();
+    for def in HIGHLIGHTS.iter() {
+        if def.tag.is_empty() {
+            continue;
+        }
+        writeln!(
+            base_css,
+            "  a-{} {{ color: var(--arb-{}-dark); font-weight: var(--arb-{}-dark-weight, normal); font-style: var(--arb-{}-dark-style, normal); text-decoration: var(--arb-{}-dark-decoration, none); }}",
+            def.tag, def.tag, def.tag, def.tag, def.tag
+        ).unwrap();
+    }
+    writeln!(base_css, "}}").unwrap();
+
+    // Explicit data-theme overrides
+    writeln!(base_css, "\n/* Explicit light mode */").unwrap();
+    writeln!(base_css, ":root[data-theme=\"light\"] {{").unwrap();
+    for def in HIGHLIGHTS.iter() {
+        if def.tag.is_empty() {
+            continue;
+        }
+        writeln!(
+            base_css,
+            "  a-{} {{ color: var(--arb-{}-light); font-weight: var(--arb-{}-light-weight, normal); font-style: var(--arb-{}-light-style, normal); text-decoration: var(--arb-{}-light-decoration, none); }}",
+            def.tag, def.tag, def.tag, def.tag, def.tag
+        ).unwrap();
+    }
+    writeln!(base_css, "}}").unwrap();
+
+    writeln!(base_css, "\n/* Explicit dark mode */").unwrap();
+    writeln!(base_css, ":root[data-theme=\"dark\"] {{").unwrap();
+    for def in HIGHLIGHTS.iter() {
+        if def.tag.is_empty() {
+            continue;
+        }
+        writeln!(
+            base_css,
+            "  a-{} {{ color: var(--arb-{}-dark); font-weight: var(--arb-{}-dark-weight, normal); font-style: var(--arb-{}-dark-style, normal); text-decoration: var(--arb-{}-dark-decoration, none); }}",
+            def.tag, def.tag, def.tag, def.tag, def.tag
+        ).unwrap();
+    }
+    writeln!(base_css, "}}").unwrap();
+
+    fs::write(&base_path, &base_css).map_err(|e| e.to_string())?;
+
+    // Generate base-docsrs.css - uses variable fallback for JS-based switching
+    let base_docsrs_path = themes_dir.join("base-docsrs.css");
+    let mut docsrs_css = String::new();
+
+    writeln!(
+        docsrs_css,
+        "/* Arborium base CSS for docs.rs - uses variable fallback */"
+    )
+    .unwrap();
+    writeln!(
+        docsrs_css,
+        "/* JS dynamically loads one theme at a time */\n"
+    )
+    .unwrap();
+
+    for def in HIGHLIGHTS.iter() {
+        if def.tag.is_empty() {
+            continue;
+        }
+        writeln!(
+            docsrs_css,
+            "a-{} {{ color: var(--arb-{}-dark, var(--arb-{}-light)); font-weight: var(--arb-{}-dark-weight, var(--arb-{}-light-weight, normal)); font-style: var(--arb-{}-dark-style, var(--arb-{}-light-style, normal)); text-decoration: var(--arb-{}-dark-decoration, var(--arb-{}-light-decoration, none)); }}",
+            def.tag, def.tag, def.tag, def.tag, def.tag, def.tag, def.tag, def.tag, def.tag
+        ).unwrap();
+    }
+
+    fs::write(&base_docsrs_path, &docsrs_css).map_err(|e| e.to_string())?;
+
     println!(
-        "{} Generated {} theme CSS files",
+        "{} Generated {} theme files + base.css + base-docsrs.css",
         "✓".green(),
         generated.to_string().cyan()
-    );
-
-    // Print instructions for updating package.json
-    println!();
-    println!("{}", "Next steps:".bold());
-    println!(
-        "  {} Update packages/arborium/package.json exports if new themes were added",
-        "→".blue()
-    );
-    println!(
-        "  {} Run {} to build the package",
-        "→".blue(),
-        "npm run build".cyan()
     );
 
     Ok(())

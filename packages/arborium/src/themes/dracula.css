@@ -1,69 +1,72 @@
-/* Dracula theme - generated from TOML */
-/* This file contains ONLY syntax highlighting colors. */
-/* Background, font, and layout are YOUR responsibility. */
+/* Dracula theme (dark) - generated from TOML */
+/* Defines --arb-*-dark variables */
 
-a-at { color: #50fa7b; }
-a-co { color: #bd93f9; }
-a-cb { color: #bd93f9; }
-a-fb { color: #8be9fd; }
-a-f { color: #50fa7b; }
-a-fm { color: #50fa7b; }
-a-k { color: #ff79c6; }
-a-kc { color: #ff79c6; }
-a-ko { color: #ff79c6; }
-a-kd { color: #ff79c6; }
-a-ke { color: #ff79c6; }
-a-kf { color: #ff79c6; }
-a-ki { color: #ff79c6; }
-a-kp { color: #ff79c6; }
-a-kr { color: #ff79c6; }
-a-kt { color: #ff79c6; }
-a-ky { color: #ff79c6; }
-a-o { color: #ff79c6; }
-a-pr { color: #8be9fd; }
-a-p { color: #f8f8f2; }
-a-pb { color: #f8f8f2; }
-a-pd { color: #f8f8f2; }
-a-ps { color: #ff79c6; }
-a-s { color: #f1fa8c; }
-a-ss { color: #ff5555; }
-a-tg { color: #ff79c6; }
-a-td { color: #ff79c6; }
-a-te { color: #ff79c6; }
-a-t { color: #8be9fd; }
-a-tb { color: #8be9fd; }
-a-tq { color: #8be9fd; }
-a-v { color: #f8f8f2; }
-a-vb { color: #bd93f9; }
-a-vp { color: #ffb86c; }
-a-c { color: #6272a4; }
-a-cd { color: #6272a4; }
-a-m { color: #50fa7b; }
-a-l { color: #8be9fd; }
-a-da { color: #50fa7b; }
-a-dd { color: #ff5555; }
-a-n { color: #bd93f9; }
-a-tl { color: #f8f8f2; }
-a-em { font-style: italic; }
-a-st { font-weight: bold; }
-a-tu { color: #8be9fd; text-decoration: underline; }
-a-tr { color: #8be9fd; }
-a-se { color: #ff79c6; }
-a-tt { color: #bd93f9; font-weight: bold; }
-a-tx { text-decoration: line-through; }
-a-sp { color: #f8f8f2; }
-a-in { color: #ff79c6; }
-a-sc { color: #ff79c6; }
-a-rp { color: #ff79c6; }
-a-cn { color: #ff79c6; }
-a-ex { color: #ff79c6; }
-a-pp { color: #ff79c6; }
-a-ch { color: #f1fa8c; }
-a-cs { color: #f1fa8c; }
-a-vm { color: #f8f8f2; }
-a-fd { color: #50fa7b; }
-a-tf { color: #8be9fd; }
-a-fc { color: #50fa7b; }
-a-km { color: #ff79c6; }
-a-dr { color: #ff79c6; }
-a-rx { color: #f1fa8c; }
+:root {
+  --arb-at-dark: #50fa7b;
+  --arb-co-dark: #bd93f9;
+  --arb-cb-dark: #bd93f9;
+  --arb-fb-dark: #8be9fd;
+  --arb-f-dark: #50fa7b;
+  --arb-fm-dark: #50fa7b;
+  --arb-k-dark: #ff79c6;
+  --arb-kc-dark: #ff79c6;
+  --arb-ko-dark: #ff79c6;
+  --arb-kd-dark: #ff79c6;
+  --arb-ke-dark: #ff79c6;
+  --arb-kf-dark: #ff79c6;
+  --arb-ki-dark: #ff79c6;
+  --arb-kp-dark: #ff79c6;
+  --arb-kr-dark: #ff79c6;
+  --arb-kt-dark: #ff79c6;
+  --arb-ky-dark: #ff79c6;
+  --arb-o-dark: #ff79c6;
+  --arb-pr-dark: #8be9fd;
+  --arb-p-dark: #f8f8f2;
+  --arb-pb-dark: #f8f8f2;
+  --arb-pd-dark: #f8f8f2;
+  --arb-ps-dark: #ff79c6;
+  --arb-s-dark: #f1fa8c;
+  --arb-ss-dark: #ff5555;
+  --arb-tg-dark: #ff79c6;
+  --arb-td-dark: #ff79c6;
+  --arb-te-dark: #ff79c6;
+  --arb-t-dark: #8be9fd;
+  --arb-tb-dark: #8be9fd;
+  --arb-tq-dark: #8be9fd;
+  --arb-v-dark: #f8f8f2;
+  --arb-vb-dark: #bd93f9;
+  --arb-vp-dark: #ffb86c;
+  --arb-c-dark: #6272a4;
+  --arb-cd-dark: #6272a4;
+  --arb-m-dark: #50fa7b;
+  --arb-l-dark: #8be9fd;
+  --arb-da-dark: #50fa7b;
+  --arb-dd-dark: #ff5555;
+  --arb-n-dark: #bd93f9;
+  --arb-tl-dark: #f8f8f2;
+  --arb-em-dark-style: italic;
+  --arb-st-dark-weight: bold;
+  --arb-tu-dark: #8be9fd;
+  --arb-tu-dark-decoration: underline;
+  --arb-tr-dark: #8be9fd;
+  --arb-se-dark: #ff79c6;
+  --arb-tt-dark: #bd93f9;
+  --arb-tt-dark-weight: bold;
+  --arb-tx-dark-decoration: line-through;
+  --arb-sp-dark: #f8f8f2;
+  --arb-in-dark: #ff79c6;
+  --arb-sc-dark: #ff79c6;
+  --arb-rp-dark: #ff79c6;
+  --arb-cn-dark: #ff79c6;
+  --arb-ex-dark: #ff79c6;
+  --arb-pp-dark: #ff79c6;
+  --arb-ch-dark: #f1fa8c;
+  --arb-cs-dark: #f1fa8c;
+  --arb-vm-dark: #f8f8f2;
+  --arb-fd-dark: #50fa7b;
+  --arb-tf-dark: #8be9fd;
+  --arb-fc-dark: #50fa7b;
+  --arb-km-dark: #ff79c6;
+  --arb-dr-dark: #ff79c6;
+  --arb-rx-dark: #f1fa8c;
+}

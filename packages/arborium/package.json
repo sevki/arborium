@@ -17,6 +17,8 @@
     "./iife": {
       "import": "./dist/arborium.iife.js"
     },
+    "./themes/base.css": "./dist/themes/base.css",
+    "./themes/base-docsrs.css": "./dist/themes/base-docsrs.css",
     "./themes/alabaster.css": "./dist/themes/alabaster.css",
     "./themes/ayu-dark.css": "./dist/themes/ayu-dark.css",
     "./themes/ayu-light.css": "./dist/themes/ayu-light.css",

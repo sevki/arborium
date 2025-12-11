@@ -13,7 +13,7 @@ import type { ParseResult, ArboriumConfig, Grammar, Span, Injection } from "./ty
 // Default config
 export const defaultConfig: Required<ArboriumConfig> = {
   manual: false,
-  theme: "tokyo-night",
+  theme: "one-dark",
   selector: "pre code",
   cdn: "jsdelivr",
   version: "1", // Major version - allows patch/minor upgrades via CDN

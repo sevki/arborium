@@ -5,13 +5,9 @@
  * Configuration via data attributes or window.Arborium object.
  */
 
-import { loadGrammar, highlight, getConfig, setConfig, defaultConfig } from './loader.js';
-import {
-  detectLanguage,
-  extractLanguageFromClass,
-  normalizeLanguage,
-} from './detect.js';
-import type { ArboriumConfig } from './types.js';
+import { loadGrammar, highlight, getConfig, setConfig, defaultConfig } from "./loader.js";
+import { detectLanguage, extractLanguageFromClass, normalizeLanguage } from "./detect.js";
+import type { ArboriumConfig } from "./types.js";
 
 // Capture current script immediately (before any async operations)
 const currentScript = document.currentScript as HTMLScriptElement | null;
@@ -35,27 +31,27 @@ function getConfigFromScript(): Partial<ArboriumConfig> {
   const params = getQueryParams();
 
   // Data attributes
-  if (currentScript.hasAttribute('data-manual')) {
+  if (currentScript.hasAttribute("data-manual")) {
     config.manual = true;
   }
 
-  const theme = currentScript.getAttribute('data-theme');
+  const theme = currentScript.getAttribute("data-theme");
   if (theme) config.theme = theme;
 
-  const selector = currentScript.getAttribute('data-selector');
+  const selector = currentScript.getAttribute("data-selector");
   if (selector) config.selector = selector;
 
-  const cdn = currentScript.getAttribute('data-cdn');
+  const cdn = currentScript.getAttribute("data-cdn");
   if (cdn) config.cdn = cdn;
 
-  const version = currentScript.getAttribute('data-version');
+  const version = currentScript.getAttribute("data-version");
   if (version) config.version = version;
 
   // Query parameters (for local testing)
-  const pluginsUrl = params.get('pluginsUrl');
+  const pluginsUrl = params.get("pluginsUrl");
   if (pluginsUrl) config.pluginsUrl = pluginsUrl;
 
-  const hostUrl = params.get('hostUrl');
+  const hostUrl = params.get("hostUrl");
   if (hostUrl) config.hostUrl = hostUrl;
 
   return config;
@@ -63,7 +59,7 @@ function getConfigFromScript(): Partial<ArboriumConfig> {
 
 /** Detect if we're running on docs.rs */
 function isDocsRsEnvironment(): boolean {
-  return document.documentElement.hasAttribute('data-docs-rs-theme');
+  return document.documentElement.hasAttribute("data-docs-rs-theme");
 }
 
 /** Map docs.rs theme names to Arborium theme IDs */
@@ -71,9 +67,9 @@ function mapDocsRsTheme(value?: string): string | null {
   if (!value) return null;
 
   const themeMap: Record<string, string> = {
-    light: 'docsrs-light',
-    dark: 'docsrs-dark',
-    ayu: 'docsrs-ayu',
+    light: "docsrs-light",
+    dark: "docsrs-dark",
+    ayu: "docsrs-ayu",
   };
 
   if (themeMap[value]) {
@@ -93,9 +89,7 @@ function getAutoTheme(): string {
       return docsRsTheme;
     }
 
-    const legacyDocsRsTheme = mapDocsRsTheme(
-      document.documentElement.dataset.docsRsTheme
-    );
+    const legacyDocsRsTheme = mapDocsRsTheme(document.documentElement.dataset.docsRsTheme);
     if (legacyDocsRsTheme) {
       return legacyDocsRsTheme;
     }
@@ -103,16 +97,16 @@ function getAutoTheme(): string {
 
   // Local rustdoc: data-theme toggles between light/dark but lacks docs.rs marker
   const rustdocTheme = document.documentElement.dataset.theme;
-  if (rustdocTheme === 'light') {
-    return 'github-light';
+  if (rustdocTheme === "light") {
+    return "github-light";
   }
-  if (rustdocTheme === 'dark') {
-    return 'tokyo-night';
+  if (rustdocTheme === "dark") {
+    return "one-dark";
   }
 
   // Fall back to system preference
-  const isLight = window.matchMedia('(prefers-color-scheme: light)').matches;
-  return isLight ? 'github-light' : 'tokyo-night';
+  const isLight = window.matchMedia("(prefers-color-scheme: light)").matches;
+  return isLight ? "github-light" : "one-dark";
 }
 
 /** Get merged configuration from all sources and apply to loader */
@@ -140,26 +134,24 @@ function findCodeBlocks(selector: string): HTMLElement[] {
 /** Check if a code block already has syntax highlighting or semantic markup */
 function hasExistingHighlighting(block: HTMLElement): boolean {
   // Check for common highlighting library markers
-  const highlightClasses = ['hljs', 'highlighted', 'prism-code', 'shiki'];
+  const highlightClasses = ["hljs", "highlighted", "prism-code", "shiki"];
   for (const cls of highlightClasses) {
     if (block.classList.contains(cls)) return true;
   }
 
   // Check if there are spans with syntax highlighting classes inside
   // (highlight.js, prism, etc. use spans with classes)
-  const spans = block.querySelectorAll('span[class]');
+  const spans = block.querySelectorAll("span[class]");
   if (spans.length > 0) {
     // If there are multiple spans with classes, likely already highlighted
     // Be conservative: even a few spans suggest existing highlighting
-    const classedSpans = Array.from(spans).filter(
-      (s) => s.className && s.className.length > 0
-    );
+    const classedSpans = Array.from(spans).filter((s) => s.className && s.className.length > 0);
     if (classedSpans.length >= 3) return true;
   }
 
   // Check for semantic markup (e.g., docs.rs uses <a> tags for type/function links)
   // If there are links inside the code, it has meaningful markup we shouldn't destroy
-  const links = block.querySelectorAll('a');
+  const links = block.querySelectorAll("a");
   if (links.length >= 2) return true;
 
   return false;
@@ -168,7 +160,7 @@ function hasExistingHighlighting(block: HTMLElement): boolean {
 /** Get the language for a code block */
 function getLanguageForBlock(block: HTMLElement): string | null {
   // Check data-lang attribute
-  const dataLang = block.getAttribute('data-lang');
+  const dataLang = block.getAttribute("data-lang");
   if (dataLang) return normalizeLanguage(dataLang);
 
   // Check class="language-*"
@@ -179,7 +171,7 @@ function getLanguageForBlock(block: HTMLElement): string | null {
   // Check parent element (often <pre> wraps <code>)
   const parent = block.parentElement;
   if (parent) {
-    const parentDataLang = parent.getAttribute('data-lang');
+    const parentDataLang = parent.getAttribute("data-lang");
     if (parentDataLang) return normalizeLanguage(parentDataLang);
 
     const parentClassLang = extractLanguageFromClass(parent.className);
@@ -187,62 +179,95 @@ function getLanguageForBlock(block: HTMLElement): string | null {
   }
 
   // Try auto-detection
-  const source = block.textContent || '';
+  const source = block.textContent || "";
   return detectLanguage(source);
 }
 
-/** Inject theme CSS if not already present */
-function injectThemeCSS(theme: string): void {
-  const themeId = `arborium-theme-${theme}`;
-  if (document.getElementById(themeId)) return;
-
-  // Get the base URL for CSS
+/** Get the CSS base URL */
+function getCssBaseUrl(): string {
   const config = getMergedConfig();
 
-  let cssUrl: string;
   if (config.hostUrl) {
-    // Local mode - use hostUrl base
-    cssUrl = `${config.hostUrl}/themes/${theme}.css`;
-  } else {
-    // CDN mode
-    const cdn = config.cdn;
-    const version = config.version;
-
-    let baseUrl: string;
-    if (cdn === 'jsdelivr') {
-      baseUrl = 'https://cdn.jsdelivr.net/npm';
-    } else if (cdn === 'unpkg') {
-      baseUrl = 'https://unpkg.com';
-    } else {
-      baseUrl = cdn;
-    }
-
-    const versionSuffix = version === 'latest' ? '' : `@${version}`;
-    cssUrl = `${baseUrl}/@arborium/arborium${versionSuffix}/dist/themes/${theme}.css`;
+    return `${config.hostUrl}/themes`;
   }
-  console.debug(`[arborium] Loading theme: ${cssUrl}`);
 
-  const link = document.createElement('link');
-  link.id = themeId;
-  link.rel = 'stylesheet';
+  const cdn = config.cdn;
+  const version = config.version;
+
+  let baseUrl: string;
+  if (cdn === "jsdelivr") {
+    baseUrl = "https://cdn.jsdelivr.net/npm";
+  } else if (cdn === "unpkg") {
+    baseUrl = "https://unpkg.com";
+  } else {
+    baseUrl = cdn;
+  }
+
+  const versionSuffix = version === "latest" ? "" : `@${version}`;
+  return `${baseUrl}/@arborium/arborium${versionSuffix}/dist/themes`;
+}
+
+/** Inject base CSS (only once) */
+function injectBaseCSS(): void {
+  const baseId = "arborium-base";
+  if (document.getElementById(baseId)) return;
+
+  const cssUrl = `${getCssBaseUrl()}/base-docsrs.css`;
+  console.debug(`[arborium] Loading base CSS: ${cssUrl}`);
+
+  const link = document.createElement("link");
+  link.id = baseId;
+  link.rel = "stylesheet";
   link.href = cssUrl;
   document.head.appendChild(link);
+}
+
+// Track currently loaded theme
+let currentThemeId: string | null = null;
+
+/** Inject theme CSS, removing any previously loaded theme */
+function injectThemeCSS(theme: string): void {
+  // Remove old theme if different
+  if (currentThemeId && currentThemeId !== theme) {
+    const oldLink = document.getElementById(`arborium-theme-${currentThemeId}`);
+    if (oldLink) {
+      oldLink.remove();
+      console.debug(`[arborium] Removed theme: ${currentThemeId}`);
+    }
+  }
+
+  const themeId = `arborium-theme-${theme}`;
+  if (document.getElementById(themeId)) {
+    currentThemeId = theme;
+    return;
+  }
+
+  const cssUrl = `${getCssBaseUrl()}/${theme}.css`;
+  console.debug(`[arborium] Loading theme: ${cssUrl}`);
+
+  const link = document.createElement("link");
+  link.id = themeId;
+  link.rel = "stylesheet";
+  link.href = cssUrl;
+  document.head.appendChild(link);
+
+  currentThemeId = theme;
 }
 
 /** Highlight a single code block */
 async function highlightBlock(
   block: HTMLElement,
   language: string,
-  config: ArboriumConfig
+  config: ArboriumConfig,
 ): Promise<void> {
-  const source = block.textContent || '';
+  const source = block.textContent || "";
   if (!source.trim()) return;
 
   try {
     const html = await highlight(language, source, config);
     block.innerHTML = html;
-    block.setAttribute('data-highlighted', 'true');
-    block.setAttribute('data-lang', language);
+    block.setAttribute("data-highlighted", "true");
+    block.setAttribute("data-lang", language);
   } catch (err) {
     console.warn(`[arborium] Failed to highlight ${language}:`, err);
     // Don't modify the block on error
@@ -253,7 +278,10 @@ async function highlightBlock(
 async function autoHighlight(): Promise<void> {
   const config = getMergedConfig();
 
-  // Inject theme CSS
+  // Inject base CSS (defines a-* selectors using variables)
+  injectBaseCSS();
+
+  // Inject theme CSS (defines the variables)
   injectThemeCSS(config.theme);
 
   // Find all code blocks
@@ -266,7 +294,7 @@ async function autoHighlight(): Promise<void> {
 
   for (const block of blocks) {
     // Skip already highlighted blocks
-    if (block.hasAttribute('data-highlighted')) continue;
+    if (block.hasAttribute("data-highlighted")) continue;
 
     // Skip blocks that appear to have existing syntax highlighting
     // (e.g., docs.rs uses spans with classes for highlighting)
@@ -288,7 +316,7 @@ async function autoHighlight(): Promise<void> {
     loadGrammar(lang, config).catch((err) => {
       console.warn(`[arborium] Failed to load grammar for ${lang}:`, err);
       return null;
-    })
+    }),
   );
 
   // Wait for all grammars to load
@@ -313,15 +341,13 @@ async function autoHighlight(): Promise<void> {
 
   // Log summary
   const total = blocks.length;
-  const highlighted = blocks.filter((b) =>
-    b.hasAttribute('data-highlighted')
-  ).length;
+  const highlighted = blocks.filter((b) => b.hasAttribute("data-highlighted")).length;
   const skipped = unknownBlocks.length;
 
   if (highlighted > 0 || skipped > 0) {
     console.debug(
       `[arborium] Highlighted ${highlighted}/${total} blocks` +
-        (skipped > 0 ? ` (${skipped} unknown language)` : '')
+        (skipped > 0 ? ` (${skipped} unknown language)` : ""),
     );
   }
 }
@@ -336,13 +362,13 @@ export async function highlightAll(config?: ArboriumConfig): Promise<void> {
 export async function highlightElement(
   element: HTMLElement,
   language?: string,
-  config?: ArboriumConfig
+  config?: ArboriumConfig,
 ): Promise<void> {
   const mergedConfig = getConfig({ ...getMergedConfig(), ...config });
   const lang = language || getLanguageForBlock(element);
 
   if (!lang) {
-    console.warn('[arborium] Could not detect language for element');
+    console.warn("[arborium] Could not detect language for element");
     return;
   }
 
@@ -385,10 +411,7 @@ function watchThemeChanges(): void {
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
       const attr = mutation.attributeName;
-      if (
-        attr === 'data-docs-rs-theme' ||
-        (attr === 'data-theme' && isDocsRsEnvironment())
-      ) {
+      if (attr === "data-docs-rs-theme" || (attr === "data-theme" && isDocsRsEnvironment())) {
         onThemeChange();
         break;
       }
@@ -398,15 +421,15 @@ function watchThemeChanges(): void {
 
   // Watch for system color scheme changes
   window
-    .matchMedia('(prefers-color-scheme: light)')
-    .addEventListener('change', () => onThemeChange());
+    .matchMedia("(prefers-color-scheme: light)")
+    .addEventListener("change", () => onThemeChange());
 }
 
 // Auto-highlight on DOMContentLoaded (unless manual mode)
 const config = getMergedConfig();
 if (!config.manual) {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => {
       autoHighlight();
       watchThemeChanges();
     });

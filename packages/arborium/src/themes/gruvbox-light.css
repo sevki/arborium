@@ -1,69 +1,72 @@
-/* Gruvbox Light theme - generated from TOML */
-/* This file contains ONLY syntax highlighting colors. */
-/* Background, font, and layout are YOUR responsibility. */
+/* Gruvbox Light theme (light) - generated from TOML */
+/* Defines --arb-*-light variables */
 
-a-at { color: #b57614; }
-a-co { color: #8f3f71; }
-a-cb { color: #8f3f71; }
-a-fb { color: #427b58; }
-a-f { color: #427b58; }
-a-fm { color: #427b58; }
-a-k { color: #9d0006; }
-a-kc { color: #9d0006; }
-a-ko { color: #9d0006; }
-a-kd { color: #9d0006; }
-a-ke { color: #9d0006; }
-a-kf { color: #9d0006; }
-a-ki { color: #9d0006; }
-a-kp { color: #9d0006; }
-a-kr { color: #9d0006; }
-a-kt { color: #9d0006; }
-a-ky { color: #9d0006; }
-a-o { color: #3c3836; }
-a-pr { color: #076678; }
-a-p { color: #3c3836; }
-a-pb { color: #3c3836; }
-a-pd { color: #3c3836; }
-a-ps { color: #af3a03; }
-a-s { color: #79740e; }
-a-ss { color: #af3a03; }
-a-tg { color: #9d0006; }
-a-td { color: #9d0006; }
-a-te { color: #9d0006; }
-a-t { color: #b57614; }
-a-tb { color: #b57614; }
-a-tq { color: #b57614; }
-a-v { color: #3c3836; }
-a-vb { color: #af3a03; }
-a-vp { color: #076678; }
-a-c { color: #928374; }
-a-cd { color: #928374; }
-a-m { color: #427b58; }
-a-l { color: #9d0006; }
-a-da { color: #79740e; }
-a-dd { color: #9d0006; }
-a-n { color: #8f3f71; }
-a-tl { color: #3c3836; }
-a-em { font-style: italic; }
-a-st { font-weight: bold; }
-a-tu { color: #076678; text-decoration: underline; }
-a-tr { color: #427b58; }
-a-se { color: #af3a03; }
-a-tt { color: #79740e; font-weight: bold; }
-a-tx { text-decoration: line-through; }
-a-sp { color: #3c3836; }
-a-in { color: #9d0006; }
-a-sc { color: #9d0006; }
-a-rp { color: #9d0006; }
-a-cn { color: #9d0006; }
-a-ex { color: #9d0006; }
-a-pp { color: #9d0006; }
-a-ch { color: #79740e; }
-a-cs { color: #79740e; }
-a-vm { color: #3c3836; }
-a-fd { color: #427b58; }
-a-tf { color: #b57614; }
-a-fc { color: #427b58; }
-a-km { color: #9d0006; }
-a-dr { color: #9d0006; }
-a-rx { color: #79740e; }
+:root {
+  --arb-at-light: #b57614;
+  --arb-co-light: #8f3f71;
+  --arb-cb-light: #8f3f71;
+  --arb-fb-light: #427b58;
+  --arb-f-light: #427b58;
+  --arb-fm-light: #427b58;
+  --arb-k-light: #9d0006;
+  --arb-kc-light: #9d0006;
+  --arb-ko-light: #9d0006;
+  --arb-kd-light: #9d0006;
+  --arb-ke-light: #9d0006;
+  --arb-kf-light: #9d0006;
+  --arb-ki-light: #9d0006;
+  --arb-kp-light: #9d0006;
+  --arb-kr-light: #9d0006;
+  --arb-kt-light: #9d0006;
+  --arb-ky-light: #9d0006;
+  --arb-o-light: #3c3836;
+  --arb-pr-light: #076678;
+  --arb-p-light: #3c3836;
+  --arb-pb-light: #3c3836;
+  --arb-pd-light: #3c3836;
+  --arb-ps-light: #af3a03;
+  --arb-s-light: #79740e;
+  --arb-ss-light: #af3a03;
+  --arb-tg-light: #9d0006;
+  --arb-td-light: #9d0006;
+  --arb-te-light: #9d0006;
+  --arb-t-light: #b57614;
+  --arb-tb-light: #b57614;
+  --arb-tq-light: #b57614;
+  --arb-v-light: #3c3836;
+  --arb-vb-light: #af3a03;
+  --arb-vp-light: #076678;
+  --arb-c-light: #928374;
+  --arb-cd-light: #928374;
+  --arb-m-light: #427b58;
+  --arb-l-light: #9d0006;
+  --arb-da-light: #79740e;
+  --arb-dd-light: #9d0006;
+  --arb-n-light: #8f3f71;
+  --arb-tl-light: #3c3836;
+  --arb-em-light-style: italic;
+  --arb-st-light-weight: bold;
+  --arb-tu-light: #076678;
+  --arb-tu-light-decoration: underline;
+  --arb-tr-light: #427b58;
+  --arb-se-light: #af3a03;
+  --arb-tt-light: #79740e;
+  --arb-tt-light-weight: bold;
+  --arb-tx-light-decoration: line-through;
+  --arb-sp-light: #3c3836;
+  --arb-in-light: #9d0006;
+  --arb-sc-light: #9d0006;
+  --arb-rp-light: #9d0006;
+  --arb-cn-light: #9d0006;
+  --arb-ex-light: #9d0006;
+  --arb-pp-light: #9d0006;
+  --arb-ch-light: #79740e;
+  --arb-cs-light: #79740e;
+  --arb-vm-light: #3c3836;
+  --arb-fd-light: #427b58;
+  --arb-tf-light: #b57614;
+  --arb-fc-light: #427b58;
+  --arb-km-light: #9d0006;
+  --arb-dr-light: #9d0006;
+  --arb-rx-light: #79740e;
+}
