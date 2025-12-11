@@ -7,18 +7,18 @@
  * 3. Parse and highlight using the grammar's tree-sitter parser
  */
 
-import { createWasiImports, grammarTypesImport } from './wasi-shims.js';
-import type { ParseResult, ArboriumConfig, Grammar, Span, Injection } from './types.js';
+import { createWasiImports, grammarTypesImport } from "./wasi-shims.js";
+import type { ParseResult, ArboriumConfig, Grammar, Span, Injection } from "./types.js";
 
 // Default config
 export const defaultConfig: Required<ArboriumConfig> = {
   manual: false,
-  theme: 'tokyo-night',
-  selector: 'pre code',
-  cdn: 'jsdelivr',
-  version: 'latest',
-  pluginsUrl: 'https://arborium.bearcove.eu/plugins.json',
-  hostUrl: '', // Empty means use CDN based on version
+  theme: "tokyo-night",
+  selector: "pre code",
+  cdn: "jsdelivr",
+  version: "1", // Major version - allows patch/minor upgrades via CDN
+  pluginsUrl: "https://arborium.bearcove.eu/plugins.json",
+  hostUrl: "", // Empty means use CDN based on version
 };
 
 // Rust host module (loaded on demand)
@@ -58,9 +58,7 @@ let pluginsManifest: PluginsManifest | null = null;
 let availableLanguages: Set<string> = new Set();
 
 /** WIT Result type as returned by jco-generated code */
-type WitResult<T, E> =
-  | { tag: 'ok'; val: T }
-  | { tag: 'err'; val: E };
+type WitResult<T, E> = { tag: "ok"; val: T } | { tag: "err"; val: E };
 
 /** Plugin interface as exported by jco-generated WIT components */
 interface JcoPlugin {
@@ -91,8 +89,8 @@ async function loadPluginsManifest(): Promise<void> {
   pluginsManifest = await response.json();
 
   // Populate available languages
-  availableLanguages = new Set(pluginsManifest!.entries.map(e => e.language));
-  console.debug(`[arborium] Available languages: ${Array.from(availableLanguages).join(', ')}`);
+  availableLanguages = new Set(pluginsManifest!.entries.map((e) => e.language));
+  console.debug(`[arborium] Available languages: ${Array.from(availableLanguages).join(", ")}`);
 }
 
 /** Load a grammar plugin */
@@ -108,7 +106,7 @@ async function loadGrammarPlugin(language: string): Promise<GrammarPlugin | null
   await loadPluginsManifest();
 
   // Find language entry
-  const entry = pluginsManifest?.entries.find(e => e.language === language);
+  const entry = pluginsManifest?.entries.find((e) => e.language === language);
   if (!entry) {
     console.debug(`[arborium] Grammar '${language}' not found in manifest`);
     return null;
@@ -118,7 +116,7 @@ async function loadGrammarPlugin(language: string): Promise<GrammarPlugin | null
     // Always use CDN URLs for grammars (they're published packages)
     // hostUrl only affects the host module loading
     const jsUrl = entry.cdn_js;
-    const baseUrl = jsUrl.substring(0, jsUrl.lastIndexOf('/'));
+    const baseUrl = jsUrl.substring(0, jsUrl.lastIndexOf("/"));
 
     console.debug(`[arborium] Loading grammar '${language}' from ${jsUrl}`);
     // Dynamically import the JS module
@@ -146,7 +144,7 @@ async function loadGrammarPlugin(language: string): Promise<GrammarPlugin | null
     const instance = await module.instantiate(getCoreModule, imports);
 
     // Get the plugin interface
-    const jcoPlugin = (instance.plugin || instance['arborium:grammar/plugin@0.1.0']) as JcoPlugin;
+    const jcoPlugin = (instance.plugin || instance["arborium:grammar/plugin@0.1.0"]) as JcoPlugin;
     if (!jcoPlugin) {
       console.error(`Grammar '${language}' missing plugin interface`);
       return null;
@@ -165,15 +163,15 @@ async function loadGrammarPlugin(language: string): Promise<GrammarPlugin | null
           // Handle various result shapes from jco
           // Some versions return { tag: 'ok', val: ParseResult }
           // Others might return ParseResult directly
-          if (result.tag === 'err') {
+          if (result.tag === "err") {
             const err = result.val as { message?: string };
             console.error(`[arborium] Parse error: ${err?.message}`);
             return { spans: [], injections: [] };
           }
 
           // Extract the actual value - could be result.val or result itself
-          const val = result.tag === 'ok' ? result.val : result;
-          if (!val || typeof val !== 'object') {
+          const val = result.tag === "ok" ? result.val : result;
+          if (!val || typeof val !== "object") {
             console.error(`[arborium] Unexpected parse result:`, result);
             return { spans: [], injections: [] };
           }
@@ -245,14 +243,14 @@ function getHostUrl(): string {
   const cdn = config.cdn;
   const version = config.version;
   let baseUrl: string;
-  if (cdn === 'jsdelivr') {
-    baseUrl = 'https://cdn.jsdelivr.net/npm';
-  } else if (cdn === 'unpkg') {
-    baseUrl = 'https://unpkg.com';
+  if (cdn === "jsdelivr") {
+    baseUrl = "https://cdn.jsdelivr.net/npm";
+  } else if (cdn === "unpkg") {
+    baseUrl = "https://unpkg.com";
   } else {
     baseUrl = cdn;
   }
-  const versionSuffix = version === 'latest' ? '' : `@${version}`;
+  const versionSuffix = version === "latest" ? "" : `@${version}`;
   return `${baseUrl}/@arborium/arborium${versionSuffix}/dist`;
 }
 
@@ -281,7 +279,7 @@ async function loadHost(): Promise<HostModule | null> {
       console.debug(`[arborium] Host loaded successfully`);
       return hostModule;
     } catch (e) {
-      console.error('[arborium] Failed to load host:', e);
+      console.error("[arborium] Failed to load host:", e);
       return null;
     }
   })();
@@ -290,14 +288,18 @@ async function loadHost(): Promise<HostModule | null> {
 }
 
 /** Highlight source code */
-export async function highlight(language: string, source: string, _config?: ArboriumConfig): Promise<string> {
+export async function highlight(
+  language: string,
+  source: string,
+  _config?: ArboriumConfig,
+): Promise<string> {
   // Try to use the Rust host (handles injections properly)
   const host = await loadHost();
   if (host) {
     try {
       return host.highlight(language, source);
     } catch (e) {
-      console.warn('Host highlight failed, falling back to JS:', e);
+      console.warn("Host highlight failed, falling back to JS:", e);
     }
   }
 
@@ -312,7 +314,10 @@ export async function highlight(language: string, source: string, _config?: Arbo
 }
 
 /** Load a grammar for direct use */
-export async function loadGrammar(language: string, _config?: ArboriumConfig): Promise<Grammar | null> {
+export async function loadGrammar(
+  language: string,
+  _config?: ArboriumConfig,
+): Promise<Grammar | null> {
   const plugin = await loadGrammarPlugin(language);
   if (!plugin) return null;
 
@@ -335,7 +340,7 @@ export function spansToHtml(source: string, spans: Span[]): string {
   // Sort spans by start position
   const sorted = [...spans].sort((a, b) => a.start - b.start);
 
-  let html = '';
+  let html = "";
   let pos = 0;
 
   for (const span of sorted) {
@@ -370,38 +375,38 @@ export function spansToHtml(source: string, spans: Span[]): string {
 
 /** Get the short tag for a capture name */
 function getTagForCapture(capture: string): string | null {
-  if (capture.startsWith('keyword') || capture === 'include' || capture === 'conditional') {
-    return 'k';
+  if (capture.startsWith("keyword") || capture === "include" || capture === "conditional") {
+    return "k";
   }
-  if (capture.startsWith('function') || capture.startsWith('method')) {
-    return 'f';
+  if (capture.startsWith("function") || capture.startsWith("method")) {
+    return "f";
   }
-  if (capture.startsWith('string') || capture === 'character') {
-    return 's';
+  if (capture.startsWith("string") || capture === "character") {
+    return "s";
   }
-  if (capture.startsWith('comment')) {
-    return 'c';
+  if (capture.startsWith("comment")) {
+    return "c";
   }
-  if (capture.startsWith('type')) {
-    return 't';
+  if (capture.startsWith("type")) {
+    return "t";
   }
-  if (capture.startsWith('variable')) {
-    return 'v';
+  if (capture.startsWith("variable")) {
+    return "v";
   }
-  if (capture.startsWith('number') || capture === 'float') {
-    return 'n';
+  if (capture.startsWith("number") || capture === "float") {
+    return "n";
   }
-  if (capture.startsWith('operator')) {
-    return 'o';
+  if (capture.startsWith("operator")) {
+    return "o";
   }
-  if (capture.startsWith('punctuation')) {
-    return 'p';
+  if (capture.startsWith("punctuation")) {
+    return "p";
   }
-  if (capture.startsWith('tag')) {
-    return 'tg';
+  if (capture.startsWith("tag")) {
+    return "tg";
   }
-  if (capture.startsWith('attribute')) {
-    return 'at';
+  if (capture.startsWith("attribute")) {
+    return "at";
   }
   return null;
 }
@@ -409,10 +414,10 @@ function getTagForCapture(capture: string): string | null {
 /** Escape HTML special characters */
 function escapeHtml(text: string): string {
   return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 /** Get current config, optionally merging with overrides */

@@ -44,7 +44,7 @@ export interface ArboriumConfig {
   selector?: string;
   /** CDN to use: "jsdelivr" | "unpkg" | custom base URL */
   cdn?: string;
-  /** Package version to load (default: "latest") */
+  /** Package version to load (default: "1" for latest 1.x.x) */
   version?: string;
   /** URL to plugins.json manifest (for local testing) */
   pluginsUrl?: string;
