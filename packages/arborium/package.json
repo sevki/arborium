@@ -29,9 +29,6 @@
     "./themes/cobalt2.css": "./dist/themes/cobalt2.css",
     "./themes/dayfox.css": "./dist/themes/dayfox.css",
     "./themes/desert256.css": "./dist/themes/desert256.css",
-    "./themes/rustdoc-ayu.css": "./dist/themes/rustdoc-ayu.css",
-    "./themes/rustdoc-dark.css": "./dist/themes/rustdoc-dark.css",
-    "./themes/rustdoc-light.css": "./dist/themes/rustdoc-light.css",
     "./themes/dracula.css": "./dist/themes/dracula.css",
     "./themes/ef-melissa-dark.css": "./dist/themes/ef-melissa-dark.css",
     "./themes/github-dark.css": "./dist/themes/github-dark.css",
@@ -47,6 +44,9 @@
     "./themes/nord.css": "./dist/themes/nord.css",
     "./themes/one-dark.css": "./dist/themes/one-dark.css",
     "./themes/rose-pine-moon.css": "./dist/themes/rose-pine-moon.css",
+    "./themes/rustdoc-ayu.css": "./dist/themes/rustdoc-ayu.css",
+    "./themes/rustdoc-dark.css": "./dist/themes/rustdoc-dark.css",
+    "./themes/rustdoc-light.css": "./dist/themes/rustdoc-light.css",
     "./themes/solarized-dark.css": "./dist/themes/solarized-dark.css",
     "./themes/solarized-light.css": "./dist/themes/solarized-light.css",
     "./themes/tokyo-night.css": "./dist/themes/tokyo-night.css",
@@ -85,5 +85,5 @@
   },
   "type": "module",
   "types": "./dist/arborium.d.ts",
-  "version": "1.0.3"
+  "version": "1.0.4"
 }
