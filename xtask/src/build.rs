@@ -1064,17 +1064,24 @@ fn build_single_plugin(
     check_wasm_browser_compatibility(&dest_wasm)?;
     println!("  {} No browser-incompatible imports found", "✓".green());
 
-    // Generate package.json
-    let package_json_content = serde_json::json!({
-        "name": format!("@arborium/{}", grammar),
-        "version": _version,
-        "type": "module",
-        "files": ["grammar.js", "grammar_bg.wasm"]
-    });
+    // Copy and update package.json (preserve generated metadata like repository/homepage)
+    let source_package_json = plugin_source.join("package.json");
     let dest_package_json = plugin_output.join("package.json");
+    let package_json_str = fs_err::read_to_string(&source_package_json)
+        .into_diagnostic()
+        .context("failed to read source package.json")?;
+    let mut package_json_value: serde_json::Value = serde_json::from_str(&package_json_str)
+        .into_diagnostic()
+        .context("failed to parse source package.json")?;
+    if let Some(obj) = package_json_value.as_object_mut() {
+        obj.insert(
+            "version".to_string(),
+            serde_json::Value::String(_version.to_string()),
+        );
+    }
     std::fs::write(
         &dest_package_json,
-        serde_json::to_string_pretty(&package_json_content).unwrap(),
+        serde_json::to_string_pretty(&package_json_value).unwrap(),
     )
     .into_diagnostic()
     .context("failed to write package.json")?;
