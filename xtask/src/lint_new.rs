@@ -24,7 +24,10 @@ pub fn run_lints(crates_dir: &Utf8Path, options: LintOptions) -> miette::Result<
     let registry = CrateRegistry::load(crates_dir).map_err(|e| miette::miette!("{e}"))?;
 
     let total_crates = registry.crates.len();
-    let pb = ProgressBar::new(total_crates as u64);
+    // Three passes total
+    let total_steps = total_crates * 3;
+
+    let pb = ProgressBar::new(total_steps as u64);
     pb.set_style(
         ProgressStyle::default_bar()
             .template("{spinner:.green} [{bar:40.cyan/blue}] {pos}/{len} Linting {msg}")
@@ -33,15 +36,18 @@ pub fn run_lints(crates_dir: &Utf8Path, options: LintOptions) -> miette::Result<
     );
 
     let mut errors = 0;
-    let mut warnings = 0;
     let mut issues: Vec<(String, Vec<LintDiagnostic>)> = Vec::new();
 
     // First pass: check for crates without arborium.kdl
     for (name, state) in registry.iter() {
-        pb.set_message(name.strip_prefix("arborium-").unwrap_or(name).to_string());
+        pb.set_message(format!(
+            "{} (pass 1/3)",
+            name.strip_prefix("arborium-").unwrap_or(name)
+        ));
+        // Force a tick to ensure progress bar updates
+        pb.tick();
         let has_grammar_dir = state.path.join("grammar").is_dir();
         if state.config.is_none() && has_grammar_dir {
-            warnings += 1;
             issues.push((
                 name.to_string(),
                 vec![LintDiagnostic::Warning("missing arborium.kdl".to_string())],
@@ -50,23 +56,22 @@ pub fn run_lints(crates_dir: &Utf8Path, options: LintOptions) -> miette::Result<
         pb.inc(1);
     }
 
-    pb.set_position(0);
-
     // Second pass: lint each configured crate
     for (name, state, config) in registry.configured_crates() {
-        pb.set_message(name.strip_prefix("arborium-").unwrap_or(name).to_string());
+        pb.set_message(format!(
+            "{} (pass 2/3)",
+            name.strip_prefix("arborium-").unwrap_or(name)
+        ));
         let crate_diagnostics = lint_crate(name, state, config, options);
 
         if !crate_diagnostics.is_empty() {
             for diag in &crate_diagnostics {
                 match diag {
                     LintDiagnostic::Error(_) => errors += 1,
-                    LintDiagnostic::Warning(_) => warnings += 1,
+                    LintDiagnostic::Warning(_) => {}
                     LintDiagnostic::Spanned { is_error, .. } => {
                         if *is_error {
                             errors += 1;
-                        } else {
-                            warnings += 1;
                         }
                     }
                 }
@@ -76,11 +81,12 @@ pub fn run_lints(crates_dir: &Utf8Path, options: LintOptions) -> miette::Result<
         pb.inc(1);
     }
 
-    pb.set_position(0);
-
     // Third pass: check for legacy files
     for (name, state) in registry.iter() {
-        pb.set_message(name.strip_prefix("arborium-").unwrap_or(name).to_string());
+        pb.set_message(format!(
+            "{} (pass 3/3)",
+            name.strip_prefix("arborium-").unwrap_or(name)
+        ));
         if !state.files.legacy_files.is_empty() {
             let mut legacy_diagnostics = Vec::new();
             for legacy in &state.files.legacy_files {
@@ -88,7 +94,6 @@ pub fn run_lints(crates_dir: &Utf8Path, options: LintOptions) -> miette::Result<
                     "legacy file should be deleted: {}",
                     legacy.file_name().unwrap_or("?")
                 )));
-                warnings += 1;
             }
             issues.push((name.to_string(), legacy_diagnostics));
         }
@@ -124,25 +129,9 @@ pub fn run_lints(crates_dir: &Utf8Path, options: LintOptions) -> miette::Result<
         println!();
     }
 
-    // Summary - single checkmark line
+    // Exit with error if there are any errors
     if errors > 0 {
-        println!(
-            "{} Linted {} crates ({} errors, {} warnings)",
-            "✗".red(),
-            total_crates,
-            errors,
-            warnings
-        );
         std::process::exit(1);
-    } else if warnings > 0 {
-        println!(
-            "{} Linted {} crates ({} warnings)",
-            "✓".green(),
-            total_crates,
-            warnings
-        );
-    } else {
-        println!("{} Linted {} crates", "✓".green(), total_crates);
     }
 
     Ok(())

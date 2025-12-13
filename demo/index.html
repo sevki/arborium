@@ -166,6 +166,7 @@
                 <a href="#integrations" class="nav-link">Integrations</a>
                 <a href="#languages" class="nav-link">Languages</a>
                 <a href="#themes" class="nav-link">Themes</a>
+                <a href="#html-tags" class="nav-link">HTML Tags</a>
                 <a href="#faq" class="nav-link">FAQ</a>
             </nav>
 
@@ -197,19 +198,11 @@
                     <div class="compare-boxes">
                         <div class="compare-box old">
                             <span class="compare-label">Traditional</span>
-                            <code
-                                ><a-tg>&lt;span</a-tg> <a-at>class</a-at><a-p>=</a-p
-                                ><a-s>"keyword"</a-s><a-tg>&gt;</a-tg>fn<a-tg
-                                    >&lt;/span&gt;</a-tg
-                                ></code
-                            >
+                            <code><a-p>&lt;</a-p><a-tg>span</a-tg> <a-at>class</a-at>=&quot;<a-s>keyword</a-s>&quot;<a-p>&gt;</a-p>fn<a-p>&lt;/</a-p><a-tg>span</a-tg><a-p>&gt;</a-p></code>
                         </div>
                         <div class="compare-box new">
                             <span class="compare-label">arborium</span>
-                            <code
-                                ><a-tg>&lt;a-k&gt;</a-tg><a-k>fn</a-k
-                                ><a-tg>&lt;/a-k&gt;</a-tg></code
-                            >
+                            <code><a-p>&lt;</a-p><a-tg>a-k</a-tg><a-p>&gt;</a-p>fn<a-p>&lt;/</a-p><a-tg>a-k</a-tg><a-p>&gt;</a-p></code>
                         </div>
                     </div>
                     <p><strong>ANSI</strong> — 24-bit true color for terminal applications.</p>
@@ -602,6 +595,58 @@
                     <p>
                         Custom themes can be defined programmatically using RGB colors and style
                         attributes (bold, italic, underline, strikethrough).
+                    </p>
+                </div>
+
+                <div class="about-card" id="html-tags">
+                    <h3>HTML Tag Reference</h3>
+                    <p>
+                        Arborium uses custom HTML elements to mark up syntax. Each tag corresponds to a semantic code element.
+                        To create custom themes, target these elements in your CSS.
+                    </p>
+
+                    <h4>Core Tags</h4>
+                    <div class="tag-grid">
+                        <div class="tag-item"><code>&lt;a-k&gt;</code> — Keyword</div>
+                        <div class="tag-item"><code>&lt;a-f&gt;</code> — Function</div>
+                        <div class="tag-item"><code>&lt;a-s&gt;</code> — String</div>
+                        <div class="tag-item"><code>&lt;a-c&gt;</code> — Comment</div>
+                        <div class="tag-item"><code>&lt;a-t&gt;</code> — Type</div>
+                        <div class="tag-item"><code>&lt;a-v&gt;</code> — Variable</div>
+                        <div class="tag-item"><code>&lt;a-co&gt;</code> — Constant</div>
+                        <div class="tag-item"><code>&lt;a-n&gt;</code> — Number</div>
+                        <div class="tag-item"><code>&lt;a-o&gt;</code> — Operator</div>
+                        <div class="tag-item"><code>&lt;a-p&gt;</code> — Punctuation</div>
+                        <div class="tag-item"><code>&lt;a-pr&gt;</code> — Property</div>
+                        <div class="tag-item"><code>&lt;a-at&gt;</code> — Attribute</div>
+                        <div class="tag-item"><code>&lt;a-tg&gt;</code> — Tag (HTML/XML)</div>
+                        <div class="tag-item"><code>&lt;a-m&gt;</code> — Macro</div>
+                        <div class="tag-item"><code>&lt;a-l&gt;</code> — Label</div>
+                        <div class="tag-item"><code>&lt;a-ns&gt;</code> — Namespace</div>
+                        <div class="tag-item"><code>&lt;a-cr&gt;</code> — Constructor</div>
+                    </div>
+
+                    <h4>Markup Tags</h4>
+                    <div class="tag-grid">
+                        <div class="tag-item"><code>&lt;a-tt&gt;</code> — Title/Heading</div>
+                        <div class="tag-item"><code>&lt;a-st&gt;</code> — Strong/Bold</div>
+                        <div class="tag-item"><code>&lt;a-em&gt;</code> — Emphasis/Italic</div>
+                        <div class="tag-item"><code>&lt;a-tu&gt;</code> — Link/URL</div>
+                        <div class="tag-item"><code>&lt;a-tl&gt;</code> — Literal/Code</div>
+                        <div class="tag-item"><code>&lt;a-tx&gt;</code> — Strikethrough</div>
+                    </div>
+
+                    <h4>Diff & Special</h4>
+                    <div class="tag-grid">
+                        <div class="tag-item"><code>&lt;a-da&gt;</code> — Diff Addition</div>
+                        <div class="tag-item"><code>&lt;a-dd&gt;</code> — Diff Deletion</div>
+                        <div class="tag-item"><code>&lt;a-eb&gt;</code> — Embedded</div>
+                        <div class="tag-item"><code>&lt;a-er&gt;</code> — Error</div>
+                    </div>
+
+                    <p>
+                        For the complete reference with examples and CSS styling tips, see the
+                        <a href="https://github.com/bearcove/arborium#html-tag-reference">HTML Tag Reference in the README</a>.
                     </p>
                 </div>
 
