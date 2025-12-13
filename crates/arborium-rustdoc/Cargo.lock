@@ -773,6 +773,7 @@ dependencies = [
  "color-eyre",
  "facet",
  "facet-args",
+ "fs_extra",
  "lol_html",
  "owo-colors",
  "walkdir",
@@ -1320,6 +1321,12 @@ name = "foldhash"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "77ce24cb58228fbb8aa041425bb1050850ac19177686ea6e0f41a70416f56fdb"
+
+[[package]]
+name = "fs_extra"
+version = "1.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "42703706b716c37f96a77aea830392ad231f44c9e9a67872fa5548707e11b11c"
 
 [[package]]
 name = "gimli"

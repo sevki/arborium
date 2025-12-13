@@ -3,6 +3,7 @@
 use crate::css::generate_rustdoc_theme_css;
 use crate::html::{TransformError, TransformResult, transform_html};
 use arborium::Highlighter;
+use fs_extra::dir::{self, CopyOptions};
 use std::fs;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
@@ -58,7 +59,19 @@ impl Processor {
         // If output_dir is different from input_dir, copy everything first
         if let Some(ref out) = self.options.output_dir {
             if out != &self.options.input_dir {
-                copy_dir_recursive(&self.options.input_dir, out)?;
+                // Create output directory if it doesn't exist
+                if !out.exists() {
+                    fs::create_dir_all(out)?;
+                }
+
+                // Copy contents using fs_extra (handles symlinks, permissions, etc.)
+                let options = CopyOptions::new().overwrite(true).copy_inside(true);
+                dir::copy(&self.options.input_dir, out, &options).map_err(|e| {
+                    ProcessError::Io(std::io::Error::new(
+                        std::io::ErrorKind::Other,
+                        e.to_string(),
+                    ))
+                })?;
             }
         }
 
@@ -155,49 +168,6 @@ impl Processor {
         }
 
         Ok(result)
-    }
-}
-
-/// Copy a directory recursively, handling symlinks properly.
-fn copy_dir_recursive(src: &Path, dst: &Path) -> Result<(), ProcessError> {
-    if !dst.exists() {
-        fs::create_dir_all(dst)?;
-    }
-
-    for entry in fs::read_dir(src)? {
-        let entry = entry?;
-        let src_path = entry.path();
-        let dst_path = dst.join(entry.file_name());
-        let file_type = entry.file_type()?;
-
-        if file_type.is_symlink() {
-            // Preserve symlinks by reading the target and creating a new symlink
-            let target = fs::read_link(&src_path)?;
-            symlink(&target, &dst_path)?;
-        } else if file_type.is_dir() {
-            copy_dir_recursive(&src_path, &dst_path)?;
-        } else {
-            fs::copy(&src_path, &dst_path)?;
-        }
-    }
-
-    Ok(())
-}
-
-/// Create a symlink (cross-platform).
-#[cfg(unix)]
-fn symlink(target: &Path, link: &Path) -> std::io::Result<()> {
-    std::os::unix::fs::symlink(target, link)
-}
-
-#[cfg(windows)]
-fn symlink(target: &Path, link: &Path) -> std::io::Result<()> {
-    // On Windows, we need to know if the target is a directory
-    // Since we're copying from an existing structure, check if target exists
-    if target.is_dir() {
-        std::os::windows::fs::symlink_dir(target, link)
-    } else {
-        std::os::windows::fs::symlink_file(target, link)
     }
 }
 

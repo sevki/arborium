@@ -27,6 +27,9 @@ struct TransformState {
     current_lang: Option<String>,
     /// Accumulated text content from the current code block.
     collected_text: String,
+    /// Whether we successfully registered an end tag handler for the current block.
+    /// If false, we should not remove text content.
+    can_process: bool,
     /// Statistics about the transformation.
     result: TransformResult,
     /// The highlighter (wrapped for sharing).
@@ -88,15 +91,19 @@ pub fn transform_html(
                                     // Check if we have a language set
                                     let has_lang = state_ref.borrow().current_lang.is_some();
                                     if !has_lang {
+                                        state_ref.borrow_mut().can_process = false;
                                         return Ok(());
                                     }
 
                                     // Clear collected text for this block
                                     state_ref.borrow_mut().collected_text.clear();
 
-                                    // Set up end tag handler
+                                    // Set up end tag handler - only proceed if we can register it
                                     let state_for_end = state_ref.clone();
                                     if let Some(handlers) = el.end_tag_handlers() {
+                                        // Mark that we can process this block
+                                        state_ref.borrow_mut().can_process = true;
+
                                         handlers.push(Box::new(move |end| {
                                             let mut state = state_for_end.borrow_mut();
 
@@ -153,9 +160,15 @@ pub fn transform_html(
                                             // Reset for next block
                                             state.current_lang = None;
                                             state.collected_text.clear();
+                                            state.can_process = false;
 
                                             Ok(())
                                         }));
+                                    } else {
+                                        // Cannot register end tag handler - skip this block
+                                        // This can happen with self-closing elements
+                                        state_ref.borrow_mut().can_process = false;
+                                        state_ref.borrow_mut().result.blocks_skipped += 1;
                                     }
 
                                     Ok(())
@@ -164,8 +177,9 @@ pub fn transform_html(
                             .text(move |text: &mut lol_html::html_content::TextChunk| {
                                 let mut state = state_for_code_text.borrow_mut();
 
-                                // Only collect if we're in a language block
-                                if state.current_lang.is_some() {
+                                // Only collect and remove text if we can process this block
+                                // (i.e., we successfully registered an end tag handler)
+                                if state.current_lang.is_some() && state.can_process {
                                     state.collected_text.push_str(text.as_str());
                                     text.remove(); // Remove original - we'll re-insert highlighted
                                 }
@@ -258,5 +272,78 @@ mod tests {
     fn test_decode_html_entities() {
         assert_eq!(decode_html_entities("&lt;div&gt;"), "<div>");
         assert_eq!(decode_html_entities("foo &amp; bar"), "foo & bar");
+    }
+
+    #[test]
+    fn test_transform_html_highlights_toml() {
+        let html = r#"<pre class="language-toml"><code>[package]
+name = "test"</code></pre>"#;
+
+        let highlighter = Highlighter::new();
+        let (output, result) = transform_html(html, highlighter).unwrap();
+
+        assert_eq!(result.blocks_highlighted, 1);
+        assert_eq!(result.blocks_skipped, 0);
+        // Output should contain arborium's custom elements
+        assert!(output.contains("<a-"));
+    }
+
+    #[test]
+    fn test_transform_html_skips_rust() {
+        let html = r#"<pre class="language-rust rust"><code>fn main() {}</code></pre>"#;
+
+        let highlighter = Highlighter::new();
+        let (output, result) = transform_html(html, highlighter).unwrap();
+
+        assert_eq!(result.blocks_highlighted, 0);
+        assert_eq!(result.blocks_skipped, 1);
+        // Output should be unchanged (no arborium elements)
+        assert!(!output.contains("<a-"));
+        assert!(output.contains("fn main()"));
+    }
+
+    #[test]
+    fn test_transform_html_handles_unsupported_language() {
+        let html = r#"<pre class="language-nosuchlang"><code>some code</code></pre>"#;
+
+        let highlighter = Highlighter::new();
+        let (output, result) = transform_html(html, highlighter).unwrap();
+
+        assert_eq!(result.blocks_highlighted, 0);
+        assert_eq!(result.blocks_skipped, 1);
+        assert!(
+            result
+                .unsupported_languages
+                .contains(&"nosuchlang".to_string())
+        );
+        // Original content should be preserved
+        assert!(output.contains("some code"));
+    }
+
+    #[test]
+    fn test_transform_html_decodes_entities() {
+        // TOML with HTML entities that need decoding
+        let html = r#"<pre class="language-toml"><code>[deps]
+foo = &quot;bar&quot;</code></pre>"#;
+
+        let highlighter = Highlighter::new();
+        let (output, result) = transform_html(html, highlighter).unwrap();
+
+        assert_eq!(result.blocks_highlighted, 1);
+        // The highlighter should have received decoded content
+        // and produced highlighted output
+        assert!(output.contains("<a-"));
+    }
+
+    #[test]
+    fn test_transform_html_preserves_non_code_content() {
+        let html = r#"<html><body><h1>Title</h1><pre class="language-json"><code>{"key": "value"}</code></pre><p>Footer</p></body></html>"#;
+
+        let highlighter = Highlighter::new();
+        let (output, result) = transform_html(html, highlighter).unwrap();
+
+        assert_eq!(result.blocks_highlighted, 1);
+        assert!(output.contains("<h1>Title</h1>"));
+        assert!(output.contains("<p>Footer</p>"));
     }
 }

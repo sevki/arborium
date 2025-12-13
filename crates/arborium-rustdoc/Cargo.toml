@@ -38,3 +38,4 @@ color-eyre = "0.6"
 
 # Progress/output
 owo-colors = "4"
+fs_extra = "1.3.0"
