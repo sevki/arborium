@@ -438,7 +438,7 @@ echo "Version: $VERSION (release: $IS_RELEASE)""#,
                             "key",
                             "grammar-cache-v1000-${{ hashFiles('langs/group-*/*/def/grammar/grammar.js', 'langs/group-*/*/def/grammar/package.json') }}",
                         ),
-                        ("restore-keys", "grammar-cache-v10-"),
+                        ("restore-keys", "grammar-cache-v1000-"),
                     ]),
                 // Generate with version (from tag or 0.0.0-dev for non-release)
                 Step::run(
