@@ -1922,6 +1922,7 @@ description = "Tree-sitter syntax highlighting with HTML rendering and WASM supp
 keywords = ["tree-sitter", "syntax-highlighting", "wasm"]
 categories = ["parsing", "text-processing", "wasm"]
 links = "arborium"
+readme = "../../README.md"
 
 [features]
 default = []
