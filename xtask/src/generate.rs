@@ -2633,8 +2633,8 @@ all-languages = [
         r#"
 [dependencies]
 arborium = {{ version = "{version}", path = "../arborium" }}
-facet = {{ git = "https://github.com/facet-rs/facet" }}
-facet-args = {{ git = "https://github.com/facet-rs/facet" }}
+facet = "0.33.0"
+facet-args = "0.33.0"
 "#
     ));
 
