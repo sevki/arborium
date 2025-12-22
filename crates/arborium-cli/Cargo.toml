@@ -49,6 +49,7 @@ all-languages = [
     "lang-glsl",
     "lang-go",
     "lang-graphql",
+    "lang-groovy",
     "lang-haskell",
     "lang-hcl",
     "lang-hlsl",
@@ -149,6 +150,7 @@ lang-gleam = ["arborium/lang-gleam"]
 lang-glsl = ["arborium/lang-glsl"]
 lang-go = ["arborium/lang-go"]
 lang-graphql = ["arborium/lang-graphql"]
+lang-groovy = ["arborium/lang-groovy"]
 lang-haskell = ["arborium/lang-haskell"]
 lang-hcl = ["arborium/lang-hcl"]
 lang-hlsl = ["arborium/lang-hlsl"]

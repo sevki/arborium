@@ -2595,6 +2595,7 @@ repository = "https://github.com/bearcove/arborium"
 description = "Command-line syntax highlighter powered by arborium"
 keywords = ["tree-sitter", "syntax-highlighting", "cli"]
 categories = ["command-line-utilities", "text-processing"]
+readme = "README.md"
 
 [[bin]]
 name = "arborium"
