@@ -614,7 +614,7 @@ echo "Version: $VERSION (release: $IS_RELEASE)""#,
         Job::new(runners::UBUNTU_32)
             .name("Publish crates.io")
             .container(CONTAINER)
-            .needs(["generate", "test-linux", "test-macos", "clippy"])
+            .needs(["generate", "test-linux", "clippy"])
             .when(IS_RELEASE)
             .permissions([("id-token", "write"), ("contents", "read")])
             .steps(
