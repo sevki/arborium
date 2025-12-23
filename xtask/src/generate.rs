@@ -2399,15 +2399,366 @@ fn generate_shared_crate(
     Ok(())
 }
 
-/// Generate a simple README for a shared crate.
+/// Generate README content for a shared crate.
 fn generate_shared_crate_readme(crate_name: &str) -> String {
-    format!(
-        r#"# {crate_name}
+    let content = match crate_name {
+        "arborium-theme" => {
+            r#"# arborium-theme
+
+Theme support for arborium syntax highlighting.
+
+## Features
+
+- **Highlight categories**: The canonical list of syntax categories used across all arborium tooling
+- **Capture name mapping**: Maps tree-sitter capture names from various sources (nvim-treesitter, helix, etc.) to theme slots
+- **Theme parsing**: Load themes from Helix-style TOML files
+- **Output generation**: Generate CSS stylesheets and ANSI escape sequences
+- **Built-in themes**: Includes catppuccin, dracula, tokyo-night, github, and more
+
+## Usage
+
+```rust
+use arborium_theme::{builtin, Theme};
+
+// Use a built-in theme
+let theme = builtin::catppuccin_mocha();
+
+// Generate CSS for web output
+let css = theme.to_css();
+
+// Get ANSI style for terminal output
+let style = theme.ansi_style(highlight_index);
+```
+"#
+        }
+        "arborium-highlight" => {
+            r#"# arborium-highlight
+
+Core syntax highlighting engine for arborium.
+
+## Features
+
+This crate provides the unified highlighting engine that works with both:
+
+- **Statically linked Rust grammars**: For CLI tools and servers
+- **Dynamically loaded WASM plugins**: For browser contexts
+
+## Why Async?
+
+The parsing is synchronous (tree-sitter fundamentally is), but *getting* a grammar
+can be async in browser contexts where plugins are loaded from a CDN via dynamic
+`import()`. The async trait supports both use cases with the same API.
+
+## Usage
+
+```rust
+use arborium_highlight::{Span, spans_to_html, HtmlFormat};
+
+// After getting spans from a grammar...
+let html = spans_to_html(source, spans, &HtmlFormat::CustomElements);
+```
+"#
+        }
+        "arborium-sysroot" => {
+            r#"# arborium-sysroot
+
+WASM sysroot provider for arborium grammar plugins.
+
+## Purpose
+
+This crate serves two functions:
+
+1. **Build-time**: Provides the wasm-sysroot path to dependent crates via the
+   `DEP_ARBORIUM_SYSROOT_PATH` environment variable set by build.rs
+
+2. **Runtime**: Includes WASM allocator implementations for browser compatibility
+
+This is an internal crate used by arborium's plugin build system.
+"#
+        }
+        "arborium-test-harness" => {
+            r#"# arborium-test-harness
+
+Test harness for arborium grammar crates.
+
+## Purpose
+
+Provides utilities for testing tree-sitter grammars and their highlight/injection queries.
+
+## Usage
+
+In your grammar crate's tests:
+
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_grammar() {
+        arborium_test_harness::test_grammar(
+            language(),
+            "rust",
+            HIGHLIGHTS_QUERY,
+            INJECTIONS_QUERY,
+            LOCALS_QUERY,
+        );
+    }
+}
+```
+
+The harness validates that:
+- The grammar compiles correctly
+- Highlight queries are syntactically valid
+- Injection queries parse without errors
+"#
+        }
+        "arborium-tree-sitter" => {
+            r#"# arborium-tree-sitter
+
+Vendored tree-sitter Rust bindings for arborium.
+
+## Purpose
+
+This is a fork of the official `tree-sitter` crate, modified for arborium's needs:
+
+- Custom build configuration for WASM targets
+- Compatibility patches for the arborium plugin system
+- Pinned version to ensure consistent behavior across all grammar crates
+
+Most users should use the main `arborium` crate instead of depending on this directly.
+"#
+        }
+        "arborium-host" => {
+            r#"# arborium-host
+
+WASM host runtime for arborium in browsers.
+
+## Purpose
+
+Provides the browser-side runtime for loading and executing arborium grammar plugins.
+Uses wasm-bindgen for JavaScript interop.
+
+## How It Works
+
+The host expects these functions on `window.arboriumHost`:
+
+```javascript
+window.arboriumHost = {
+    // Check if a language is available (sync)
+    isLanguageAvailable(language) { ... },
+
+    // Load a grammar plugin, returns a handle (async)
+    async loadGrammar(language) { ... },
+};
+```
+
+Grammar plugins are WIT components loaded on-demand from a CDN.
+
+This crate implements `GrammarProvider` to integrate with `arborium-highlight`,
+ensuring browser and native Rust use the same highlighting logic.
+"#
+        }
+        "arborium-plugin-runtime" => {
+            r#"# arborium-plugin-runtime
+
+Runtime library for arborium grammar plugins.
+
+## Purpose
+
+Provides the core functionality for implementing a tree-sitter grammar as a
+WASM component plugin. This is linked into each grammar plugin.
+
+## Features
+
+- Session management (create/free)
+- Parser state and tree storage
+- Query execution to produce Span and Injection records
+- Incremental parsing via edit application
+- Cancellation support
+
+This is an internal crate used by generated grammar plugins.
+"#
+        }
+        "arborium-wire" => {
+            r#"# arborium-wire
+
+Wire protocol types for arborium WASM plugins.
+
+## Purpose
+
+Defines the data structures used for communication between the arborium host
+and grammar plugins. All types use serde for serialization.
+
+## Wire Version
+
+The `WIRE_VERSION` constant is checked by both host and plugins to ensure
+compatibility. If versions don't match, the host rejects the plugin with
+a clear error message.
+
+## Types
+
+- `Span`: A highlighted region with a capture name
+- `Injection`: A point where another language should be parsed
+- `Edit`: An incremental edit for re-parsing
+
+This is an internal crate used by the plugin system.
+"#
+        }
+        "arborium-query" => {
+            r#"# arborium-query
+
+Tree-sitter query language grammar for arborium.
+
+## Purpose
+
+Provides syntax highlighting for tree-sitter query files (`.scm`).
+This grammar highlights the query DSL itself, including:
+
+- Node types and field names
+- Capture names (`@keyword`, `@function`, etc.)
+- Predicates (`#match?`, `#eq?`, etc.)
+- Quantifiers and anchors
+
+## Usage
+
+```rust
+use arborium_query::{language, HIGHLIGHTS_QUERY};
+
+// Use with arborium's highlighting engine
+```
+"#
+        }
+        "miette-arborium" => {
+            r#"# miette-arborium
+
+Syntax highlighting for [miette](https://crates.io/crates/miette) diagnostics using arborium.
+
+## Features
+
+- Automatic language detection from file extensions
+- Tree-sitter based highlighting (same engine as the main arborium crate)
+- All arborium themes available
+- Zero configuration needed
+
+## Quick Start
+
+```rust
+fn main() {
+    // Install the highlighter globally (call once at startup)
+    miette_arborium::install_global().ok();
+
+    // Now all miette errors will have syntax highlighting!
+}
+```
+
+## With Custom Theme
+
+```rust
+fn main() {
+    let theme = arborium_theme::builtin::github_light().clone();
+    miette_arborium::install_global_with_theme(theme).ok();
+}
+```
+
+## Example Output
+
+Error diagnostics will show syntax-highlighted code snippets:
+
+```
+  × cannot find derive macro `Facet` in this scope
+   ╭─[src/lib.rs:3:10]
+ 1 │ use facet::Facet;
+ 2 │
+ 3 │ #[derive(Facet)]
+   ·          ──┬──
+   ·            ╰── cannot find derive macro `Facet` in this scope
+ 4 │ struct FooBar {
+   ╰────
+```
+"#
+        }
+        "arborium-rustdoc" => {
+            r#"# arborium-rustdoc
+
+Post-process rustdoc HTML to add syntax highlighting for non-Rust code blocks.
+
+## Purpose
+
+Rustdoc already highlights Rust code using rustc's parser, but code blocks in
+other languages (Python, JavaScript, TOML, etc.) are left unhighlighted.
+This tool fixes that.
+
+## Usage
+
+```bash
+# Generate rustdoc as usual
+cargo doc
+
+# Post-process to add highlighting
+arborium-rustdoc ./target/doc ./target/doc-highlighted
+```
+
+## How It Works
+
+1. **CSS Generation**: Appends theme CSS rules to rustdoc's stylesheet
+2. **HTML Transformation**: Uses streaming HTML parsing (lol_html) to find
+   `<pre class="language-*">` elements and replace their content with
+   syntax-highlighted HTML
+
+The output uses arborium's custom elements (`<a-k>`, `<a-f>`, etc.) which
+are styled by the injected CSS.
+"#
+        }
+        "arborium-mdbook" => {
+            r#"# arborium-mdbook
+
+[mdBook](https://rust-lang.github.io/mdBook/) preprocessor for syntax highlighting with arborium.
+
+## Purpose
+
+Replaces mdBook's built-in syntax highlighting with arborium's tree-sitter
+based highlighter, providing better accuracy and more language support.
+
+## Installation
+
+```bash
+cargo install arborium-mdbook
+```
+
+## Configuration
+
+Add to your `book.toml`:
+
+```toml
+[preprocessor.arborium]
+command = "arborium-mdbook"
+```
+
+## Features
+
+- Highlights all fenced code blocks with language annotations
+- Supports all languages available in arborium
+- Uses arborium's custom HTML elements for styling
+- Compatible with mdBook's standard themes
+"#
+        }
+        // Fallback for any crates not explicitly listed
+        _ => {
+            return format!(
+                r#"# {crate_name}
 
 Part of the [arborium](https://github.com/bearcove/arborium) project.
 
 See the [main documentation](https://arborium.dev) for more information.
 "#
+            );
+        }
+    };
+
+    format!(
+        "{}\n---\n\nPart of the [arborium](https://github.com/bearcove/arborium) project. See [arborium.dev](https://arborium.dev) for more information.\n",
+        content.trim()
     )
 }
 
