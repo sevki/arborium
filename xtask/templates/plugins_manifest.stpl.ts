@@ -14,7 +14,7 @@ export const availableLanguages: string[] = [
 export const highlights: Highlight[] = [
 <% for hl in highlights { %>  {
     name: "<%= hl.name %>",
-    tag: "<%= hl.tag %>",<% if !hl.parent_tag.is_empty() { %>
-    parentTag: "<%= hl.parent_tag %>",<% } %>
+    tag: "<%= hl.def.tag %>",<% if let Some(parent) = &hl.def.parent { %>
+    parentTag: "<%= parent %>",<% } %>
   },
 <% } %>];
