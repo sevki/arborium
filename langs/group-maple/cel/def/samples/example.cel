@@ -4,4 +4,3 @@ object.spec.template.spec.containers.all(container,
     container.image.startsWith(registry + '/')
   )
 )
-
