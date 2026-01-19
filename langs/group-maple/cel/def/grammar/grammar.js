@@ -1,3 +1,9 @@
+/**
+ * @file CEL (Common Expression Language) grammar for tree-sitter
+ * @author Gerben Welter
+ * @license MIT
+ */
+
 module.exports = grammar({
   name: 'cel',
 
