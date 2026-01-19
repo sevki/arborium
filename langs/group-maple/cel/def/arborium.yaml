@@ -1,0 +1,26 @@
+repo: https://github.com/GerbenWelter/tree-sitter-cel
+commit: e0b1039a1e037522cd9354be9d08de9a6e57c93b
+license: MIT
+
+grammars:
+  - id: cel
+    name: CEL
+    tag: data
+    tier: 3
+    has_scanner: false
+    generate_component: true
+    icon: simple-icons:googlecloud
+    aliases:
+      - cel
+
+    inventor: Google
+    year: 2018
+    description: "Common Expression Language (CEL) is a non-Turing complete expression language designed for safe evaluation in policy engines, validation rules, and configuration."
+    link: https://github.com/google/cel-spec
+    trivia: "CEL was created at Google to provide a safe, fast way to evaluate expressions in environments like Kubernetes admission control, where untrusted code evaluation is needed but security is critical."
+
+    samples:
+      - path: samples/example.cel
+        description: CEL expression showing container registry validation in Kubernetes policy
+        link: https://github.com/GerbenWelter/tree-sitter-cel/blob/main/example.cel
+        license: MIT
