@@ -1,0 +1,22 @@
+repo: https://github.com/FallenAngel97/tree-sitter-rego
+commit: ddd39af81fe8b0288102a7cb97959dfce723e0f3
+license: MIT
+
+grammars:
+  - id: rego
+    name: Rego
+    tag: config
+    tier: 4
+    icon: simple-icons:openpolicyagent
+    aliases:
+      - opa
+
+    inventor: Torin Sandall (Open Policy Agent / Styra)
+    year: 2016
+    description: "Policy language for the <a href=\"https://www.openpolicyagent.org/\">Open Policy Agent</a> (OPA); see the <a href=\"https://www.openpolicyagent.org/docs/latest/policy-language/\">Rego language reference</a>."
+    link: https://en.wikipedia.org/wiki/Open_Policy_Agent
+    trivia: "Named after the package-tracking character Rego from the movie 'The Fugitive'; OPA joined the CNCF in 2018 and graduated in Feb 2021."
+
+    samples:
+      - path: samples/example.rego
+        description: OPA authorization policy showcasing rules, comprehensions, functions, and the every keyword.
